@@ -1,0 +1,37 @@
+{
+	"name": "@agentcheck/db",
+	"version": "0.1.4",
+	"private": true,
+	"description": "Database schema, clients and migrations (Drizzle ORM + PostgreSQL).",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./testing": "./src/testing.ts"
+	},
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "node --env-file-if-exists=../../apps/web/.env.development src/scripts/migrate.ts"
+	},
+	"license": "MIT",
+	"homepage": "https://agentcheck.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yanfishel/agentcheck.git"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.4",
+		"pg": "^8.23.1",
+		"pg-boss": "^12.38.0"
+	},
+	"devDependencies": {
+		"@agentcheck/core": "workspace:*",
+		"@electric-sql/pglite": "^0.5.10",
+		"@types/pg": "^8.23.1",
+		"drizzle-kit": "^0.31.11"
+	}
+}

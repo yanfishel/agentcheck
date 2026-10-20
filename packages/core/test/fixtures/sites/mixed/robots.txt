@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /cms/
+Disallow: /css/
+Disallow: /images/
+Disallow: /javascript/
+Disallow: /temp/
+
+User-agent: Twitterbot
+Disallow:

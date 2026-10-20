@@ -1,0 +1,27 @@
+{
+	"name": "@agentcheck/worker",
+	"version": "0.1.4",
+	"private": true,
+	"description": "Queue worker that runs audits behind the network guard.",
+	"type": "module",
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"start": "node src/main.ts",
+		"dev": "node --env-file-if-exists=.env.development --watch src/main.ts",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"license": "MIT",
+	"homepage": "https://agentcheck.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yanfishel/agentcheck.git"
+	},
+	"dependencies": {
+		"@agentcheck/core": "workspace:*",
+		"@agentcheck/db": "workspace:*",
+		"pg-boss": "^12.38.0"
+	}
+}

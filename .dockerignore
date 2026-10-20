@@ -1,0 +1,11 @@
+**/node_modules
+**/.next
+**/dist
+**/.env*
+!deploy/.env.example
+.git
+.superpowers
+.claude
+**/coverage
+**/*.tsbuildinfo
+docs

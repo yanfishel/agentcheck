@@ -1,0 +1,16 @@
+name: Idea or new check
+description: Suggest a new check, a better fix, or a feature.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What should AgentCheck notice or do?
+      description: The situation it misses today, ideally with a public example URL.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: A standard, documentation or agent behaviour that backs it (llms.txt, a crawler's docs, WAI-ARIA, …).

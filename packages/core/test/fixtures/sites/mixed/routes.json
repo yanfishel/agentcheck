@@ -1,0 +1,27 @@
+{
+	"origin": "https://mixed.example",
+	"routes": {
+		"/": {
+			"status": 200,
+			"contentType": "text/html; charset=UTF-8",
+			"file": "index.html"
+		},
+		"/index.md": {
+			"status": 404,
+			"contentType": "text/html; charset=UTF-8"
+		},
+		"/llms-full.txt": {
+			"status": 404,
+			"contentType": "text/html; charset=UTF-8"
+		},
+		"/llms.txt": {
+			"status": 404,
+			"contentType": "text/html; charset=UTF-8"
+		},
+		"/robots.txt": {
+			"status": 200,
+			"contentType": "text/plain",
+			"file": "robots.txt"
+		}
+	}
+}

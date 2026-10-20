@@ -1,0 +1,372 @@
+@import "tailwindcss";
+
+/* dark: follows our theme switch, not only the system: a pinned data-theme wins,
+   "system" (no attribute) falls back to prefers-color-scheme. */
+@custom-variant dark {
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) & {
+			@slot;
+		}
+	}
+	:root[data-theme="dark"] & {
+		@slot;
+	}
+}
+
+:root {
+	color-scheme: light dark;
+	--background: light-dark(#f6f2f5, #141017);
+	--foreground: light-dark(#1b1420, #eee6ec);
+	--muted: light-dark(#6b5b66, #a0909c);
+	--line: light-dark(#dccfd8, #2f2533);
+	--accent: light-dark(#6e2a5e, #dc92cc);
+	--pass: light-dark(#0b6b5a, #4fd1b0);
+	--warn: light-dark(#9a5c06, #facc15);
+	--fail: light-dark(#b42318, #f87171);
+	--skip: var(--muted);
+	--accent-fg: light-dark(#ffffff, #1b1420);
+	--accent-soft: light-dark(#f1e3ec, #2c1f2a);
+	--surface: light-dark(#ffffff, #1c1620);
+	--surface-2: light-dark(#fbf8fa, #211a26);
+	--line-soft: light-dark(#eadfe6, #241c29);
+	--pass-soft: light-dark(#dff3ec, #13302a);
+	--warn-soft: light-dark(#fdf1d6, #332b10);
+	--fail-soft: light-dark(#fde2df, #3a1a1a);
+	/* The plum band (header, landing hero, report band) is plum with white in both
+	   themes, so these tokens have one value; `.on-band` maps the accent pair onto
+	   them inside the band. Status on it (the score ring) in three discrete steps
+	   of the site's status colours, picked to read on plum. */
+	--band-bg: #6e2a5e;
+	--band-fg: #ffffff;
+	--band-pass: #4fd1b0;
+	--band-warn: #facc15;
+	--band-fail: #ff3b30;
+	/* Code windows (components/ui/code-window.tsx) are dark in both themes, like an
+	   editor or a terminal, so these tokens have one value. */
+	--code-bg: #1b1420;
+	--code-bar: #241c29;
+	--code-line: #2f2533;
+	--code-tab: #3a2e40;
+	--code-dot: #4a3d50;
+	--code-fg: #eee6ec;
+	--code-text: #d9cfd6;
+	--code-muted: #9a8a95;
+	--code-prompt: #dc92cc;
+	--code-key: #dc92cc;
+	--code-string: #9fe0c7;
+	--code-flag: #8fb7ff;
+	--code-number: #f6c177;
+	--code-pass: #4fd1b0;
+	--code-warn: #facc15;
+	--code-fail: #f87171;
+	/* Category identity (components/category-meta.tsx). Hues kept clear of the status
+	   colours and the plum brand; validated for colour-vision deficiency in both
+	   themes. They mark icons and rings only, never text. */
+	--cat-manifests: light-dark(#1fb8d1, #1597b8);
+	--cat-bots: light-dark(#1d4fc4, #3560da);
+	--cat-semantics: light-dark(#a074f2, #9b74ee);
+	--cat-actions: light-dark(#c9488c, #cf4086);
+	/* Hero backdrop light and shade (on the plum band, one value), and the halo
+	   around the focused start form. */
+	--hero-glow: rgba(220, 146, 204, 0.55);
+	--hero-warm: rgba(255, 190, 150, 0.22);
+	--hero-shade: rgba(40, 10, 35, 0.6);
+	--hero-grid: rgba(255, 255, 255, 0.09);
+	--hero-cell: rgba(255, 255, 255, 0.14);
+	--focus-halo: light-dark(#d4b3cc, #fbeaf6);
+	/* The start form floats above the page. */
+	--lift-shadow:
+		0 1px 2px light-dark(rgba(27, 20, 32, 0.08), rgba(0, 0, 0, 0.5)),
+		0 12px 32px -10px light-dark(rgba(110, 42, 94, 0.4), rgba(0, 0, 0, 0.7)),
+		0 28px 56px -28px light-dark(rgba(27, 20, 32, 0.35), rgba(0, 0, 0, 0.8));
+	/* The report band's screenshot thumbnail and its grade seal, on the plum band. */
+	--thumb-shadow:
+		0 1px 3px light-dark(rgba(27, 10, 24, 0.3), rgba(27, 20, 32, 0.25)),
+		0 10px 24px -8px light-dark(rgba(27, 10, 24, 0.55), rgba(27, 20, 32, 0.45));
+	/* A faint light edge round the thumbnail on the plum band. */
+	--thumb-ring: rgba(255, 255, 255, 0.22);
+	/* Behind dialogs: a dark scrim in both themes. */
+	--scrim: rgba(18, 8, 16, 0.55);
+	/* The shadow under the spark of a grade stamp (history cards, the band's thumbnail). */
+	--spark-shadow: rgba(27, 10, 24, 0.7);
+	/* A soft light disc under the score ring, so it lifts off the band. */
+	--score-halo: rgba(255, 255, 255, 0.13);
+	--card-shadow:
+		0 1px 2px light-dark(rgba(27, 20, 32, 0.06), rgba(0, 0, 0, 0.4)),
+		0 8px 24px -12px light-dark(rgba(110, 42, 94, 0.25), rgba(0, 0, 0, 0.6));
+}
+
+/* Links to anchors on the same page glide there, unless motion is reduced.
+   Next keeps it for hash links because <html> has data-scroll-behavior. */
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+/* An anchor lands a little below the top edge, not flush against it. */
+[id] {
+	scroll-margin-top: 1.5rem;
+}
+
+/* The theme menu pins a scheme; without the attribute the system preference decides. */
+:root[data-theme="light"] {
+	color-scheme: light;
+}
+:root[data-theme="dark"] {
+	color-scheme: dark;
+}
+
+/* Inside the plum band the accent pair is the band's own, in both themes, so
+   everything on it (header controls, chips, the score ring, the grade seal)
+   looks the same in light and dark. Overlays open in a portal outside it. */
+.on-band {
+	--accent: var(--band-bg);
+	--accent-fg: var(--band-fg);
+	--thumb-shadow:
+		0 1px 3px rgba(27, 10, 24, 0.3), 0 10px 24px -8px rgba(27, 10, 24, 0.55);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-muted: var(--muted);
+	--color-line: var(--line);
+	--color-accent: var(--accent);
+	--color-pass: var(--pass);
+	--color-warn: var(--warn);
+	--color-fail: var(--fail);
+	--color-skip: var(--skip);
+	--color-accent-fg: var(--accent-fg);
+	--color-accent-soft: var(--accent-soft);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-line-soft: var(--line-soft);
+	--color-pass-soft: var(--pass-soft);
+	--color-warn-soft: var(--warn-soft);
+	--color-fail-soft: var(--fail-soft);
+	--color-focus-halo: var(--focus-halo);
+	--color-band-pass: var(--band-pass);
+	--color-band-warn: var(--band-warn);
+	--color-band-fail: var(--band-fail);
+	--color-code-bg: var(--code-bg);
+	--color-code-bar: var(--code-bar);
+	--color-code-line: var(--code-line);
+	--color-code-tab: var(--code-tab);
+	--color-code-dot: var(--code-dot);
+	--color-code-fg: var(--code-fg);
+	--color-code-text: var(--code-text);
+	--color-code-muted: var(--code-muted);
+	--color-code-prompt: var(--code-prompt);
+	--color-code-key: var(--code-key);
+	--color-code-string: var(--code-string);
+	--color-code-flag: var(--code-flag);
+	--color-code-number: var(--code-number);
+	--color-code-pass: var(--code-pass);
+	--color-code-warn: var(--code-warn);
+	--color-code-fail: var(--code-fail);
+	--color-cat-manifests: var(--cat-manifests);
+	--color-cat-bots: var(--cat-bots);
+	--color-cat-semantics: var(--cat-semantics);
+	--color-cat-actions: var(--cat-actions);
+	--shadow-card: var(--card-shadow);
+	--shadow-lift: var(--lift-shadow);
+	--shadow-thumb: var(--thumb-shadow);
+	--color-thumb-ring: var(--thumb-ring);
+	--color-score-halo: var(--score-halo);
+	--color-band-bg: var(--band-bg);
+	--color-scrim: var(--scrim);
+	--radius-card: 14px;
+	/* The one content width for every page (header, footer and page bodies). */
+	--container-page: 1040px;
+	--font-sans: var(--font-schibsted);
+	--font-mono: var(--font-jetbrains);
+}
+
+html {
+	isolation: isolate;
+}
+
+/* Everything clickable shows the pointer (Tailwind 4 resets buttons to the default
+   cursor). Layered as base, so a utility (disabled:cursor-not-allowed, or
+   cursor-default on a tooltip-only trigger) still wins. */
+@layer base {
+	a[href],
+	button:not(:disabled),
+	summary,
+	label[for],
+	select:not(:disabled),
+	[role="button"]:not([aria-disabled="true"]),
+	[role="menuitem"]:not([aria-disabled="true"]),
+	[role="menuitemradio"]:not([aria-disabled="true"]),
+	[role="menuitemcheckbox"]:not([aria-disabled="true"]),
+	[role="option"]:not([aria-disabled="true"]),
+	[role="tab"]:not([aria-disabled="true"]) {
+		cursor: pointer;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none;
+		animation: none;
+	}
+}
+
+body {
+	position: relative;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* The brand mark (components/brand-mark.tsx). Only the spark moves; the frame and
+   letters never change. Done and failed are colour only. */
+@layer components {
+	/* Layered, so a text-* utility recolours the idle mark (the header band uses text-accent-fg). */
+	.ac {
+		color: var(--accent);
+		overflow: visible;
+	}
+}
+.ac .ac-spark {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+/* idle: one short glint, then a long rest */
+.ac--idle .ac-spark {
+	animation: ac-glint 14s ease-in-out 1.2s infinite;
+}
+@keyframes ac-glint {
+	0%,
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+	3% {
+		transform: scale(0.68);
+		opacity: 0.45;
+	}
+	6% {
+		transform: scale(1.08);
+		opacity: 1;
+	}
+	8% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+/* queued: the spark twinkles while the audit waits for a worker */
+.ac--queued .ac-spark {
+	animation: ac-twinkle 1.8s ease-in-out infinite;
+}
+@keyframes ac-twinkle {
+	0%,
+	100% {
+		transform: scale(0.7);
+		opacity: 0.45;
+	}
+	50% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+/* running: half-turn ticks */
+.ac--running .ac-spark {
+	animation: ac-spin 1.2s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+}
+@keyframes ac-spin {
+	from {
+		transform: rotate(0);
+	}
+	to {
+		transform: rotate(180deg);
+	}
+}
+.ac--done {
+	color: var(--pass);
+}
+.ac--failed {
+	color: var(--fail);
+}
+@media (prefers-reduced-motion: reduce) {
+	.ac .ac-spark {
+		animation: none;
+	}
+}
+
+/* The landing hero backdrop (components/landing/hero-backdrop.tsx): slow glows, a
+   line grid whose cells light up now and then, and grain. The top fades to the flat
+   fill so the header above stays seamless. */
+.hero-glow {
+	position: absolute;
+	inset: -30%;
+	background:
+		radial-gradient(40% 45% at 78% 22%, var(--hero-glow), transparent 70%),
+		radial-gradient(35% 40% at 15% 85%, var(--hero-shade), transparent 70%),
+		radial-gradient(30% 35% at 28% 35%, var(--hero-warm), transparent 70%);
+	animation: hero-aurora 18s ease-in-out infinite alternate;
+}
+/* Drift and grow only: a rotation lifts the layer's corners past its -30% inset on
+   short, wide bands (the report), so an edge showed. Scaling only pushes edges out. */
+@keyframes hero-aurora {
+	from {
+		transform: translate(0, 0) scale(1);
+	}
+	to {
+		transform: translate(4%, -3%) scale(1.06);
+	}
+}
+/* A faint line grid that fades out from the middle of the hero. */
+.hero-grid {
+	position: absolute;
+	inset: 0;
+	background-image:
+		linear-gradient(to right, var(--hero-grid) 1px, transparent 1px),
+		linear-gradient(to bottom, var(--hero-grid) 1px, transparent 1px);
+	background-size: 44px 44px;
+	/* Lines sit at the centre -22px + n * 44px and at y = n * 44px; .hero-cell relies on it. */
+	background-position: center top;
+	mask-image: radial-gradient(
+		ellipse 60% 70% at 50% 45%,
+		#000 20%,
+		transparent 100%
+	);
+}
+.hero-grain {
+	position: absolute;
+	inset: 0;
+	opacity: 0.12;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.hero-fade {
+	mask-image: linear-gradient(to bottom, transparent, #000 18%);
+}
+.hero-cell {
+	position: absolute;
+	left: calc(50% - 21px + var(--col) * 44px);
+	top: calc(var(--row) * 44px + 1px);
+	width: 43px;
+	height: 43px;
+	background: var(--hero-cell);
+	box-shadow: 0 0 24px var(--hero-cell);
+	opacity: 0;
+	animation: hero-lit 8s ease-in-out infinite;
+}
+@keyframes hero-lit {
+	0%,
+	100% {
+		opacity: 0;
+	}
+	12% {
+		opacity: 1;
+	}
+	40% {
+		opacity: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.hero-glow,
+	.hero-cell {
+		animation: none;
+	}
+}

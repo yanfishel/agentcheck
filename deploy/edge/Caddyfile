@@ -1,0 +1,4 @@
+# One file per site in sites/. Caddy gets and renews the certificates itself.
+# It does not trust an incoming X-Forwarded-For (no trusted_proxies), so the
+# last entry an app reads is the client address Caddy saw.
+import sites/*.caddy

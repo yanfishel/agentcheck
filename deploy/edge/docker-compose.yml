@@ -1,0 +1,33 @@
+# The server's front door, shared by every project on it (on the server
+# /srv/edge). It owns the `edge` network; a project's public container joins
+# it under a unique alias and gets one file in sites/. Start this stack first.
+name: edge
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  edge:
+    name: edge
+
+volumes:
+  caddy_data:
+  caddy_config:

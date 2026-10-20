@@ -1,0 +1,12 @@
+# Biome formats the code; this keeps other editors on the same tabs and LF.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = tab
+
+[*.{yml,yaml,md}]
+indent_style = space
+indent_size = 2

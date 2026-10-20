@@ -1,0 +1,17 @@
+# AgentCheck
+
+> AgentCheck checks how ready a website is for AI agents, search assistants and browser automation: llms.txt and markdown versions of pages, robots.txt rules for AI crawlers, structured data, and controls an agent can use. A free web service at agentcheck.dev and an MIT-licensed CLI on npm.
+
+Paste a URL at https://agentcheck.dev for a score from 0 to 100 in four weighted categories (AI manifests 30%, bot access 20%, content and semantics 25%, agentic actionability 25%), a fix for every failed check, and generated fix files (robots.txt, llms.txt, llms-full.txt, a markdown version of the page, head tags) built from the site's own pages.
+
+## Docs
+
+- [The home page in markdown](https://agentcheck.dev/index.md): what is checked and why, how it works, an example report, the CLI and the badge, questions and answers
+- [Full text](https://agentcheck.dev/llms-full.txt): the home page and the CLI reference in one file
+- [Source code](https://github.com/yanfishel/agentcheck): the engine, the CLI and the web service (MIT)
+- [CLI on npm](https://www.npmjs.com/package/agentcheck): `npx agentcheck <url>` and `npx agentcheck fix <url>`
+
+## Optional
+
+- [Privacy Policy](https://agentcheck.dev/privacy): what the service stores and for how long
+- [Terms of Use](https://agentcheck.dev/terms)

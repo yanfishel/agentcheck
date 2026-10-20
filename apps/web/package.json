@@ -1,0 +1,45 @@
+{
+	"name": "@agentcheck/web",
+	"version": "0.1.4",
+	"private": true,
+	"description": "The agentcheck.dev web app (Next.js).",
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"typecheck": "next typegen && tsc --noEmit",
+		"test": "vitest run --passWithNoTests"
+	},
+	"license": "MIT",
+	"homepage": "https://agentcheck.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yanfishel/agentcheck.git"
+	},
+	"dependencies": {
+		"@agentcheck/core": "workspace:*",
+		"@agentcheck/db": "workspace:*",
+		"@base-ui/react": "1.9.0",
+		"@clerk/nextjs": "^7.9.17",
+		"fflate": "^0.8.3",
+		"lucide-react": "^1.59.0",
+		"next": "16.4.2",
+		"playwright-core": "catalog:",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"server-only": "^0.0.1"
+	},
+	"devDependencies": {
+		"@tailwindcss/turbopack": "^4",
+		"@testing-library/jest-dom": "^7.0.1",
+		"@testing-library/react": "^16.3.3",
+		"@testing-library/user-event": "^14.6.8",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"jsdom": "^30.1.3",
+		"tailwindcss": "^4"
+	}
+}

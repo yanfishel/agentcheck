@@ -1,0 +1,173 @@
+{
+	"tool": {
+		"name": "agentcheck",
+		"version": "0.1.2"
+	},
+	"target": "https://vite.dev",
+	"finalUrl": "https://vite.dev/",
+	"timestamp": "2026-10-20T20:47:01.938Z",
+	"categories": [
+		{
+			"id": "ai-manifests",
+			"title": "AI Manifests",
+			"weight": 30,
+			"status": "scored",
+			"score": 80,
+			"checks": [
+				{
+					"id": "llms-txt",
+					"title": "llms.txt present",
+					"weight": 40,
+					"status": "pass",
+					"message": "/llms.txt is published"
+				},
+				{
+					"id": "llms-txt-format",
+					"title": "llms.txt follows the llmstxt.org format",
+					"weight": 20,
+					"status": "pass",
+					"message": "llms.txt follows the llmstxt.org format"
+				},
+				{
+					"id": "llms-full-txt",
+					"title": "llms-full.txt present",
+					"weight": 20,
+					"status": "pass",
+					"message": "/llms-full.txt is published"
+				},
+				{
+					"id": "markdown-twin",
+					"title": "Markdown version of the page",
+					"weight": 20,
+					"status": "fail",
+					"message": "No markdown version of this page found",
+					"details": ["https://vite.dev/index.md: HTTP 404"],
+					"remediation": "Serve a markdown version of the page (e.g. <page>.md) and advertise it with <link rel=\"alternate\" type=\"text/markdown\">."
+				}
+			]
+		},
+		{
+			"id": "bot-access",
+			"title": "Bot Access",
+			"weight": 20,
+			"status": "scored",
+			"score": 100,
+			"checks": [
+				{
+					"id": "ai-bots-allowed",
+					"title": "AI crawlers allowed",
+					"weight": 60,
+					"status": "pass",
+					"message": "No robots.txt found; all AI crawlers are allowed by default"
+				},
+				{
+					"id": "noai-directives",
+					"title": "No noai directives",
+					"weight": 30,
+					"status": "pass",
+					"message": "No noai or noimageai directives found"
+				},
+				{
+					"id": "asset-access",
+					"title": "Page assets crawlable",
+					"weight": 10,
+					"status": "pass",
+					"message": "No robots.txt found; page assets are crawlable"
+				}
+			]
+		},
+		{
+			"id": "content-semantics",
+			"title": "Content & Semantics",
+			"weight": 25,
+			"status": "scored",
+			"score": 63,
+			"checks": [
+				{
+					"id": "heading-hierarchy",
+					"title": "Heading hierarchy",
+					"weight": 25,
+					"status": "warn",
+					"message": "Heading hierarchy has problems",
+					"details": [
+						"h1 → h6 (\"Trusted by the world's best software teams\")",
+						"h2 → h5 (\"Instant Server Start\")",
+						"h2 → h5 (\"Flexible Plugin System\")"
+					],
+					"remediation": "Use exactly one h1 and nest headings without skipping levels (h2, then h3)."
+				},
+				{
+					"id": "structured-data",
+					"title": "Structured data",
+					"weight": 25,
+					"status": "fail",
+					"message": "No structured data found",
+					"remediation": "Add a <script type=\"application/ld+json\"> block describing the page with schema.org types."
+				},
+				{
+					"id": "opengraph",
+					"title": "OpenGraph tags",
+					"weight": 20,
+					"status": "pass",
+					"message": "All core OpenGraph tags present"
+				},
+				{
+					"id": "content-density",
+					"title": "Content density",
+					"weight": 30,
+					"status": "pass",
+					"message": "480 words of main content (79% of page text)"
+				}
+			]
+		},
+		{
+			"id": "agentic-actionability",
+			"title": "Agentic Actionability",
+			"weight": 25,
+			"status": "scored",
+			"score": 80,
+			"checks": [
+				{
+					"id": "accessible-names",
+					"title": "Accessible names",
+					"weight": 40,
+					"status": "warn",
+					"message": "1 of 65 interactive elements have no accessible name (2%)",
+					"details": [
+						"link: <a.spsr-link.flex> href=\"https://www.cloudways.com/en/velocity.ph\""
+					],
+					"remediation": "Give icon-only links and buttons an accessible name (aria-label or visually hidden text)."
+				},
+				{
+					"id": "click-targets",
+					"title": "Click targets",
+					"weight": 25,
+					"status": "pass",
+					"message": "No click traps found"
+				},
+				{
+					"id": "overlay-blocking",
+					"title": "Overlay blocking",
+					"weight": 20,
+					"status": "pass",
+					"message": "Nothing covers the page on load"
+				},
+				{
+					"id": "captcha-blocking",
+					"title": "Captcha blocking",
+					"weight": 15,
+					"status": "pass",
+					"message": "No captcha found"
+				}
+			]
+		}
+	],
+	"score": 80,
+	"grade": "B",
+	"browser": {
+		"used": true,
+		"engine": "chrome",
+		"version": "155.0.8059.80",
+		"renderMs": 3770
+	}
+}

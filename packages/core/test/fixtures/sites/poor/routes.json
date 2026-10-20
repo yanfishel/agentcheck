@@ -1,0 +1,28 @@
+{
+	"origin": "https://poor.example",
+	"routes": {
+		"/": {
+			"status": 200,
+			"contentType": "text/html",
+			"file": "index.html"
+		},
+		"/index.md": {
+			"status": 404,
+			"contentType": "text/html"
+		},
+		"/llms-full.txt": {
+			"status": 404,
+			"contentType": "text/html"
+		},
+		"/llms.txt": {
+			"status": 200,
+			"contentType": "text/plain",
+			"file": "llms.txt"
+		},
+		"/robots.txt": {
+			"status": 200,
+			"contentType": "text/plain",
+			"file": "robots.txt"
+		}
+	}
+}

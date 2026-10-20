@@ -1,0 +1,25 @@
+# Lumen Notes
+
+> Lumen Notes is a fictional note-taking app that keeps plain markdown files, syncs them between devices and publishes notebooks in formats AI agents can read.
+
+The site is small: a home page, product pages, documentation and release news.
+
+## Main pages
+
+- [Home page](https://good.example/): what Lumen Notes is
+- [Features](https://good.example/features): editor, backlinks, tags and sync
+- [Pricing](https://good.example/pricing): the free notebook and the team plans
+
+## Docs
+
+- [Install guide](https://good.example/docs/install): download, first folder, first note
+- [Publishing a notebook](https://good.example/docs/publish): turn a notebook into a site
+
+## News
+
+- [Lumen Notes 2.0: published notebooks](https://good.example/news/lumen-notes-2-0)
+
+## Optional
+
+- [Privacy policy](https://good.example/privacy)
+- [Terms of use](https://good.example/terms)

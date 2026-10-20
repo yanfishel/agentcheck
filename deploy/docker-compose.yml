@@ -1,0 +1,76 @@
+# The AgentCheck stack. Lives in /srv/agentcheck next to .env (see docs/deploy.md).
+# It publishes no ports: the edge stack's Caddy reaches web over the shared
+# `edge` network as agentcheck-web; everything else stays on this project's network.
+name: agentcheck
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  web:
+    image: ghcr.io/yanfishel/agentcheck-web:${AGENTCHECK_VERSION:?set AGENTCHECK_VERSION in .env}
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      default:
+      edge:
+        aliases:
+          - agentcheck-web
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging: *logging
+
+  worker:
+    image: ghcr.io/yanfishel/agentcheck-worker:${AGENTCHECK_VERSION:?set AGENTCHECK_VERSION in .env}
+    restart: unless-stopped
+    # The worker needs only the database and its concurrency, not the web secrets.
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      AUDIT_CONCURRENCY: ${AUDIT_CONCURRENCY:-2}
+    init: true
+    shm_size: 1gb
+    # Lets Chromium's sandbox create its namespaces (Playwright's profile).
+    security_opt:
+      - seccomp=./seccomp-chromium.json
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging: *logging
+
+  migrate:
+    image: ghcr.io/yanfishel/agentcheck-worker:${AGENTCHECK_VERSION:?set AGENTCHECK_VERSION in .env}
+    command: ["node", "packages/db/src/scripts/migrate.ts"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agentcheck
+      POSTGRES_DB: agentcheck
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentcheck -d agentcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging: *logging
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  pgdata:

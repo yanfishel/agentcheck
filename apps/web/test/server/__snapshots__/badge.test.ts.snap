@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderBadge > draws two segments with the label and the score 1`] = `"<svg xmlns="http://www.w3.org/2000/svg" width="111" height="20" viewBox="0 0 111 20" role="img" aria-label="AI Ready: 78/100"><title>AI Ready: 78/100</title><g shape-rendering="crispEdges"><rect width="62" height="20" fill="#1b1420"/><rect x="62" width="49" height="20" fill="#6e2a5e"/></g><g font-family="Verdana,DejaVu Sans,sans-serif"><text x="31" y="14" fill="#fff" font-size="11" text-anchor="middle">AI Ready</text><text x="86.5" y="14" fill="#fff" font-size="11" text-anchor="middle">78/100</text></g></svg>"`;

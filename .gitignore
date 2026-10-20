@@ -1,0 +1,33 @@
+node_modules/
+dist/
+coverage/
+
+# Generated audit reports
+agentcheck-report.html
+agent-audit/
+
+# IDE
+.idea/
+
+# Personal Claude Code files
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Next.js
+.next/
+
+# Brainstorm mockups (superpowers visual companion)
+.superpowers/
+
+# Playwright MCP output
+.playwright-mcp/
+
+# Third-party Claude Code skills (installed locally, not part of the project)
+.claude/skills/clerk*
+skills-lock.json
+
+# Environment files: only the examples and the non-secret dev defaults are tracked
+.env
+.env.*
+!.env.example
+!.env.development

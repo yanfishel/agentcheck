@@ -1,0 +1,94 @@
+import type { PageMeta } from "./extract.ts";
+import { cleanText, escapeAttribute, jsonForScript } from "./text.ts";
+import type { FixFile, FixTodo } from "./types.ts";
+
+export function buildHeadHtml(
+	page: PageMeta,
+	opts: { og: boolean; jsonLd: boolean },
+): FixFile {
+	const todos: FixTodo[] = [];
+	const fixes: string[] = [];
+	const lines: string[] = [];
+	const none = "none found on the page";
+
+	const meta = (property: string, value: string) =>
+		`<meta property="${property}" content="${escapeAttribute(value)}">`;
+	const todoMeta = (property: string, what: string, placeholder = what) => {
+		todos.push({ text: `head.html: ${property}, ${what} (${none})` });
+		return meta(property, `TODO: ${placeholder}`);
+	};
+	if (opts.og) {
+		fixes.push("opengraph");
+		const missing = (key: string) => !(key in page.og);
+		const title = page.title || page.h1;
+		if (missing("og:title")) {
+			lines.push(
+				title
+					? meta("og:title", title)
+					: todoMeta("og:title", "a title for the page"),
+			);
+		}
+		if (missing("og:description")) {
+			lines.push(
+				page.description
+					? meta("og:description", page.description)
+					: todoMeta("og:description", "a description of the page"),
+			);
+		}
+		if (missing("og:image")) {
+			lines.push(
+				page.image
+					? meta("og:image", page.image)
+					: todoMeta("og:image", "a 1200×630 picture", "a 1200×630 image URL"),
+			);
+		}
+		if (missing("og:url")) {
+			lines.push(meta("og:url", page.canonical || page.url));
+		}
+		if (missing("og:type")) lines.push(meta("og:type", "website"));
+		if (missing("og:site_name") && page.siteName) {
+			lines.push(meta("og:site_name", page.siteName));
+		}
+	}
+
+	if (opts.jsonLd) {
+		fixes.push("structured-data");
+		const url = `${new URL(page.url).origin}/`;
+		const pageName = page.siteNameFromPage ? cleanText(page.siteName) : "";
+		const name = pageName || new URL(page.url).hostname;
+		const json = jsonForScript({
+			"@context": "https://schema.org",
+			"@graph": [
+				{ "@type": "WebSite", name, url },
+				// Organization only when the page itself names the site.
+				...(pageName
+					? [
+							{
+								"@type": "Organization",
+								name,
+								url,
+								...(page.logo ? { logo: page.logo } : {}),
+							},
+						]
+					: []),
+			],
+		});
+		lines.push(`<script type="application/ld+json">\n${json}\n</script>`);
+	}
+
+	const where = `Add inside <head> of ${page.url}`;
+	const replace = opts.jsonLd && page.jsonLd.present && !page.jsonLd.usable;
+	const target = replace
+		? `${where}; replace the existing JSON-LD block`
+		: where;
+	const note = replace ? `${target} with the one below` : where;
+
+	return {
+		kind: "head",
+		name: "head.html",
+		target,
+		fixes,
+		content: `${[`<!-- ${note.replace(/--+/g, "-")} -->`, ...lines].join("\n")}\n`,
+		todos,
+	};
+}

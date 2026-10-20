@@ -1,0 +1,53 @@
+{
+	"name": "agentcheck",
+	"version": "0.1.4",
+	"description": "Audit how ready a website is for AI agents, search LLMs and autonomous browsers.",
+	"author": "Yan Fishel (https://fishart.co.il)",
+	"type": "module",
+	"bin": {
+		"agentcheck": "./dist/cli.mjs"
+	},
+	"files": [
+		"dist",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"build": "tsdown",
+		"dev": "tsdown --watch",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"keywords": [
+		"ai",
+		"llms.txt",
+		"audit",
+		"cli",
+		"agents",
+		"seo"
+	],
+	"license": "MIT",
+	"homepage": "https://agentcheck.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yanfishel/agentcheck.git",
+		"directory": "apps/cli"
+	},
+	"bugs": "https://github.com/yanfishel/agentcheck/issues",
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"devDependencies": {
+		"@agentcheck/core": "workspace:*",
+		"tsdown": "^0.23.1"
+	},
+	"dependencies": {
+		"cheerio": "catalog:",
+		"playwright-core": "catalog:",
+		"robots-parser": "catalog:",
+		"undici": "catalog:"
+	}
+}

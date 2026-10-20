@@ -1,0 +1,29 @@
+{
+	"origin": "https://good.example",
+	"routes": {
+		"/": {
+			"status": 200,
+			"contentType": "text/html; charset=utf-8",
+			"file": "index.html"
+		},
+		"/index.md": {
+			"status": 200,
+			"contentType": "text/plain; charset=utf-8",
+			"file": "index.md"
+		},
+		"/llms-full.txt": {
+			"status": 404,
+			"contentType": "text/html; charset=utf-8"
+		},
+		"/llms.txt": {
+			"status": 200,
+			"contentType": "text/plain; charset=utf-8",
+			"file": "llms.txt"
+		},
+		"/robots.txt": {
+			"status": 200,
+			"contentType": "text/plain; charset=utf-8",
+			"file": "robots.txt"
+		}
+	}
+}

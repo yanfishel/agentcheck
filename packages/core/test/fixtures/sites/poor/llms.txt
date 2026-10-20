@@ -1,0 +1,30 @@
+  # Pixel Orchard — Design and Frontend Studio
+
+## Contact & Links
+- **Location:** Riverton
+- **Website / Portfolio:** [https://poor.example](https://poor.example)
+- **Case studies:** [https://poor.example/work](https://poor.example/work)
+
+---
+
+## Summary
+Pixel Orchard is a fictional one-person studio that designs and builds interfaces for small companies: marketing sites, dashboards and the occasional mobile app. The work runs from the first sketch to the deployed code.
+
+---
+
+## Skills & Tooling
+
+### Frontend
+- **Languages:** JavaScript, TypeScript, HTML, CSS
+- **Frameworks:** React, Next.js, Vue.js
+- **Styling:** Tailwind CSS, CSS modules
+
+### Design
+- **Tools:** Figma, Inkscape
+- **Strengths:** design systems, motion, accessible colour palettes
+
+---
+
+## Selected work
+- **Orchard Board:** a planning dashboard for a fictional farm cooperative.
+- **Lantern:** a booking site for a fictional evening language school.

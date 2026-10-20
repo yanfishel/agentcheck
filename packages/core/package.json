@@ -1,0 +1,35 @@
+{
+	"name": "@agentcheck/core",
+	"version": "0.1.4",
+	"private": true,
+	"description": "Audit engine: checks, scoring and reporters.",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./version": "./src/version.ts",
+		"./scoring": "./src/scoring.ts",
+		"./terminal": "./src/reporters/terminal.ts",
+		"./fixes": "./src/fixes/index.ts",
+		"./test-helpers": "./test/helpers/index.ts"
+	},
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"capture": "node scripts/capture-fixture.ts"
+	},
+	"license": "MIT",
+	"homepage": "https://agentcheck.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yanfishel/agentcheck.git"
+	},
+	"dependencies": {
+		"cheerio": "catalog:",
+		"playwright-core": "catalog:",
+		"robots-parser": "catalog:",
+		"undici": "catalog:"
+	}
+}

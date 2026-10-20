@@ -1,0 +1,8 @@
+agentcheck.dev {
+	encode zstd gzip
+	reverse_proxy agentcheck-web:3000
+}
+
+www.agentcheck.dev {
+	redir https://agentcheck.dev{uri} permanent
+}

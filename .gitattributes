@@ -1,0 +1,2 @@
+* text=auto eol=lf
+packages/core/test/fixtures/sites/** -text

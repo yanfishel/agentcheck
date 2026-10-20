@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792356170313,
+      "tag": "0000_sudden_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792359896692,
+      "tag": "0001_odd_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792371621275,
+      "tag": "0002_aberrant_ogun",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792431085584,
+      "tag": "0003_perpetual_punisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792436766180,
+      "tag": "0004_empty_celestials",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792453726784,
+      "tag": "0005_handy_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792494861474,
+      "tag": "0006_zippy_violations",
+      "breakpoints": true
+    }
+  ]
+}
