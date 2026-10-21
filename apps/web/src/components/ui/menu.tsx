@@ -109,18 +109,21 @@ export function RadioMenu<T extends string>({
 	value,
 	onValueChange,
 	options,
+	align = "end",
 }: {
 	trigger: ReactElement;
 	label: string;
 	value: T;
 	onValueChange: (value: T) => void;
 	options: RadioMenuOption<T>[];
+	/** Which edge of the trigger the popup lines up with. */
+	align?: "start" | "end";
 }) {
 	return (
 		<BaseMenu.Root>
 			<BaseMenu.Trigger render={trigger} />
 			<BaseMenu.Portal>
-				<BaseMenu.Positioner sideOffset={6} align="end">
+				<BaseMenu.Positioner sideOffset={6} align={align}>
 					<BaseMenu.Popup aria-label={label} className={popupClass}>
 						<BaseMenu.RadioGroup
 							value={value}

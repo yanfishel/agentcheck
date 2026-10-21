@@ -1,8 +1,10 @@
 "use client";
 
 import { Tabs } from "@base-ui/react/tabs";
+import { ChevronDown } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { CopyButton } from "./copy-button";
+import { RadioMenu } from "./menu";
 
 export type CodeTab = {
 	/** Shown as the file or shell name in the window bar. */
@@ -50,13 +52,14 @@ export function CodeWindow({
 	const [own, setOwn] = useState(0);
 	const active = value ?? own;
 	const current = tabs[active] ?? tabs[0];
+	const select = (next: number) => {
+		setOwn(next);
+		onValueChange?.(next);
+	};
 	return (
 		<Tabs.Root
 			value={active}
-			onValueChange={(next) => {
-				setOwn(Number(next));
-				onValueChange?.(Number(next));
-			}}
+			onValueChange={(next) => select(Number(next))}
 			className="overflow-hidden rounded-[14px] border border-code-line bg-code-bg shadow-card"
 		>
 			<div className="flex items-end gap-2 bg-code-bar px-3 pt-2">
@@ -68,9 +71,40 @@ export function CodeWindow({
 					<i className="size-2.5 rounded-full bg-code-dot" />
 					<i className="size-2.5 rounded-full bg-code-dot" />
 				</span>
+				{/* On a phone the tabs do not fit beside the buttons: one picker
+				    shows the active file and lists the others. */}
+				{current && tabs.length > 1 ? (
+					<RadioMenu
+						label={label}
+						align="start"
+						value={String(active)}
+						onValueChange={(next) => select(Number(next))}
+						options={tabs.map((tab, index) => ({
+							value: String(index),
+							label: tab.label,
+						}))}
+						trigger={
+							<button
+								type="button"
+								aria-label={`${label}: ${current.label}, ${active + 1} of ${tabs.length}`}
+								className="mb-1.5 inline-flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-code-bg px-3 py-2 font-mono text-xs text-code-fg shadow-[inset_0_2px_0_var(--code-prompt)] outline-none focus-visible:outline-2 focus-visible:outline-code-prompt sm:hidden"
+							>
+								{current.icon}
+								<span className="truncate">{current.label}</span>
+								<span className="ml-auto text-code-muted">
+									{active + 1}/{tabs.length}
+								</span>
+								<ChevronDown
+									aria-hidden="true"
+									className="size-4 shrink-0 text-code-muted"
+								/>
+							</button>
+						}
+					/>
+				) : null}
 				<Tabs.List
 					aria-label={label}
-					className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none]"
+					className={`min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] ${tabs.length > 1 ? "hidden sm:flex" : "flex"}`}
 				>
 					{tabs.map(({ label: name, icon }, index) => (
 						<Tabs.Tab
@@ -90,20 +124,34 @@ export function CodeWindow({
 							text={current.copy}
 							load={current.load}
 							ariaLabel={current.copyLabel}
+							compact
 						/>
 						{current.actions}
 					</div>
 				) : null}
 			</div>
-			{tabs.map((tab, index) => (
-				<Tabs.Panel key={tab.label} value={index} keepMounted>
-					<pre
-						className={`overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed text-code-text ${codeClassName ?? ""}`}
+			{/* Every panel sits in the same grid cell, so the window is as tall as
+			    its tallest tab and switching tabs never changes its height. An
+			    inactive panel drops the `hidden` attribute (preflight's
+			    `display: none !important` would take it out of the layout) and is
+			    hidden by visibility instead; Base UI keeps it `inert`. */}
+			<div className="grid">
+				{tabs.map((tab, index) => (
+					<Tabs.Panel
+						key={tab.label}
+						value={index}
+						keepMounted
+						render={({ hidden: _hidden, ...props }) => <div {...props} />}
+						className="[grid-area:1/1] min-w-0 data-hidden:invisible"
 					>
-						<code>{tab.content}</code>
-					</pre>
-				</Tabs.Panel>
-			))}
+						<pre
+							className={`h-full overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed text-code-text ${codeClassName ?? ""}`}
+						>
+							<code>{tab.content}</code>
+						</pre>
+					</Tabs.Panel>
+				))}
+			</div>
 			{footer}
 		</Tabs.Root>
 	);

@@ -97,7 +97,12 @@ components and the copy.
   classes come from `code` in `ui/code-tokens.ts`, a plain module, because
   constants exported from a `"use client"` file reach server components as
   client references. The landing's terminal output is the real
-  `renderTerminal` run on the saved example audit.
+  `renderTerminal` run on the saved example audit. The window is as tall as
+  its tallest tab (all panels share one grid cell; an inactive one is
+  `inert` and `visibility: hidden`, never `display: none`), so switching tabs
+  never moves the page. Below `sm` the tabs give way to a file picker
+  (`RadioMenu`: icon, name, "1/5", chevron) and Copy/Download show only their
+  icons (labels stay for screen readers).
 - The landing's example (`landing/example-report.tsx`) is a saved real audit
   of vite.dev (`content/example-audit.json`, screenshot and site icon in
   `public/example/`, all from `apps/web/scripts/capture-example.ts`), rendered
