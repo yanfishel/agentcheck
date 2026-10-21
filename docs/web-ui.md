@@ -155,13 +155,15 @@ components and the copy.
 - `app/global-error.tsx` replaces the root layout when it fails: its own
   document, no header, footer or Clerk, never the error text.
 - Every Full check button (start form, `RerunButton` with `mode="full"`) gives a
-  guest, or any 401, `FullCheckDialog` instead of a request. On a report page
-  the guest's press is the intent: it is remembered (`rerun-intent.ts`,
-  sessionStorage, keyed by the audit and the mode, 10 minutes) and, once the
-  viewer is signed in on that page, the `RerunButton` of that mode with
-  `auditId` starts the run by itself. A guest's Full check remembers a full
-  run; a guest's Generate fix files remembers a run in the audit's own mode
-  (the fix files then come from that owned report). Only the press counts:
+  guest, or any 401, `FullCheckDialog` instead of a request. The guest's
+  press is the intent: it is remembered (`rerun-intent.ts`, sessionStorage,
+  keyed by the audit (or `START_SCOPE` for the start form) and the mode, 10
+  minutes) and, once the viewer is signed in on that page, the run starts by
+  itself: on the landing the start form posts the URL that was typed; on a
+  report page the `RerunButton` of that mode with `auditId` does it. A
+  guest's Full check remembers a full run; a guest's Generate fix files
+  remembers a run in the audit's own mode (the fix files then come from that
+  owned report). Only the press counts:
   closing the dialog without Sign in or Sign up forgets it (`AccountDialog`'s
   `onDismiss`), and nothing ever starts without a press.
 - On a done quick report the skipped browser category carries `FullCheckOffer`

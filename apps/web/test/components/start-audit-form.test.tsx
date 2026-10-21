@@ -2,6 +2,11 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	rememberRerun,
+	START_SCOPE,
+	takeRerun,
+} from "@/components/rerun-intent";
 import { StartAuditForm } from "@/components/start-audit-form";
 
 const push = vi.fn();
@@ -17,6 +22,7 @@ vi.mock("@clerk/nextjs", () => ({
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+	sessionStorage.clear();
 	fetchMock = vi.fn();
 	vi.stubGlobal("fetch", fetchMock);
 });
@@ -170,6 +176,64 @@ describe("StartAuditForm", () => {
 		).toBeInTheDocument();
 		expect(screen.queryByRole("alert")).toBeNull();
 		expect(push).not.toHaveBeenCalled();
+	});
+});
+
+describe("StartAuditForm: a guest's Full check carries on after sign-in", () => {
+	const typed = "https://example.com";
+
+	it("remembers the press with the typed URL, and only until the dialog is dismissed", async () => {
+		await submit("Full check");
+		await screen.findByRole("dialog", { name: "Full check needs an account" });
+		const intent = takeRerun(START_SCOPE, "full");
+		expect(intent).toMatchObject({
+			auditId: START_SCOPE,
+			url: typed,
+			mode: "full",
+		});
+		expect(fetchMock).not.toHaveBeenCalled();
+
+		rememberRerun(START_SCOPE, typed, "full");
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		expect(takeRerun(START_SCOPE, "full")).toBeNull();
+	});
+
+	it("starts the full check of that URL once the viewer is signed in", async () => {
+		fetchMock.mockResolvedValue(Response.json({ id: "a7" }, { status: 201 }));
+		const user = userEvent.setup();
+		const view = render(<StartAuditForm />);
+		await user.type(
+			screen.getByRole("textbox", { name: "Website URL" }),
+			typed,
+		);
+		await user.click(screen.getByRole("button", { name: "Full check" }));
+		await screen.findByRole("dialog", { name: "Full check needs an account" });
+		isSignedIn = true;
+		view.rerender(<StartAuditForm />);
+		await waitFor(() => expect(push).toHaveBeenCalledWith("/audits/a7"));
+		expect(sentBody(0)).toEqual({ url: typed, mode: "full" });
+		expect(takeRerun(START_SCOPE, "full")).toBeNull();
+	});
+
+	it("starts once on load when a signed-in viewer comes back with the press", async () => {
+		fetchMock.mockResolvedValue(Response.json({ id: "a7" }, { status: 201 }));
+		rememberRerun(START_SCOPE, typed, "full");
+		isSignedIn = true;
+		const view = render(<StartAuditForm />);
+		await waitFor(() => expect(push).toHaveBeenCalledWith("/audits/a7"));
+		expect(sentBody(0)).toEqual({ url: typed, mode: "full" });
+		expect(screen.getByRole("textbox", { name: "Website URL" })).toHaveValue(
+			typed,
+		);
+		view.rerender(<StartAuditForm />);
+		expect(fetchMock).toHaveBeenCalledOnce();
+	});
+
+	it("starts nothing without a press", () => {
+		isSignedIn = true;
+		render(<StartAuditForm />);
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });
 
