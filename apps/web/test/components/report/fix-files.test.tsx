@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FixFilesFooter } from "@/components/report/fix-files/footer";
 import { FixFilesPanel } from "@/components/report/fix-files/panel";
 import { FixFilesProvider } from "@/components/report/fix-files/provider";
+import { takeRerun } from "@/components/rerun-intent";
 import type { FixFilesPreview, FixFilesView } from "@/server/fix-files";
 
 vi.mock("next/navigation", () => ({
@@ -182,8 +190,9 @@ describe("Fix files", () => {
 		expect(within(footer).getByRole("button", { name: "Generating…" }));
 	});
 
-	it("guest gets the account dialog", async () => {
+	it("guest gets the account dialog, and the press is remembered as a rerun", async () => {
 		signedIn = false;
+		sessionStorage.clear();
 		setup(none, "other");
 		await userEvent.click(
 			within(panel()).getByRole("button", { name: "Generate fix files" }),
@@ -192,6 +201,24 @@ describe("Fix files", () => {
 			await screen.findByRole("dialog", { name: "Fix files need an account" }),
 		).toBeInTheDocument();
 		expect(fetchMock).not.toHaveBeenCalled();
+		expect(takeRerun("a1", "quick")).toMatchObject({
+			auditId: "a1",
+			url: "https://example.com",
+			mode: "quick",
+		});
+	});
+
+	it("closing the account dialog without signing in forgets the press", async () => {
+		signedIn = false;
+		sessionStorage.clear();
+		setup(none, "other");
+		await userEvent.click(
+			within(panel()).getByRole("button", { name: "Generate fix files" }),
+		);
+		await screen.findByRole("dialog", { name: "Fix files need an account" });
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		expect(takeRerun("a1", "quick")).toBeNull();
 	});
 
 	it("non-owner gets the run-it-from-your-account dialog", async () => {

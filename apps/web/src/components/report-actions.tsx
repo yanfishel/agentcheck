@@ -69,7 +69,7 @@ export function ReportActions({
 			{/* Left: run it again (and, after a quick check, as a full one). */}
 			{canRerun ? (
 				<div className="flex flex-wrap items-start gap-2">
-					<RerunButton url={url} mode={mode} />
+					<RerunButton url={url} mode={mode} auditId={auditId} />
 					{mode === "quick" ? (
 						<RerunButton url={url} mode="full" upgrade auditId={auditId} />
 					) : null}

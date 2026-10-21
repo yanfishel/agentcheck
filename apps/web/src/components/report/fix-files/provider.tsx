@@ -16,6 +16,7 @@ import {
 import type { FixFilesView } from "../../../server/fix-files";
 import { AccountDialog } from "../../full-check-dialog";
 import { RerunButton } from "../../rerun-button";
+import { forgetRerun, rememberRerun } from "../../rerun-intent";
 import { Dialog } from "../../ui";
 import { FIX_ATTEMPTS_MAX } from "./file-meta";
 
@@ -105,7 +106,14 @@ export function FixFilesProvider({
 	const start = useCallback(() => {
 		if (role !== "owner") {
 			if (role === "admin") return;
-			setPrompt(isLoaded && !isSignedIn ? "guest" : "not-owner");
+			if (isLoaded && !isSignedIn) {
+				// The press is remembered; once signed in on this page the check
+				// runs again from their account (RerunButton carries it out).
+				rememberRerun(auditId, url, mode);
+				setPrompt("guest");
+			} else {
+				setPrompt("not-owner");
+			}
 			return;
 		}
 		if (startingRef.current || busy || !canStart) return;
@@ -131,7 +139,17 @@ export function FixFilesProvider({
 				setStarting(false);
 			}
 		})();
-	}, [role, isLoaded, isSignedIn, busy, canStart, endpoint]);
+	}, [
+		role,
+		isLoaded,
+		isSignedIn,
+		busy,
+		canStart,
+		endpoint,
+		auditId,
+		url,
+		mode,
+	]);
 
 	const openFile = useCallback((kind: FixKind) => {
 		setActiveKind(kind);
@@ -224,8 +242,9 @@ export function FixFilesProvider({
 			<AccountDialog
 				open={prompt === "guest"}
 				onOpenChange={(open) => setPrompt(open ? "guest" : null)}
+				onDismiss={forgetRerun}
 				title="Fix files need an account"
-				description="Fix files belong to an account. Sign up or sign in, run the check from your account, and generate them from that report."
+				description="Fix files belong to an account. Sign up or sign in: this check runs again from your account as soon as you are in, and you generate them from that report."
 			/>
 			<Dialog
 				open={prompt === "not-owner"}
