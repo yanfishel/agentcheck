@@ -118,6 +118,11 @@ components and the copy.
   moving moment), "Check your site now", one line and a second
   `StartAuditForm` (`id="check-now"`, `tone="band"`: its own field id, hint in
   the band's colours, never takes focus). The section order above it stays.
+  The report pages end with the same band: `/audits/[id]` in every state
+  (queued to done, failed) with "Check another site" (`id="check-another"`),
+  `/r/[shareToken]` with "How ready is your site?" and a line inviting the
+  reader to check their own (`id="check-yours"`). It is an invitation, not an
+  action on the report, so the shared report's no-actions rule stands.
 - The site is AI-ready itself (our own CLI must keep it at A): `content/site.ts`
   holds its URL (`https://agentcheck.dev`, a constant because the landing is
   built before the server's env exists) and the root metadata (metadataBase,
@@ -139,6 +144,11 @@ components and the copy.
   production renderer has no fonts for SVG text.
 - On a phone (below `sm`) the header shows the mark only; the name stays for
   screen readers.
+- The header carries "Check a site" (`CheckSiteLink`, to `/#start`, lucide
+  `Zap` like the form's Quick) on every page but the landing, whose hero holds
+  the form: a translucent pill with a faint border, centred in the header row
+  from `sm`; below `sm` an icon-only round button at the head of the nav, the
+  label kept for screen readers.
 - Same-page anchors scroll smoothly (`scroll-behavior` on `<html>` with
   `data-scroll-behavior="smooth"` so Next keeps it; off under reduced motion)
   and land 1.5rem below the top. The URL field gets focus on load where there
