@@ -133,6 +133,10 @@ components and the copy.
   keyboard) and after any click on a link to `#start`.
 - In a skipped category the reason is shown once, in its header; each check
   row then shows the check's title instead of repeating it.
+- A category header is icon and title in one flex item of natural width
+  (`flex-auto min-w-0`) and the chips in another; chips that do not fit
+  beside the whole title wrap under it. The title never gets a zero basis: at
+  320 px that left it a sliver of the line and its words ran under the chips.
 
 ## Account-gated actions
 
