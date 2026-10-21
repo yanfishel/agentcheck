@@ -5,11 +5,7 @@ import { RotateCw, ScanSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FullCheckDialog } from "./full-check-dialog";
-import {
-	forgetFullCheck,
-	rememberFullCheck,
-	takeFullCheck,
-} from "./full-check-intent";
+import { forgetRerun, rememberRerun, takeRerun } from "./rerun-intent";
 import { Button } from "./ui";
 
 const NETWORK_ERROR = "Could not start the audit. Try again.";
@@ -32,8 +28,10 @@ export function RerunButton({
 	upgrade?: boolean;
 	/**
 	 * The audit this button sits on. With it, a guest's press on Full check is
-	 * remembered through the sign-in it needs, and the full check starts by
-	 * itself once they are signed in on this page (see full-check-intent.ts).
+	 * remembered through the sign-in it needs, and the run starts by itself
+	 * once they are signed in on this page; the button also carries out a
+	 * remembered press of its mode made elsewhere on the page, such as a
+	 * guest's Generate fix files (see rerun-intent.ts).
 	 */
 	auditId?: string;
 }) {
@@ -46,7 +44,7 @@ export function RerunButton({
 	async function rerun() {
 		if (pending) return;
 		if (mode === "full" && isLoaded && !isSignedIn) {
-			if (upgrade && auditId) rememberFullCheck(auditId, url);
+			if (auditId) rememberRerun(auditId, url, "full");
 			setNeedsAccount(true);
 			return;
 		}
@@ -57,9 +55,9 @@ export function RerunButton({
 	// start() reads the latest props; the intent is consumed on the first run.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: see above
 	useEffect(() => {
-		if (!upgrade || !auditId || !isLoaded || !isSignedIn) return;
-		if (takeFullCheck(auditId)) void start();
-	}, [upgrade, auditId, isLoaded, isSignedIn]);
+		if (!auditId || !isLoaded || !isSignedIn) return;
+		if (takeRerun(auditId, mode)) void start();
+	}, [auditId, mode, isLoaded, isSignedIn]);
 
 	async function start() {
 		setError(null);
@@ -116,7 +114,7 @@ export function RerunButton({
 			<FullCheckDialog
 				open={needsAccount}
 				onOpenChange={setNeedsAccount}
-				onDismiss={forgetFullCheck}
+				onDismiss={forgetRerun}
 			/>
 		</div>
 	);
