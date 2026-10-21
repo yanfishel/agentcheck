@@ -49,6 +49,8 @@ function setup(props: Partial<Props> = {}) {
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+	// A guest's Full check press is remembered in sessionStorage; tests start clean.
+	sessionStorage.clear();
 	fetchMock = vi.fn();
 	vi.stubGlobal("fetch", fetchMock);
 	Object.defineProperty(navigator, "clipboard", {

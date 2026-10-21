@@ -3,8 +3,13 @@
 import { useAuth } from "@clerk/nextjs";
 import { RotateCw, ScanSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FullCheckDialog } from "./full-check-dialog";
+import {
+	forgetFullCheck,
+	rememberFullCheck,
+	takeFullCheck,
+} from "./full-check-intent";
 import { Button } from "./ui";
 
 const NETWORK_ERROR = "Could not start the audit. Try again.";
@@ -14,6 +19,7 @@ export function RerunButton({
 	mode,
 	label,
 	upgrade = false,
+	auditId,
 }: {
 	url: string;
 	mode: "quick" | "full";
@@ -24,6 +30,12 @@ export function RerunButton({
 	 * A guest gets the sign-up dialog instead of a request (and so does a 401).
 	 */
 	upgrade?: boolean;
+	/**
+	 * The audit this button sits on. With it, a guest's press on Full check is
+	 * remembered through the sign-in it needs, and the full check starts by
+	 * itself once they are signed in on this page (see full-check-intent.ts).
+	 */
+	auditId?: string;
 }) {
 	const router = useRouter();
 	const { isLoaded, isSignedIn } = useAuth();
@@ -34,9 +46,22 @@ export function RerunButton({
 	async function rerun() {
 		if (pending) return;
 		if (mode === "full" && isLoaded && !isSignedIn) {
+			if (upgrade && auditId) rememberFullCheck(auditId, url);
 			setNeedsAccount(true);
 			return;
 		}
+		await start();
+	}
+
+	// The press a guest made before signing in: start what they asked for.
+	// start() reads the latest props; the intent is consumed on the first run.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: see above
+	useEffect(() => {
+		if (!upgrade || !auditId || !isLoaded || !isSignedIn) return;
+		if (takeFullCheck(auditId)) void start();
+	}, [upgrade, auditId, isLoaded, isSignedIn]);
+
+	async function start() {
 		setError(null);
 		setPending(true);
 		try {
@@ -88,7 +113,11 @@ export function RerunButton({
 					{error}
 				</p>
 			) : null}
-			<FullCheckDialog open={needsAccount} onOpenChange={setNeedsAccount} />
+			<FullCheckDialog
+				open={needsAccount}
+				onOpenChange={setNeedsAccount}
+				onDismiss={forgetFullCheck}
+			/>
 		</div>
 	);
 }

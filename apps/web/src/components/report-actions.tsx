@@ -71,7 +71,7 @@ export function ReportActions({
 				<div className="flex flex-wrap items-start gap-2">
 					<RerunButton url={url} mode={mode} />
 					{mode === "quick" ? (
-						<RerunButton url={url} mode="full" upgrade />
+						<RerunButton url={url} mode="full" upgrade auditId={auditId} />
 					) : null}
 				</div>
 			) : null}

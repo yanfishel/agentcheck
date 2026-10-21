@@ -12,6 +12,7 @@ import {
 	FixFilesProvider,
 	type FixFilesRole,
 } from "../../../components/report/fix-files/provider";
+import { FullCheckOffer } from "../../../components/report/full-check-offer";
 import { ReportActions } from "../../../components/report-actions";
 import {
 	canViewAudit,
@@ -121,6 +122,11 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 						categoryFooter={(categoryId) => (
 							<FixFilesFooter categoryId={categoryId} />
 						)}
+						categoryAside={(category) =>
+							audit.mode === "quick" && category.status === "skipped" ? (
+								<FullCheckOffer auditId={audit.id} url={audit.url} />
+							) : null
+						}
 						actions={
 							<ReportActions
 								auditId={audit.id}
