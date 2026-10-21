@@ -1,15 +1,14 @@
 import type { AuditResult } from "@agentcheck/core";
-
-type Grade = AuditResult["grade"];
-
 import type { ReactNode } from "react";
 import { SiteIcon } from "../site-icon";
+import { BandGradeMark, BandScoreRing } from "./band-arrival";
 import { Gauge } from "./gauge";
-import { GradeMark, gradeStroke } from "./grade-mark";
+import { gradeStroke } from "./grade-mark";
 import { ScoreConfetti } from "./score-confetti";
+import { HALO, ScoreRing } from "./score-ring";
 import { type ScreenshotSources, ScreenshotThumb } from "./screenshot-thumb";
 
-export { gradeStroke };
+export { gradeStroke, ScoreRing };
 
 export function hostOf(url: string): string {
 	try {
@@ -17,47 +16,6 @@ export function hostOf(url: string): string {
 	} catch {
 		return url;
 	}
-}
-
-/**
- * A soft light disc under the band's ring that reaches a few pixels past it, so
- * the ring lifts off the plum band. The pending ring shares it, so
- * nothing changes size when the score arrives.
- */
-const HALO = "rounded-full bg-score-halo ring-4 ring-score-halo";
-
-/** The score as a round-capped arc over a faint track, coloured by grade. */
-export function ScoreRing({
-	score,
-	grade,
-	large = false,
-}: {
-	score: number;
-	grade: Grade;
-	/** The report page's band: a bigger ring from sm up. */
-	large?: boolean;
-}) {
-	return (
-		<Gauge
-			value={score}
-			arc={gradeStroke(grade)}
-			track="stroke-accent-fg/20"
-			className={`${HALO} ${large ? "size-24 sm:size-32" : "size-24"}`}
-		>
-			<p className="flex flex-col items-center">
-				<span
-					className={`leading-none font-extrabold tracking-tight tabular-nums ${large ? "text-3xl sm:text-[2.5rem]" : "text-3xl"}`}
-				>
-					{score}
-				</span>
-				<span
-					className={`mt-0.5 leading-none text-accent-fg/85 ${large ? "text-xs sm:text-sm" : "text-xs"}`}
-				>
-					of 100
-				</span>
-			</p>
-		</Gauge>
-	);
 }
 
 /**
@@ -102,6 +60,9 @@ export function FailedRing() {
 /**
  * The plum band at the top of a report: ring, host, chips, and the grade in the
  * brand frame, or with a screenshot the page's thumbnail with the grade as a seal.
+ * Inside a report that animates arrivals (a band that appears when a watched
+ * audit finishes) the ring pops and counts up, the grade fades in and the
+ * thumbnail fades and rises in; anywhere else it is still.
  */
 export function ScoreBand({
 	result,
@@ -126,7 +87,7 @@ export function ScoreBand({
 	celebrate?: boolean;
 }) {
 	const ring = (
-		<ScoreRing score={result.score} grade={result.grade} large={!surface} />
+		<BandScoreRing score={result.score} grade={result.grade} large={!surface} />
 	);
 	const Heading = heading;
 	return (
@@ -174,7 +135,7 @@ export function ScoreBand({
 					    bottom edge on the chips' baseline (the frame ends at 87.5% of
 					    the mark's box, hence the nudge down). */}
 					{screenshot ? null : (
-						<GradeMark
+						<BandGradeMark
 							grade={result.grade}
 							className={`hidden shrink-0 translate-y-[12%] text-accent-fg sm:block ${surface ? "size-14" : "size-20"}`}
 						/>
@@ -188,7 +149,7 @@ export function ScoreBand({
 					/>
 				) : (
 					// On a phone the grade keeps its place beside the ring.
-					<GradeMark
+					<BandGradeMark
 						grade={result.grade}
 						className={`justify-self-end text-accent-fg sm:hidden ${surface ? "size-14" : "size-16"}`}
 					/>

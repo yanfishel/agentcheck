@@ -18,6 +18,7 @@ const audit = (over: Partial<Audit>): Audit => {
 		mode: "quick",
 		status: "done",
 		result: null,
+		partial: null,
 		score: 80,
 		grade: "B",
 		error: null,
@@ -91,6 +92,18 @@ describe("faviconId", () => {
 		]);
 		expect(groups[0]?.faviconId).toBe("B");
 		expect(groups[0]?.screenshotId).toBe("A");
+	});
+
+	it("ignores the early favicon of a running audit", () => {
+		const groups = groupAuditsByUrl([
+			audit({ id: "A", status: "running", hasFavicon: true }),
+			audit({ id: "B", hasFavicon: true }),
+		]);
+		expect(groups[0]?.faviconId).toBe("B");
+		const only = groupAuditsByUrl([
+			audit({ id: "A", status: "running", hasFavicon: true }),
+		]);
+		expect(only[0]?.faviconId).toBeNull();
 	});
 
 	it("faviconId is null without any favicon", () => {

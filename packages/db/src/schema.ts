@@ -1,4 +1,4 @@
-import type { AuditResult } from "@agentcheck/core";
+import type { AuditResult, FinishedCheck } from "@agentcheck/core";
 import type { FixFiles, FixKind } from "@agentcheck/core/fixes";
 import { sql } from "drizzle-orm";
 import {
@@ -74,6 +74,8 @@ export const audits = pgTable(
 		mode: text("mode").$type<AuditMode>().notNull(),
 		status: text("status").$type<AuditStatus>().notNull().default("queued"),
 		result: jsonb("result").$type<AuditResult>(),
+		/** Checks finished so far by a running audit, keyed by check id. */
+		partial: jsonb("partial").$type<Record<string, FinishedCheck>>(),
 		score: integer("score"),
 		grade: text("grade"),
 		error: text("error"),

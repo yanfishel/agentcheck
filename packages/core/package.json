@@ -8,6 +8,7 @@
 		".": "./src/index.ts",
 		"./version": "./src/version.ts",
 		"./scoring": "./src/scoring.ts",
+		"./progress": "./src/progress.ts",
 		"./terminal": "./src/reporters/terminal.ts",
 		"./fixes": "./src/fixes/index.ts",
 		"./test-helpers": "./test/helpers/index.ts"

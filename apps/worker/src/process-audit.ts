@@ -3,6 +3,7 @@ import {
 	type AuditResult,
 	defaultUserAgent,
 	type Favicon,
+	type FinishedCheck,
 	type GuardedAuditOptionsInput,
 	guardedAuditOptions,
 	runAudit,
@@ -81,6 +82,18 @@ export async function processAudit(
 	log("info", "audit.started", { auditId, mode: row.mode, url: row.url });
 	const started = performance.now();
 
+	// Partial data is best effort: a failed write is logged, never awaited,
+	// and neither fails the audit nor reaches the engine.
+	const partial = (write: Promise<boolean>, what: string) => {
+		write.catch((error: unknown) => {
+			log("warn", "audit.partial_error", {
+				auditId,
+				what,
+				error: errorMessage(error),
+			});
+		});
+	};
+
 	// Only the guard's options: nothing from the job payload or the row
 	// except the target URL and the mode reaches runAudit.
 	// The first-screen shot is kept only for full audits and stored with the
@@ -92,8 +105,12 @@ export async function processAudit(
 		userAgent: defaultUserAgent(WORKER_VERSION),
 		toolVersion: WORKER_VERSION,
 		browser: full,
+		onCheck: (check: FinishedCheck) => {
+			partial(store.recordCheck(auditId, jobId, check), check.id);
+		},
 		onFavicon: (icon: Favicon) => {
 			favicon = icon;
+			partial(store.saveFavicon(auditId, jobId, icon), "favicon");
 		},
 		...(full && {
 			onScreenshot: (shot: Screenshot) => {

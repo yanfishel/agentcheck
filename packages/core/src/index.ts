@@ -45,6 +45,7 @@ export {
 	isBlockedAddress,
 	type UrlCheck,
 } from "./net/policy.ts";
+export { completeCategories, type FinishedCheck } from "./progress.ts";
 export { renderHtml } from "./reporters/html.ts";
 export { renderTerminal } from "./reporters/terminal.ts";
 export type { AuditResult } from "./types.ts";

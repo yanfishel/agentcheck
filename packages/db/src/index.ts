@@ -21,8 +21,10 @@ export {
 	getAuditScreenshot,
 	listAudits,
 	listUserHistory,
+	recordAuditCheck,
 	STALE_QUEUED_MS,
 	STALE_RUNNING_MS,
+	saveAuditFavicon,
 	setShareToken,
 } from "./audits.ts";
 export type { Db, DbHandle } from "./client.ts";

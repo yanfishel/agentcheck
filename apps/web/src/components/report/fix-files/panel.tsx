@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, Pencil, Wand } from "lucide-react";
-import { Fragment, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type {
 	FixFilePreview,
 	FixFilesPreview,
@@ -14,6 +14,7 @@ import {
 	CopyButton,
 	code,
 } from "../../ui";
+import { ARRIVE_FADE, useArrival, useArrivalLive } from "../arrival";
 import { relativeTime } from "../relative-time";
 import { hostOf } from "../score-band";
 import {
@@ -90,7 +91,7 @@ function builtLine(result: FixFilesPreview, url: string): string {
 
 /** The line under the title for every state but done. */
 function StatusLine() {
-	const { view, busy, startError, gaveUp, role } = useFixFiles();
+	const { view, busy, startError, gaveUp, role, pending } = useFixFiles();
 	if (startError) return <p className="mt-1 text-sm text-fail">{startError}</p>;
 	if (gaveUp) {
 		return (
@@ -124,13 +125,27 @@ function StatusLine() {
 		<p className="mt-1 text-sm text-muted">
 			{`${listKinds(view.kinds)} built from your site's own pages.`}
 			{role === "admin" ? " Not generated yet." : null}
+			{pending && role !== "admin"
+				? " Available when the check finishes."
+				: null}
 		</p>
 	);
 }
 
 function StartButton() {
-	const { view, busy, canStart, start, role } = useFixFiles();
+	const { view, busy, canStart, start, role, pending } = useFixFiles();
 	if (role === "admin") return null;
+	if (pending) {
+		return (
+			<Button
+				size="sm"
+				disabled
+				icon={<Wand aria-hidden="true" className="size-4" />}
+			>
+				Generate fix files
+			</Button>
+		);
+	}
 	if (busy) {
 		return (
 			<Button
@@ -154,10 +169,37 @@ function StartButton() {
 	);
 }
 
-/** The Fix files card between the category tiles and the sections; null when nothing is fixable. */
+/** How long the block takes to collapse when a running audit turns out to have nothing to fix. */
+const COLLAPSE_MS = 500;
+
+/**
+ * The Fix files card between the category tiles and the sections, with its
+ * own top margin; null when nothing is fixable. While the audit runs it waits
+ * (muted, a pulsing line, Generate off) until a category calls for a file;
+ * once the kinds are settled with none it collapses (at once with reduced
+ * motion) and stays gone for the life of the page.
+ */
 export function FixFilesPanel() {
-	const { view, auditId, siteUrl, activeKind, setActiveKind } = useFixFiles();
-	if (view.kinds.length === 0) return null;
+	const { view, auditId, siteUrl, activeKind, setActiveKind, kindsSettled } =
+		useFixFiles();
+	const live = useArrivalLive();
+	const waiting = view.kinds.length === 0;
+	const nothingToFix = waiting && kindsSettled;
+	// Nothing to fix from the first render: never shown.
+	const [gone, setGone] = useState(nothingToFix);
+	const [collapsing, setCollapsing] = useState(false);
+	if (nothingToFix && !gone && !collapsing) {
+		if (live) setCollapsing(true);
+		else setGone(true);
+	}
+	useEffect(() => {
+		if (!collapsing) return;
+		const timer = setTimeout(() => setGone(true), COLLAPSE_MS);
+		return () => clearTimeout(timer);
+	}, [collapsing]);
+	// The status line fades in over the waiting line when the first file is called for.
+	const filesArrived = useArrival(!waiting);
+	if (gone) return null;
 	const result = view.status === "done" ? view.result : null;
 	const files = result?.files ?? [];
 	const index = Math.max(
@@ -170,131 +212,151 @@ export function FixFilesPanel() {
 	const title = `${FIX_FILES_ANCHOR}-title`;
 
 	return (
-		<section
-			id={FIX_FILES_ANCHOR}
-			aria-labelledby={title}
-			className="scroll-mt-4 rounded-[14px] border border-line bg-surface p-5 shadow-card"
+		// Collapsing: height (the grid row), opacity and the margin go to zero.
+		// The one column is minmax(0, 1fr): an auto column would grow to the
+		// widest line of a file and push the card past the page.
+		<div
+			inert={collapsing}
+			className={`grid grid-cols-[minmax(0,1fr)] motion-safe:transition-[grid-template-rows,opacity,margin] motion-safe:duration-500 motion-safe:ease-out ${collapsing ? "mt-0 grid-rows-[0fr] opacity-0" : "mt-6 grid-rows-[1fr]"}`}
 		>
-			<div className="flex flex-wrap items-start gap-x-4 gap-y-3">
-				<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-					<Wand aria-hidden="true" className="size-5" />
-				</span>
-				<div className="min-w-0 flex-1 basis-60">
-					<h2 id={title} className="text-lg font-bold">
-						Fix files
-					</h2>
-					{result ? (
-						<p className="mt-1 text-sm text-muted" suppressHydrationWarning>
-							{builtLine(result, siteUrl)}
-						</p>
-					) : (
-						<StatusLine />
-					)}
-				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					{result ? (
-						// Nothing to copy or download when every file was skipped.
-						files.length > 0 ? (
-							<>
-								{view.hasPrompt ? (
-									<CopyButton
-										load={() =>
-											fetchText(`/api/audits/${auditId}/fix-files/prompt`)
-										}
-										label="Copy prompt for your agent"
-									/>
-								) : null}
-								<a
-									href={`/api/audits/${auditId}/fix-files/zip`}
-									download
-									className={buttonClass("primary", "sm")}
-								>
-									<Download aria-hidden="true" className="size-4" />
-									Download zip
-								</a>
-							</>
-						) : null
-					) : (
-						<StartButton />
-					)}
-				</div>
-			</div>
-			{result ? (
-				<div className="mt-5">
-					{current ? (
-						<>
-							<p className="mb-2 text-sm">{current.target}</p>
-							<CodeWindow
-								label="Fix files"
-								tabs={fileTabs(auditId, files)}
-								value={index}
-								onValueChange={(next) => {
-									const file = files[next];
-									if (file) setActiveKind(file.kind);
-								}}
-								codeClassName="max-h-[28rem] overflow-y-auto"
-							/>
-							{current.previewOf !== null ? (
-								<p className="mt-2 text-sm text-muted">
-									{`Showing the first ${formatSize(FIX_PREVIEW_MAX)} of ${current.name} (${formatSize(current.previewOf)}). Download for the full file.`}
+			<div className={collapsing ? "min-h-0 overflow-hidden" : "min-h-0"}>
+				<section
+					id={FIX_FILES_ANCHOR}
+					aria-labelledby={title}
+					aria-busy={waiting || undefined}
+					className="scroll-mt-4 rounded-[14px] border border-line bg-surface p-5 shadow-card"
+				>
+					<div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+						<span
+							className={`grid size-10 shrink-0 place-items-center rounded-xl motion-safe:transition-colors motion-safe:duration-500 ${waiting ? "bg-surface-2 text-muted" : "bg-accent-soft text-accent"}`}
+						>
+							<Wand aria-hidden="true" className="size-5" />
+						</span>
+						<div className="min-w-0 flex-1 basis-60">
+							<h2
+								id={title}
+								className={`text-lg font-bold${waiting ? " text-muted" : ""}`}
+							>
+								Fix files
+							</h2>
+							{waiting ? (
+								<span className="mt-2 block h-4 w-64 max-w-full rounded bg-surface-2 motion-safe:animate-pulse" />
+							) : result ? (
+								<p className="mt-1 text-sm text-muted" suppressHydrationWarning>
+									{builtLine(result, siteUrl)}
 								</p>
+							) : (
+								<div className={filesArrived ? ARRIVE_FADE : undefined}>
+									<StatusLine />
+								</div>
+							)}
+						</div>
+						<div className="flex flex-wrap items-center gap-2">
+							{result ? (
+								// Nothing to copy or download when every file was skipped.
+								files.length > 0 ? (
+									<>
+										{view.hasPrompt ? (
+											<CopyButton
+												load={() =>
+													fetchText(`/api/audits/${auditId}/fix-files/prompt`)
+												}
+												label="Copy prompt for your agent"
+											/>
+										) : null}
+										<a
+											href={`/api/audits/${auditId}/fix-files/zip`}
+											download
+											className={buttonClass("primary", "sm")}
+										>
+											<Download aria-hidden="true" className="size-4" />
+											Download zip
+										</a>
+									</>
+								) : null
+							) : (
+								<StartButton />
+							)}
+						</div>
+					</div>
+					{result ? (
+						<div className="mt-5">
+							{current ? (
+								<>
+									<p className="mb-2 text-sm">{current.target}</p>
+									<CodeWindow
+										label="Fix files"
+										tabs={fileTabs(auditId, files)}
+										value={index}
+										onValueChange={(next) => {
+											const file = files[next];
+											if (file) setActiveKind(file.kind);
+										}}
+										codeClassName="max-h-[28rem] overflow-y-auto"
+									/>
+									{current.previewOf !== null ? (
+										<p className="mt-2 text-sm text-muted">
+											{`Showing the first ${formatSize(FIX_PREVIEW_MAX)} of ${current.name} (${formatSize(current.previewOf)}). Download for the full file.`}
+										</p>
+									) : null}
+								</>
 							) : null}
-						</>
-					) : null}
-					{result.skipped.length > 0 ? (
-						<ul className="mt-3 space-y-1 text-sm text-muted">
-							{result.skipped.map(({ kind, reason }) => (
-								<li key={kind}>
-									{`${kindFileName[kind]} was not built: ${reason}.`}
-								</li>
-							))}
-						</ul>
-					) : null}
-					{todoCount > 0 ? (
-						<div className="mt-3 rounded-lg bg-warn-soft px-3 py-2.5 text-sm">
-							<p
-								id={`${FIX_FILES_ANCHOR}-todos`}
-								className="flex items-center gap-2 font-semibold"
-							>
-								<Pencil aria-hidden="true" className="size-4 text-warn" />
-								{`Fill in by hand (${todoCount})`}
-							</p>
-							<dl
-								aria-labelledby={`${FIX_FILES_ANCHOR}-todos`}
-								className="mt-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2.5"
-							>
-								{todoGroups.map(({ file, items, pages }) => (
-									<Fragment key={file}>
-										<dt className="font-mono text-xs font-semibold leading-5">
-											{file}
-										</dt>
-										<dd className="min-w-0">
-											{items.map((item) => (
-												<p key={item}>{item}</p>
-											))}
-											{pages.length > 0 ? (
-												<>
-													<p>{`Add descriptions of ${pages.length} pages:`}</p>
-													<ul className="mt-1 flex flex-wrap gap-1">
-														{pages.map((page) => (
-															<li
-																key={page}
-																className="rounded-md border border-line bg-surface px-1.5 font-mono text-xs leading-5 break-all"
-															>
-																{page}
-															</li>
-														))}
-													</ul>
-												</>
-											) : null}
-										</dd>
-									</Fragment>
-								))}
-							</dl>
+							{result.skipped.length > 0 ? (
+								<ul className="mt-3 space-y-1 text-sm text-muted">
+									{result.skipped.map(({ kind, reason }) => (
+										<li key={kind}>
+											{`${kindFileName[kind]} was not built: ${reason}.`}
+										</li>
+									))}
+								</ul>
+							) : null}
+							{todoCount > 0 ? (
+								<div className="mt-3 rounded-lg bg-warn-soft px-3 py-2.5 text-sm">
+									<p
+										id={`${FIX_FILES_ANCHOR}-todos`}
+										className="flex items-center gap-2 font-semibold"
+									>
+										<Pencil aria-hidden="true" className="size-4 text-warn" />
+										{`Fill in by hand (${todoCount})`}
+									</p>
+									<dl
+										aria-labelledby={`${FIX_FILES_ANCHOR}-todos`}
+										className="mt-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2.5"
+									>
+										{todoGroups.map(({ file, items, pages }) => (
+											<Fragment key={file}>
+												<dt className="font-mono text-xs font-semibold leading-5">
+													{file}
+												</dt>
+												<dd className="min-w-0">
+													{items.map((item) => (
+														<p key={item}>{item}</p>
+													))}
+													{pages.length > 0 ? (
+														<>
+															<p>{`Add descriptions of ${pages.length} pages:`}</p>
+															<ul className="mt-1 flex flex-wrap gap-1">
+																{pages.map((page) => (
+																	<li
+																		key={page}
+																		className="rounded-md border border-line bg-surface px-1.5 font-mono text-xs leading-5 break-all"
+																	>
+																		{page}
+																	</li>
+																))}
+															</ul>
+														</>
+													) : null}
+												</dd>
+											</Fragment>
+										))}
+									</dl>
+								</div>
+							) : null}
 						</div>
 					) : null}
-				</div>
-			) : null}
-		</section>
+				</section>
+			</div>
+		</div>
 	);
 }

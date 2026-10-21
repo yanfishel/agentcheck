@@ -1,4 +1,9 @@
-import type { AuditResult, Favicon, Screenshot } from "@agentcheck/core";
+import type {
+	AuditResult,
+	Favicon,
+	FinishedCheck,
+	Screenshot,
+} from "@agentcheck/core";
 import {
 	type Audit,
 	type ClaimResult,
@@ -8,7 +13,9 @@ import {
 	failAudit,
 	getSettings,
 	type PgBoss,
+	recordAuditCheck,
 	requeueAudit,
+	saveAuditFavicon,
 } from "@agentcheck/db";
 
 /** The audit row transitions the worker needs; faked in unit tests. */
@@ -27,6 +34,14 @@ export interface AuditStore {
 		},
 	): Promise<boolean>;
 	fail(id: string, error: string): Promise<boolean>;
+	/** Stores one finished check while the row is running and claimed by `jobId`. */
+	recordCheck(
+		id: string,
+		jobId: string,
+		check: FinishedCheck,
+	): Promise<boolean>;
+	/** Stores the favicon early, under the same condition as `recordCheck`. */
+	saveFavicon(id: string, jobId: string, icon: Favicon): Promise<boolean>;
 	requeue(
 		audit: Pick<Audit, "id" | "mode">,
 		delaySeconds: number,
@@ -54,6 +69,8 @@ export function dbAuditStore(
 			}),
 		complete: (id, data) => completeAudit(db, id, data, now),
 		fail: (id, error) => failAudit(db, id, error, now),
+		recordCheck: (id, jobId, check) => recordAuditCheck(db, id, jobId, check),
+		saveFavicon: (id, jobId, icon) => saveAuditFavicon(db, id, jobId, icon),
 		requeue: (audit, delaySeconds) => requeueAudit(boss, audit, delaySeconds),
 	};
 }
