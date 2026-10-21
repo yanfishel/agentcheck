@@ -222,3 +222,63 @@ describe("shiftHeadings", () => {
 		);
 	});
 });
+
+describe("pageMarkdown and hidden content", () => {
+	it("keeps content hidden until found (collapsed answers), drops the rest", () => {
+		expect(
+			md(
+				"<main><h2>Q</h2><div hidden='until-found'>Answer</div><div hidden>Gone</div><div HIDDEN='Until-Found'>Also</div><div hidden=''>Gone</div><p aria-hidden='true'>Gone</p></main>",
+			),
+		).toBe("## Q\n\nAnswer\n\nAlso");
+	});
+});
+
+describe("pageMarkdown and stacked phrasing elements", () => {
+	it("separates words that elements stacked without whitespace would glue", () => {
+		expect(md("<main><p><span>80</span><span>of 100</span></p></main>")).toBe(
+			"80 of 100",
+		);
+		expect(md("<main><p><b>Agent</b><i>Check</i></p></main>")).toBe(
+			"**Agent** *Check*",
+		);
+		expect(
+			md("<main><p><a href='/more'>Read</a><span>more</span></p></main>"),
+		).toBe("[Read](https://codeframe.pro/more) more");
+		expect(
+			md(
+				"<main><div><span><span>80</span><span>of 100</span></span></div></main>",
+			),
+		).toBe("80 of 100");
+	});
+
+	it("leaves symbols, text runs and existing whitespace alone", () => {
+		expect(md("<main><p><span>$</span><span>99</span></p></main>")).toBe("$99");
+		expect(md("<main><p>Hel<span>lo</span><span>!</span></p></main>")).toBe(
+			"Hello!",
+		);
+		expect(md("<main><p><span>Score</span> <span>80</span></p></main>")).toBe(
+			"Score 80",
+		);
+		expect(md("<main><p><span>a</span><br><span>b</span></p></main>")).toBe(
+			"a\nb",
+		);
+	});
+});
+
+describe("pageMarkdown and disclosure buttons", () => {
+	it("keeps the text of a button that opens content, drops other controls", () => {
+		expect(
+			md(
+				"<main><h3><button type='button' aria-expanded='false'>Why?<svg aria-hidden='true'></svg></button></h3><div hidden>Closed answer</div><div hidden='until-found'>Found answer</div><button type='button'>Buy</button><p>End</p></main>",
+			),
+		).toBe("### Why?\n\nClosed answer\n\nFound answer\n\nEnd");
+	});
+
+	it("drops hidden content that no disclosure button precedes", () => {
+		expect(
+			md(
+				"<main><p>Intro</p><div hidden>Gone</div><h3>Plain</h3><div hidden>Gone too</div></main>",
+			),
+		).toBe("Intro\n\n### Plain");
+	});
+});
