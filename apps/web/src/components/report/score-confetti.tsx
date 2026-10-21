@@ -24,27 +24,31 @@ export function ScoreConfetti({ children }: { children: ReactNode }) {
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 		const timers: ReturnType<typeof setTimeout>[] = [];
 		let cancelled = false;
-		void import("canvas-confetti").then(({ default: confetti }) => {
-			const box = ref.current?.getBoundingClientRect();
-			if (cancelled || !box) return;
-			const x = (box.left + box.width / 2) / window.innerWidth;
-			const y = (box.top + box.height / 2) / window.innerHeight;
-			SHOTS.forEach((shot, i) => {
-				timers.push(
-					setTimeout(() => {
-						void confetti({
-							origin: { x: x + (i % 2 === 0 ? -0.04 : 0.04), y },
-							particleCount: 60,
-							...shot,
-							ticks: 220,
-							scalar: 0.9,
-							colors: COLORS,
-							disableForReducedMotion: true,
-						});
-					}, i * SHOT_GAP_MS),
-				);
+		void import("canvas-confetti")
+			.then(({ default: confetti }) => {
+				const box = ref.current?.getBoundingClientRect();
+				if (cancelled || !box) return;
+				const x = (box.left + box.width / 2) / window.innerWidth;
+				const y = (box.top + box.height / 2) / window.innerHeight;
+				SHOTS.forEach((shot, i) => {
+					timers.push(
+						setTimeout(() => {
+							void confetti({
+								origin: { x: x + (i % 2 === 0 ? -0.04 : 0.04), y },
+								particleCount: 60,
+								...shot,
+								ticks: 220,
+								scalar: 0.9,
+								colors: COLORS,
+								disableForReducedMotion: true,
+							});
+						}, i * SHOT_GAP_MS),
+					);
+				});
+			})
+			.catch(() => {
+				// Confetti is decoration: a failed chunk load is not an error.
 			});
-		});
 		return () => {
 			cancelled = true;
 			for (const timer of timers) clearTimeout(timer);

@@ -117,13 +117,21 @@ components and the copy.
   holds its URL (`https://agentcheck.dev`, a constant because the landing is
   built before the server's env exists) and the root metadata (metadataBase,
   OpenGraph, Twitter card); `app/robots.ts`, `app/sitemap.ts`,
-  `app/opengraph-image.tsx` (our font from `app/_og/`, each font URL a literal
-  or the bundler loads one file for both weights); `public/llms.txt`,
+  `app/opengraph-image.tsx` (built at build time, `drawSiteOg`; our font from
+  `app/_og/`, each font URL a literal or the bundler loads one file for both
+  weights); `public/llms.txt`,
   `public/llms-full.txt` and `public/index.md` are hand-kept, and
   `test/app/ai-ready.test.tsx` fails when a landing heading is missing from
   `index.md` or `llms-full.txt`, so change them with the landing's copy. The
   landing carries JSON-LD (`landing/structured-data.tsx`) and
   `<link rel="alternate" type="text/markdown" href="/index.md">`.
+- OG pictures are drawn only in `app/_og/draw.tsx`: `drawSiteOg` (the site
+  picture) and `drawReportOg` (a shared report's, served at
+  `/api/shared/[token]/og.png`). Report layout: brand row with the score ring
+  top right, the grade seal before "AI readiness of" + host, the call line at
+  the bottom, the hero grid with 64px cells. A long host shrinks, then is cut
+  from the left with "…". Grade letters are HTML text, never SVG `<text>`: the
+  production renderer has no fonts for SVG text.
 - On a phone (below `sm`) the header shows the mark only; the name stays for
   screen readers.
 - Same-page anchors scroll smoothly (`scroll-behavior` on `<html>` with

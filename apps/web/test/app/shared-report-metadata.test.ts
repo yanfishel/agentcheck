@@ -76,7 +76,7 @@ describe("shared report metadata", () => {
 		expect(m.robots).toEqual({ index: false });
 	});
 
-	it("gives a shared audit without a score no picture", async () => {
+	it("gives an unfinished shared audit the generic fallback without a picture", async () => {
 		await handle.db.insert(audits).values({
 			url: "https://example.com/",
 			host: "example.com",
