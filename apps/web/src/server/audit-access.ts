@@ -1,4 +1,7 @@
 import "server-only";
+import type { AuditResult } from "@agentcheck/core";
+import { type FixKind, fixKindsFor } from "@agentcheck/core/fixes";
+import { completeCategories } from "@agentcheck/core/progress";
 import {
 	type Audit,
 	type AuditMode,
@@ -40,6 +43,13 @@ export function requireAuditAccess(
 	if (!canViewAudit(audit, viewer)) notFound();
 }
 
+/** What a running audit has produced so far: only whole categories, never raw checks. */
+export interface AuditProgressData {
+	categories: AuditResult["categories"];
+	hasFavicon: boolean;
+	fixKinds: FixKind[];
+}
+
 /** The public status of an audit, as returned by `GET /api/audits/[id]`. */
 export interface AuditStatusBody {
 	id: string;
@@ -52,6 +62,18 @@ export interface AuditStatusBody {
 	createdAt: string;
 	startedAt: string | null;
 	finishedAt: string | null;
+	/** Set only while the audit is running. */
+	progress: AuditProgressData | null;
+}
+
+function progressOf(audit: Audit): AuditProgressData | null {
+	if (audit.status !== "running") return null;
+	const categories = completeCategories(Object.values(audit.partial ?? {}));
+	return {
+		categories,
+		hasFavicon: audit.hasFavicon,
+		fixKinds: fixKindsFor({ categories }),
+	};
 }
 
 /** Picks the public fields; never the result, ip hash, share token or owner. */
@@ -67,6 +89,7 @@ export function auditStatusBody(audit: Audit): AuditStatusBody {
 		createdAt: audit.createdAt.toISOString(),
 		startedAt: audit.startedAt?.toISOString() ?? null,
 		finishedAt: audit.finishedAt?.toISOString() ?? null,
+		progress: progressOf(audit),
 	};
 }
 

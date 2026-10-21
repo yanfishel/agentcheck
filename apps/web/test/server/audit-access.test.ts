@@ -1,4 +1,5 @@
-import type { Audit, SyncedUser, User } from "@agentcheck/db";
+import type { FinishedCheck } from "@agentcheck/core/progress";
+import type { Audit, AuditStatus, SyncedUser, User } from "@agentcheck/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	auditStatusBody,
@@ -128,6 +129,7 @@ describe("auditStatusBody", () => {
 			createdAt: "2026-10-19T10:00:00.000Z",
 			startedAt: null,
 			finishedAt: null,
+			progress: null,
 		});
 	});
 
@@ -156,6 +158,67 @@ describe("auditStatusBody", () => {
 		expect(
 			auditStatusBody(audit({ status: "failed", error: "timeout" })).error,
 		).toBe("timeout");
+	});
+
+	describe("progress", () => {
+		const finished = (
+			id: string,
+			title: string,
+			status: "pass" | "fail",
+		): FinishedCheck => ({
+			id,
+			title,
+			weight: 1,
+			status,
+			message: id,
+			category: "ai-manifests",
+		});
+		const manifests: Record<string, FinishedCheck> = Object.fromEntries(
+			[
+				finished("llms-txt", "llms.txt", "fail"),
+				finished("llms-txt-format", "llms.txt format", "fail"),
+				finished("llms-full-txt", "llms-full.txt", "fail"),
+				finished("markdown-twin", "Markdown twin", "fail"),
+			].map((c) => [c.id, c]),
+		);
+
+		it("adds progress for a running audit", () => {
+			const body = auditStatusBody(
+				audit({ status: "running", partial: manifests, hasFavicon: true }),
+			);
+			expect(body.progress?.categories).toHaveLength(1);
+			expect(body.progress?.categories[0]?.id).toBe("ai-manifests");
+			expect(body.progress?.fixKinds).toContain("llms");
+			expect(body).not.toHaveProperty("partial");
+		});
+
+		it.each<AuditStatus>(["queued", "done", "failed"])(
+			"is null for a %s audit even with partial data present",
+			(status) => {
+				expect(
+					auditStatusBody(audit({ status, partial: manifests })).progress,
+				).toBeNull();
+			},
+		);
+
+		it("has no categories while nothing is finished", () => {
+			expect(auditStatusBody(audit({ status: "running" })).progress).toEqual({
+				categories: [],
+				hasFavicon: false,
+				fixKinds: [],
+			});
+		});
+
+		it("hasFavicon follows the row", () => {
+			expect(
+				auditStatusBody(audit({ status: "running", hasFavicon: true })).progress
+					?.hasFavicon,
+			).toBe(true);
+			expect(
+				auditStatusBody(audit({ status: "running", hasFavicon: false }))
+					.progress?.hasFavicon,
+			).toBe(false);
+		});
 	});
 
 	it("never exposes private fields", () => {
