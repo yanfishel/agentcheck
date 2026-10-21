@@ -16,6 +16,7 @@ export function CopyButton({
 	ariaLabel,
 	onCopied,
 	variant = "secondary",
+	compact = false,
 }: {
 	text?: string;
 	/** Fetches the text on click; used instead of `text`. */
@@ -26,6 +27,8 @@ export function CopyButton({
 	copiedLabel?: string;
 	onCopied?: () => void;
 	variant?: ButtonVariant;
+	/** Icon only below sm; the label stays for screen readers. */
+	compact?: boolean;
 }) {
 	const [copied, setCopied] = useState(false);
 	const fallback = useRef<HTMLInputElement>(null);
@@ -75,6 +78,7 @@ export function CopyButton({
 				variant={variant}
 				size="sm"
 				onClick={copy}
+				className={compact ? "max-sm:px-2" : undefined}
 				aria-label={copied ? undefined : ariaLabel}
 				icon={
 					copied ? (
@@ -84,7 +88,9 @@ export function CopyButton({
 					)
 				}
 			>
-				{copied ? copiedLabel : label}
+				<span className={compact ? "max-sm:sr-only" : undefined}>
+					{copied ? copiedLabel : label}
+				</span>
 			</Button>
 		</>
 	);

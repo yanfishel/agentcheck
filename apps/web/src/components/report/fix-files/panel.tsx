@@ -74,10 +74,10 @@ function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
 					href={href}
 					download
 					aria-label={`Download ${file.name}`}
-					className={buttonClass("code", "sm")}
+					className={buttonClass("code", "sm", "max-sm:px-2")}
 				>
 					<Download aria-hidden="true" className="size-4" />
-					Download
+					<span className="max-sm:sr-only">Download</span>
 				</a>
 			),
 		};
