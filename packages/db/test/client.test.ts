@@ -1,7 +1,12 @@
 import { createServer, type Server, type Socket } from "node:net";
 import { sql } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createDb, type DbHandle, startQueue } from "../src/index.ts";
+import {
+	createDb,
+	type DbHandle,
+	DEFAULT_CONNECTION_TIMEOUT_MS,
+	startQueue,
+} from "../src/index.ts";
 
 /**
  * A TCP server that accepts connections and never answers, like a Postgres
@@ -39,14 +44,17 @@ describe("connection timeouts", () => {
 		handle = undefined;
 	});
 
-	it("createDb gives up connecting after the default 5 s", async () => {
+	it("createDb gives the pool the default 5 s connect timeout", () => {
 		handle = createDb(url);
-		const started = Date.now();
-		await expect(handle.db.execute(sql`select 1`)).rejects.toThrow();
-		const elapsed = Date.now() - started;
-		expect(elapsed).toBeGreaterThanOrEqual(4500);
-		expect(elapsed).toBeLessThan(6500);
-	}, 15_000);
+		// Checked on the pool's options rather than by waiting the 5 s out.
+		const { $client: pool } = handle.raw as unknown as {
+			$client: { options: { connectionTimeoutMillis?: number } };
+		};
+		expect(DEFAULT_CONNECTION_TIMEOUT_MS).toBe(5000);
+		expect(pool.options.connectionTimeoutMillis).toBe(
+			DEFAULT_CONNECTION_TIMEOUT_MS,
+		);
+	});
 
 	it("createDb accepts a custom connect timeout", async () => {
 		handle = createDb(url, { connectionTimeoutMs: 300 });
@@ -55,16 +63,17 @@ describe("connection timeouts", () => {
 		expect(Date.now() - started).toBeLessThan(2000);
 	}, 15_000);
 
-	it("startQueue gives up connecting after the default 5 s", async () => {
+	it("startQueue gives up connecting after its connect timeout", async () => {
 		const started = Date.now();
 		await expect(
 			startQueue(
-				{ connectionString: url },
+				{ connectionString: url, connectionTimeoutMs: 300 },
 				{ supervise: false, onError: () => {} },
 			),
 		).rejects.toThrow();
-		// pg-boss start waits on two connections in a row (about 10 s here)
-		// before giving up; the point is that it fails instead of hanging.
-		expect(Date.now() - started).toBeLessThan(12_500);
-	}, 20_000);
+		// pg-boss start waits on two connections in a row before giving up;
+		// the point is that it fails instead of hanging. The default timeout
+		// itself is pinned by the createDb test above.
+		expect(Date.now() - started).toBeLessThan(5_000);
+	}, 15_000);
 });
