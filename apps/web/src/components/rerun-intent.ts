@@ -12,6 +12,7 @@
 export type RerunMode = "quick" | "full";
 
 export interface RerunIntent {
+	/** The audit the press was made on, or START_SCOPE for the landing's form. */
 	auditId: string;
 	url: string;
 	mode: RerunMode;
@@ -19,6 +20,8 @@ export interface RerunIntent {
 }
 
 export const RERUN_INTENT_KEY = "agentcheck:rerun";
+/** The "audit id" of a press on the start form, which has no audit yet. */
+export const START_SCOPE = "start";
 export const RERUN_INTENT_TTL_MS = 10 * 60 * 1000;
 
 function storage(): Storage | null {

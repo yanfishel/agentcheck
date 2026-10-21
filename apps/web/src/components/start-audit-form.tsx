@@ -11,6 +11,12 @@ import {
 	useState,
 } from "react";
 import { FullCheckDialog } from "./full-check-dialog";
+import {
+	forgetRerun,
+	rememberRerun,
+	START_SCOPE,
+	takeRerun,
+} from "./rerun-intent";
 import { RobotIcon } from "./robot-icon";
 import { Button, Field, Input } from "./ui";
 
@@ -70,6 +76,17 @@ export function StartAuditForm({
 		return () => document.removeEventListener("click", onClick);
 	}, [primaryForm]);
 
+	// A guest's Full check, pressed before signing in: start it now.
+	// start() reads nothing but its arguments; the intent is taken once.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: see above
+	useEffect(() => {
+		if (!isLoaded || !isSignedIn) return;
+		const intent = takeRerun(START_SCOPE, "full");
+		if (!intent) return;
+		setUrl(intent.url);
+		void start(intent.url, "full");
+	}, [isLoaded, isSignedIn]);
+
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (pending) return;
@@ -84,11 +101,17 @@ export function StartAuditForm({
 			return;
 		}
 		setError(null);
-		// A guest's Full check gets the sign-up dialog, like every Full check button.
+		// A guest's Full check gets the sign-up dialog, like every Full check
+		// button; the press is remembered and carried out once they are in.
 		if (mode === "full" && isLoaded && !isSignedIn) {
+			rememberRerun(START_SCOPE, url, "full");
 			setNeedsAccount(true);
 			return;
 		}
+		await start(url, mode);
+	}
+
+	async function start(url: string, mode: Mode) {
 		setPending(mode);
 		try {
 			const response = await fetch("/api/audits", {
@@ -226,7 +249,11 @@ export function StartAuditForm({
 					</div>
 				</Field>
 			</form>
-			<FullCheckDialog open={needsAccount} onOpenChange={setNeedsAccount} />
+			<FullCheckDialog
+				open={needsAccount}
+				onOpenChange={setNeedsAccount}
+				onDismiss={forgetRerun}
+			/>
 		</div>
 	);
 }
