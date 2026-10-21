@@ -156,3 +156,51 @@
 - [ ] **Step 4: Run** `pnpm --filter @agentcheck/web test` — PASS.
 - [ ] **Step 5: Live check** (local stack: Postgres, `db:migrate`, web dev, worker dev): run a full and a quick audit of a reachable site from the browser; confirm tiles and sections arrive one by one, Fix files appears early with the disabled button, the switch to done does not replay animations or jump; then reload the finished report and confirm nothing animates. Stop the dev servers and any stray `--watch src/main.ts` worker.
 - [ ] **Step 6: Commit** `feat(web): fill the running audit page in as results arrive`.
+
+---
+
+## Revision 2 (spec section "Revision 2: the whole report in place from the start")
+
+Built on Tasks 1–6 as committed. Reference: `docs/superpowers/specs/2026-10-21-progressive-audit-page/spike-v2.tsx`.
+
+### Task 7: Data for the waiting report — fix-kinds settled, pending actions
+
+**Files:**
+- Modify: `packages/core/src/fixes/kinds.ts` (+ export from `@agentcheck/core/fixes`)
+- Modify: `apps/web/src/server/audit-access.ts` (`AuditProgressData`)
+- Modify: `apps/web/src/components/report-actions.tsx`, `apps/web/src/app/audits/[id]/page.tsx`, `apps/web/src/components/live-report.tsx` (prop plumbing only)
+- Test: `packages/core/test/fixes/kinds.test.ts` (or the existing kinds test file), `apps/web/test/server/audit-access.test.ts`, `apps/web/test/components/report-actions.test.tsx` (existing or new)
+
+**Interfaces:**
+- Produces:
+  - `fixKindsSettled(categories: Pick<CategoryResult, "checks">[]): boolean` in `@agentcheck/core/fixes` — true when every check id that `FIXED_BY` names is present among the given categories' checks (so `fixKindsFor` on them can no longer grow).
+  - `AuditProgressData.fixKindsSettled: boolean` (computed with the above on `progress.categories`).
+  - `ReportActions` prop `pending?: boolean` (and `score` optional when pending): renders the same buttons the finished report shows this viewer, faded (`opacity` ~0.45) and inert (`inert` attribute or `pointer-events-none` + `tabIndex={-1}`/`aria-disabled`), opening no dialog.
+  - The page builds `<ReportActions pending … />` for queued/running audits (same viewer rules as done: `canRerun`, `canShare`, mode) and passes it to `LiveReport` as `pendingActions: ReactNode`; `final.actions` stays as is.
+
+- [ ] **Step 1: Failing tests:** `fixKindsSettled is false until every fix source check is in` (only `ai-manifests` checks → false; all checks of the three static categories → true; order irrelevant); `progress carries fixKindsSettled` (running audit with the three static categories → true; with one → false); `pending actions are inert` (renders the buttons, a click opens nothing, they are not focusable/tabbable, the row has the faded class).
+- [ ] **Step 2: Run** the three files — FAIL.
+- [ ] **Step 3: Implement.**
+- [ ] **Step 4: Run** the files, then core and web suites — PASS.
+- [ ] **Step 5: Commit** `feat(web): know when fix files are settled and draw pending actions`.
+
+### Task 8: The waiting report — sections, Fix files, actions in place from the start
+
+**Files:**
+- Modify: `apps/web/src/components/audit-report.tsx`, `report/category-section.tsx` (a waiting variant or a sibling `WaitingSection` with the same outer box), `report/fix-files/panel.tsx` (+ provider if needed), `live-report.tsx`, `apps/web/src/app/globals.css` (collapse transition if not inline)
+- Test: `apps/web/test/components/report/arrival.test.tsx`, `apps/web/test/components/live-report.test.tsx`
+- Modify: `docs/web-ui.md` (the running page)
+
+**Interfaces:**
+- Consumes: Task 7 `fixKindsSettled`, `pendingActions`; Task 5/6 arrival machinery (`animate`, first render never animates).
+- Produces (behaviour, per spec Revision 2):
+  - With a partial result, `AuditReport` renders a waiting row for every category not yet in (same outer box as a section: icon, title, pulsing chip, faded chevron, not a button), in `CATEGORIES` order, keyed by category id so the waiting row and the arrived section occupy one slot.
+  - An arriving category's section opens itself (through the accordion's own open state, so it animates its height) when it has warnings or failures and `animate` is on; without problems it stays closed. With `animate` off (reopened report, or present on first render) sections open per today's `defaultOpen="problems"` rule without animation.
+  - Actions row: `pendingActions` while queued/running, `final.actions` at done, in the same wrapper; the swap fades in (no layout change).
+  - Fix files while running, for viewers who would see the block: a waiting state from the start (muted icon/title, pulsing line, Generate inactive) until `fixKinds` is non-empty (then today's pending text and inactive button); when `fixKindsSettled && fixKinds.length === 0` the block collapses (height + opacity → 0, ~500 ms, `motion-safe`; instant with reduced motion) and is not rendered after that, nor at done. A done report with no kinds renders no block (unchanged).
+
+- [ ] **Step 1: Failing tests:** `renders waiting rows for categories not yet in`; `a waiting row becomes the section in the same slot` (node of the slot wrapper stays, waiting row gone); `opens an arriving section with problems, leaves a clean one closed` (`aria-expanded`); `a reopened report opens problem sections without animation`; `actions are present and inert while running, active at done`; `Fix files waits, then shows its files`; `Fix files collapses when settled with nothing to fix` (after the transition the block is gone; reduced motion → gone at once); `no Fix files block on a done report without kinds`.
+- [ ] **Step 2: Run** the two files — FAIL.
+- [ ] **Step 3: Implement**, then update `docs/web-ui.md`.
+- [ ] **Step 4: Run** `pnpm --filter @agentcheck/web test`, `pnpm typecheck`, `pnpm check`, `pnpm build` — PASS.
+- [ ] **Step 5: Commit** `feat(web): show the whole report waiting from the start`.
