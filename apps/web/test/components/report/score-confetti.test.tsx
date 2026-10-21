@@ -52,7 +52,11 @@ describe("ScoreConfetti", () => {
 
 	it("fires four shots from the ring's centre", async () => {
 		render(<ScoreConfetti>ring</ScoreConfetti>);
-		await advance(1100);
+		await advance(10);
+		expect(fire).toHaveBeenCalledTimes(1);
+		await advance(790);
+		expect(fire).toHaveBeenCalledTimes(2);
+		await advance(1600);
 		expect(fire).toHaveBeenCalledTimes(4);
 		const colors = ["#4fd1b0", "#ffffff", "#dc92cc", "#ffbe96", "#6e2a5e"];
 		expect(fire.mock.calls[0]?.[0]).toEqual({
@@ -74,16 +78,16 @@ describe("ScoreConfetti", () => {
 
 	it("does not fire again when re-rendered", async () => {
 		const { rerender } = render(<ScoreConfetti>a</ScoreConfetti>);
-		await advance(1100);
+		await advance(2500);
 		rerender(<ScoreConfetti>b</ScoreConfetti>);
-		await advance(2000);
+		await advance(3000);
 		expect(fire).toHaveBeenCalledTimes(4);
 	});
 
 	it("neither fires nor loads the library with reduced motion", async () => {
 		stubMotion(true);
 		render(<ScoreConfetti>ring</ScoreConfetti>);
-		await advance(2000);
+		await advance(3000);
 		expect(fire).not.toHaveBeenCalled();
 		expect(loaded).not.toHaveBeenCalled();
 	});
@@ -93,7 +97,7 @@ describe("ScoreConfetti", () => {
 		await advance(10);
 		expect(fire).toHaveBeenCalledTimes(1);
 		unmount();
-		await advance(2000);
+		await advance(3000);
 		expect(fire).toHaveBeenCalledTimes(1);
 	});
 });

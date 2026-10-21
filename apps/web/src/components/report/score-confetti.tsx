@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
 const COLORS = ["#4fd1b0", "#ffffff", "#dc92cc", "#ffbe96", "#6e2a5e"];
-const SHOT_GAP_MS = 350;
+const SHOT_GAP_MS = 800;
 const SHOTS = [
 	{ spread: 80, startVelocity: 34 },
 	{ spread: 90, startVelocity: 37 },

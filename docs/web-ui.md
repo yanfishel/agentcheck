@@ -147,7 +147,7 @@ components and the copy.
   320 px that left it a sliver of the line and its words ran under the chips.
 - Confetti: a done full report (`mode === "full"`) with a total score of 100
   fires one salvo from the band's ring (`report/score-confetti.tsx`, four shots
-  350 ms apart, `canvas-confetti` loaded by a dynamic `import()` only then), on
+  800 ms apart, `canvas-confetti` loaded by a dynamic `import()` only then), on
   every open of the report page and of the shared one. Never on a quick check,
   on the landing example or with `prefers-reduced-motion: reduce` (checked
   before the import, so nothing is downloaded). It fires once per mount, so the
