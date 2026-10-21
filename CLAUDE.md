@@ -70,7 +70,7 @@ AgentCheck audits a website's readiness for AI agents: a CLI (`npx agentcheck <u
 - Tests never hit the real network. Mock HTTP with undici `MockAgent`; keep HTML/robots/llms.txt samples as fixtures under `packages/core/test/fixtures/`.
 - Expected outcomes for the reference sites (`good`, `mixed`, `poor`) live in `packages/core/test/e2e/reference-sites.test.ts`; the sites under `packages/core/test/fixtures/sites/<name>/` are synthetic, hand-made fixtures (fictional content on `https://<name>.example`, no live captures). Change a page there by hand when a check needs a new case.
 - Playwright tests run against local fixture pages served from a local server, not live sites.
-- Database and queue tests run on PGlite via `@agentcheck/db/testing` (`createTestDb()`, `startTestQueue()`); pg-boss runs in-process there, so no Docker is needed. Worker tests fake `runAudit`.
+- Database and queue tests run on PGlite via `@agentcheck/db/testing` (`createTestDb()`, `startTestQueue()`); pg-boss runs in-process there, so no Docker is needed. A PGlite boot costs about a second, so `close()` wipes the database (`resetTestDb`: every table truncated, pg-boss's schema dropped) and the next `createTestDb()` in the same test file reuses the instance; stop every queue before `close()`. Worker tests fake `runAudit`.
 - Web tests live in `apps/web/test/` (mirroring `src/`) and import sources through the `@/*` alias, never relative paths into `src/`; they stay in the node environment with `renderToStaticMarkup`; interaction tests opt into jsdom per file with `// @vitest-environment jsdom` and Testing Library.
 
 ## Deploy
