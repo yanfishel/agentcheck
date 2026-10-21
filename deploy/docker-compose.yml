@@ -13,7 +13,18 @@ services:
   web:
     image: ghcr.io/yanfishel/agentcheck-web:${AGENTCHECK_VERSION:?set AGENTCHECK_VERSION in .env}
     restart: unless-stopped
-    env_file: .env
+    # Only what the web app reads (src/server/env.ts), taken from .env by
+    # interpolation: no POSTGRES_PASSWORD, no worker settings.
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+      IP_HASH_SECRET: ${IP_HASH_SECRET:?}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:?}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?}
+      CLERK_WEBHOOK_SIGNING_SECRET: ${CLERK_WEBHOOK_SIGNING_SECRET:?}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
     networks:
       default:
       edge:

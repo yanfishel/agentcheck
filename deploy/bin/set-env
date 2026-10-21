@@ -3,7 +3,8 @@
 # server's .env. It is the forced command of the CI deploy key, so it is all
 # that key can run. Reads NAME=value lines from stdin; only the names below
 # are accepted. Every line is checked before anything is written; it prints
-# the names it updated and never a value.
+# the names it updated and never a value. Values are written in single
+# quotes, which Compose takes literally (unquoted, a "$" would be expanded).
 # Usage: set-env [ENV_FILE]   (default /srv/agentcheck/.env)
 set -eu
 
@@ -32,7 +33,14 @@ while IFS= read -r line || [ -n "$line" ]; do
 		exit 1
 		;;
 	esac
-	printf '%s\n' "$line" >>"$updates"
+	value=${line#*=}
+	case $value in
+	*"'"*)
+		echo "rejected: $name holds a single quote, which the env file cannot quote" >&2
+		exit 1
+		;;
+	esac
+	printf "%s='%s'\n" "$name" "$value" >>"$updates"
 done
 
 # Nothing to set: leave the file untouched.

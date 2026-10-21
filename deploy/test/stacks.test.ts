@@ -39,6 +39,27 @@ describe("deploy stacks", () => {
 		expect(app).toMatch(/\nnetworks:\n {2}edge:\n {4}external: true/);
 	});
 
+	it("web and worker get the variables they read, never the whole .env", () => {
+		expect(app).not.toMatch(/env_file/);
+		const web = service(app, "web");
+		for (const name of [
+			"DATABASE_URL",
+			"ADMIN_EMAIL",
+			"IP_HASH_SECRET",
+			"PUBLIC_BASE_URL",
+			"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+			"CLERK_SECRET_KEY",
+			"CLERK_WEBHOOK_SIGNING_SECRET",
+		]) {
+			expect(web).toContain(`${name}: \${${name}:?}`);
+		}
+		expect(web).not.toContain("POSTGRES_PASSWORD");
+		expect(web).not.toContain("AUDIT_CONCURRENCY");
+		const worker = service(app, "worker");
+		expect(worker).not.toContain("CLERK_SECRET_KEY");
+		expect(worker).not.toContain("POSTGRES_PASSWORD");
+	});
+
 	it("only the edge stack owns the network and publishes 80 and 443", () => {
 		expect(edge).toMatch(/\nnetworks:\n {2}edge:\n {4}name: edge/);
 		expect(edge).not.toMatch(/external: true/);
