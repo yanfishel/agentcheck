@@ -102,7 +102,7 @@ function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
  */
 function FileStatus({ file }: { file: FixFilePreview }) {
 	return (
-		<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 px-4 py-2.5 text-[12.5px] leading-relaxed text-code-muted">
+		<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 px-4 py-2.5 text-[12.5px] leading-relaxed text-code-text/85">
 			<p className="flex min-w-0 flex-1 basis-64 gap-2">
 				<MapPin aria-hidden="true" className="mt-[0.3em] size-3.5 shrink-0" />
 				<span className="min-w-0 break-words">{file.target}</span>
@@ -111,7 +111,7 @@ function FileStatus({ file }: { file: FixFilePreview }) {
 				<Tooltip
 					content={`Showing the first ${formatSize(FIX_PREVIEW_MAX)} of ${file.name} (${formatSize(file.previewOf)}). Download for the full file.`}
 				>
-					<span className="shrink-0 cursor-default whitespace-nowrap rounded-full border border-code-line px-2.5">
+					<span className="shrink-0 cursor-default whitespace-nowrap rounded-full border border-code-dot bg-code-tab/50 px-2.5 text-code-muted">
 						{`Preview: ${formatSize(FIX_PREVIEW_MAX)} of ${formatSize(file.previewOf)}`}
 					</span>
 				</Tooltip>
