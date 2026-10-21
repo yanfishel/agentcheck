@@ -45,6 +45,8 @@ type FixFilesContext = {
 	gaveUp: boolean;
 	/** The owner may (re)start: never generated, or failed with attempts left. */
 	canStart: boolean;
+	/** The audit still runs: nothing can be generated until it finishes. */
+	pending: boolean;
 	start(): void;
 	openFile(kind: FixKind): void;
 	activeKind: FixKind | null;
@@ -74,6 +76,7 @@ export function FixFilesProvider({
 	mode,
 	role,
 	initial,
+	pending = false,
 	children,
 }: {
 	auditId: string;
@@ -84,9 +87,19 @@ export function FixFilesProvider({
 	mode: AuditMode;
 	role: FixFilesRole;
 	initial: FixFilesView;
+	/**
+	 * The audit still runs: the kinds follow `initial.kinds` as categories
+	 * arrive, and Generate waits (disabled) until this turns false.
+	 */
+	pending?: boolean;
 	children: ReactNode;
 }) {
 	const [view, setView] = useState<FixFilesView>(initial);
+	const [pendingKinds, setPendingKinds] = useState(initial.kinds);
+	if (pending && initial.kinds.join() !== pendingKinds.join()) {
+		setPendingKinds(initial.kinds);
+		setView((current) => ({ ...current, kinds: initial.kinds }));
+	}
 	const [starting, setStarting] = useState(false);
 	const [startError, setStartError] = useState<string | null>(null);
 	const [gaveUp, setGaveUp] = useState(false);
@@ -116,7 +129,7 @@ export function FixFilesProvider({
 			}
 			return;
 		}
-		if (startingRef.current || busy || !canStart) return;
+		if (pending || startingRef.current || busy || !canStart) return;
 		startingRef.current = true;
 		setStarting(true);
 		setStartError(null);
@@ -140,6 +153,7 @@ export function FixFilesProvider({
 			}
 		})();
 	}, [
+		pending,
 		role,
 		isLoaded,
 		isSignedIn,
@@ -215,6 +229,7 @@ export function FixFilesProvider({
 			startError,
 			gaveUp,
 			canStart,
+			pending,
 			start,
 			openFile,
 			activeKind,
@@ -230,6 +245,7 @@ export function FixFilesProvider({
 			startError,
 			gaveUp,
 			canStart,
+			pending,
 			start,
 			openFile,
 			activeKind,

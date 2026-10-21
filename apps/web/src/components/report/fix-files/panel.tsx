@@ -14,6 +14,7 @@ import {
 	CopyButton,
 	code,
 } from "../../ui";
+import { ARRIVE_RISE, useArrival } from "../arrival";
 import { relativeTime } from "../relative-time";
 import { hostOf } from "../score-band";
 import {
@@ -90,7 +91,7 @@ function builtLine(result: FixFilesPreview, url: string): string {
 
 /** The line under the title for every state but done. */
 function StatusLine() {
-	const { view, busy, startError, gaveUp, role } = useFixFiles();
+	const { view, busy, startError, gaveUp, role, pending } = useFixFiles();
 	if (startError) return <p className="mt-1 text-sm text-fail">{startError}</p>;
 	if (gaveUp) {
 		return (
@@ -124,13 +125,27 @@ function StatusLine() {
 		<p className="mt-1 text-sm text-muted">
 			{`${listKinds(view.kinds)} built from your site's own pages.`}
 			{role === "admin" ? " Not generated yet." : null}
+			{pending && role !== "admin"
+				? " Available when the check finishes."
+				: null}
 		</p>
 	);
 }
 
 function StartButton() {
-	const { view, busy, canStart, start, role } = useFixFiles();
+	const { view, busy, canStart, start, role, pending } = useFixFiles();
 	if (role === "admin") return null;
+	if (pending) {
+		return (
+			<Button
+				size="sm"
+				disabled
+				icon={<Wand aria-hidden="true" className="size-4" />}
+			>
+				Generate fix files
+			</Button>
+		);
+	}
 	if (busy) {
 		return (
 			<Button
@@ -157,6 +172,8 @@ function StartButton() {
 /** The Fix files card between the category tiles and the sections; null when nothing is fixable. */
 export function FixFilesPanel() {
 	const { view, auditId, siteUrl, activeKind, setActiveKind } = useFixFiles();
+	// While the audit runs the block rises in once a category calls for a file.
+	const arrived = useArrival(view.kinds.length > 0);
 	if (view.kinds.length === 0) return null;
 	const result = view.status === "done" ? view.result : null;
 	const files = result?.files ?? [];
@@ -173,7 +190,7 @@ export function FixFilesPanel() {
 		<section
 			id={FIX_FILES_ANCHOR}
 			aria-labelledby={title}
-			className="scroll-mt-4 rounded-[14px] border border-line bg-surface p-5 shadow-card"
+			className={`scroll-mt-4 rounded-[14px] border border-line bg-surface p-5 shadow-card ${arrived ? ARRIVE_RISE : ""}`}
 		>
 			<div className="flex flex-wrap items-start gap-x-4 gap-y-3">
 				<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">

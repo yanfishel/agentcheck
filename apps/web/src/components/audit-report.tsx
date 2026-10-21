@@ -1,7 +1,9 @@
 import type { AuditResult } from "@agentcheck/core";
+import { CATEGORIES } from "@agentcheck/core/scoring";
 import type { ReactNode } from "react";
 import { HeroBackdrop } from "./landing/hero-backdrop";
 import { PlumBand } from "./plum-band";
+import { ArrivalProvider, Arrive } from "./report/arrival";
 import {
 	CategorySection,
 	type CategorySummary,
@@ -15,6 +17,21 @@ import type { ScreenshotSources } from "./report/screenshot-thumb";
 import { Chip, chipClass, Tooltip } from "./ui";
 
 export { categoryMarker, checkMarker } from "./report/markers";
+
+/**
+ * A running audit's report so far: the target and the categories whose checks
+ * are all in (complete categories only).
+ */
+export interface PartialAuditView {
+	target: string;
+	categories: CategoryResult[];
+}
+
+function isComplete(
+	result: AuditResult | PartialAuditView,
+): result is AuditResult {
+	return "grade" in result;
+}
 
 function absoluteTime(timestamp: string): string {
 	const date = new Date(timestamp);
@@ -44,47 +61,24 @@ function summarize(category: CategoryResult): CategorySummary {
 	};
 }
 
-/**
- * Server component: a pure rendering of an audit result. `full` puts the score on
- * a full-width plum band (the page must not wrap it in a width container) and the
- * rest at page width; `example` is the landing's static sample: the same band on
- * a rounded card, an Example chip, lower heading levels, no actions.
- */
-export function AuditReport({
+/** The score band of a finished report: on the plum band, or on a card for the example. */
+function ReportBand({
 	result,
-	variant = "full",
-	defaultOpen = "problems",
+	example,
+	tag,
 	mode,
-	label,
-	actions,
 	screenshot,
 	favicon,
-	fixFiles,
-	categoryFooter,
-	categoryAside,
-	now = Date.now(),
+	now,
 }: {
 	result: AuditResult;
-	variant?: "full" | "example";
-	defaultOpen?: "problems" | "none";
+	example: boolean;
+	tag?: string;
 	mode?: "quick" | "full";
-	/** A chip at the start of the band, e.g. "Shared report". */
-	label?: string;
-	actions?: ReactNode;
-	/** The page's thumbnail on the band (the example's is a saved file). */
 	screenshot?: ScreenshotSources;
-	/** The site's icon on the band; without it a globe holds the place. */
 	favicon?: string;
-	/** The Fix files block, between the tiles and the sections (report page only). */
-	fixFiles?: ReactNode;
-	/** A last row inside each category section (the Fix files footer). */
-	categoryFooter?: (categoryId: string) => ReactNode;
-	/** A row under a category's header, outside its panel (the Full check offer). */
-	categoryAside?: (category: CategorySummary) => ReactNode;
-	now?: number;
+	now: number;
 }) {
-	const example = variant === "example";
-	const tag = example ? "Example" : label;
 	const chips = (
 		<>
 			{tag ? <Chip tone="band">{tag}</Chip> : null}
@@ -106,7 +100,7 @@ export function AuditReport({
 
 	// The example is the live band on a rounded card: same backdrop, ring,
 	// thumbnail and site icon, lower heading level.
-	const band = example ? (
+	return example ? (
 		<div className="on-band relative isolate overflow-hidden rounded-[22px] bg-accent text-accent-fg">
 			<HeroBackdrop cells={false} />
 			<div className="relative px-5 py-6 sm:px-8 sm:py-8">
@@ -133,51 +127,144 @@ export function AuditReport({
 			/>
 		</PlumBand>
 	);
+}
+
+/**
+ * Server component: a pure rendering of an audit result. `full` puts the score on
+ * a full-width plum band (the page must not wrap it in a width container) and the
+ * rest at page width; `example` is the landing's static sample: the same band on
+ * a rounded card, an Example chip, lower heading levels, no actions.
+ *
+ * A partial result (an audit still running) draws a placeholder tile for each
+ * category not in yet, sections only for the categories that are, and keeps
+ * the action row's place empty; asides and footers wait for the finished
+ * report. With `animate` the pieces that appear after the first render arrive
+ * animated (tiles pop and count up, sections, Fix files and the action row
+ * fade and rise in). Tiles and sections are keyed by category, so a later
+ * result never remounts them.
+ */
+export function AuditReport({
+	result,
+	variant = "full",
+	defaultOpen = "problems",
+	mode,
+	label,
+	actions,
+	screenshot,
+	favicon,
+	fixFiles,
+	categoryFooter,
+	categoryAside,
+	band: bandOverride,
+	animate = false,
+	now = Date.now(),
+}: {
+	result: AuditResult | PartialAuditView;
+	variant?: "full" | "example";
+	defaultOpen?: "problems" | "none";
+	mode?: "quick" | "full";
+	/** A chip at the start of the band, e.g. "Shared report". */
+	label?: string;
+	actions?: ReactNode;
+	/** The page's thumbnail on the band (the example's is a saved file). */
+	screenshot?: ScreenshotSources;
+	/** The site's icon on the band; without it a globe holds the place. */
+	favicon?: string;
+	/** The Fix files block, between the tiles and the sections (report page only). */
+	fixFiles?: ReactNode;
+	/** A last row inside each category section (the Fix files footer). */
+	categoryFooter?: (categoryId: string) => ReactNode;
+	/** A row under a category's header, outside its panel (the Full check offer). */
+	categoryAside?: (category: CategorySummary) => ReactNode;
+	/** Replaces the score band (the running page draws its own). */
+	band?: ReactNode;
+	/** Pieces that appear after the first render arrive animated. */
+	animate?: boolean;
+	now?: number;
+}) {
+	const complete = isComplete(result) ? result : null;
+	const example = variant === "example";
+	const band =
+		bandOverride ??
+		(complete ? (
+			<ReportBand
+				result={complete}
+				example={example}
+				tag={example ? "Example" : label}
+				mode={mode}
+				screenshot={screenshot}
+				favicon={favicon}
+				now={now}
+			/>
+		) : null);
+
+	// A running audit lists its categories in the category order as they come in.
+	const categories = complete
+		? complete.categories
+		: CATEGORIES.flatMap(
+				({ id }) =>
+					result.categories.find((category) => category.id === id) ?? [],
+			);
 
 	return (
 		<article className="w-full">
 			{band}
-			<div className={example ? "" : "mx-auto w-full max-w-page px-4"}>
-				{!example && actions ? <div className="mt-4">{actions}</div> : null}
-				<div className="mt-6">
-					<CategoryTiles
-						categories={result.categories.map(
-							({ id, title, status, score }) => ({
+			<ArrivalProvider animate={animate}>
+				<div className={example ? "" : "mx-auto w-full max-w-page px-4"}>
+					{/* The action row's place is held while the audit runs, so the
+					    tiles do not move when it arrives. */}
+					{!example && (actions || !complete) ? (
+						<Arrive
+							present={Boolean(complete && actions)}
+							className="mt-4 min-h-[34px]"
+						>
+							{complete ? actions : null}
+						</Arrive>
+					) : null}
+					<div className="mt-6">
+						<CategoryTiles
+							partial={!complete}
+							categories={categories.map(({ id, title, status, score }) => ({
 								id,
 								title,
 								status,
 								score,
-							}),
-						)}
-					/>
+							}))}
+						/>
+					</div>
+					{fixFiles ? (
+						<div className="mt-6 empty:hidden">{fixFiles}</div>
+					) : null}
+					<div className="mt-6 space-y-3">
+						{categories.map((category) => {
+							const summary = summarize(category);
+							return (
+								<Arrive key={category.id} present>
+									<CategorySection
+										category={summary}
+										heading={example ? "h4" : "h2"}
+										footer={complete ? categoryFooter?.(category.id) : null}
+										aside={complete ? categoryAside?.(summary) : null}
+										defaultOpen={
+											complete !== null &&
+											defaultOpen === "problems" &&
+											summary.warn + summary.fail > 0
+										}
+									>
+										{category.checks.map((check) => (
+											<CheckRow
+												key={check.id}
+												check={check}
+												sectionReason={summary.skipReason}
+											/>
+										))}
+									</CategorySection>
+								</Arrive>
+							);
+						})}
+					</div>
 				</div>
-				{fixFiles ? <div className="mt-6 empty:hidden">{fixFiles}</div> : null}
-				<div className="mt-6 space-y-3">
-					{result.categories.map((category) => {
-						const summary = summarize(category);
-						return (
-							<CategorySection
-								key={category.id}
-								category={summary}
-								heading={example ? "h4" : "h2"}
-								footer={categoryFooter?.(category.id)}
-								aside={categoryAside?.(summary)}
-								defaultOpen={
-									defaultOpen === "problems" && summary.warn + summary.fail > 0
-								}
-							>
-								{category.checks.map((check) => (
-									<CheckRow
-										key={check.id}
-										check={check}
-										sectionReason={summary.skipReason}
-									/>
-								))}
-							</CategorySection>
-						);
-					})}
-				</div>
-			</div>
+			</ArrivalProvider>
 		</article>
 	);
 }

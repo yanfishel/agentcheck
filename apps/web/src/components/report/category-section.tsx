@@ -80,6 +80,13 @@ export function CategorySection({
 	children: ReactNode;
 }) {
 	const [open, setOpen] = useState(defaultOpen);
+	// A section that arrived while its audit ran opens when the finished report
+	// calls for it, as the report opens it on a fresh load.
+	const [wasDefaultOpen, setWasDefaultOpen] = useState(defaultOpen);
+	if (wasDefaultOpen !== defaultOpen) {
+		setWasDefaultOpen(defaultOpen);
+		if (defaultOpen) setOpen(true);
+	}
 	const anchor = categoryAnchor(category.id);
 
 	useEffect(() => {
