@@ -1,6 +1,6 @@
 {
 	"name": "agentcheck",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "Audit how ready a website is for AI agents, search LLMs and autonomous browsers.",
 	"author": "Yan Fishel (https://fishart.co.il)",
 	"type": "module",

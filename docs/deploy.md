@@ -80,8 +80,9 @@ settings, which exist only once the package does: the first version is
 published by the maintainer from a clean checkout of the tag
 (`pnpm --filter agentcheck build && pnpm --filter agentcheck publish --access public`),
 then the publisher is added and every later tag publishes itself. The job
-runs `npm install -g npm@latest` because trusted publishing needs npm 11.5.1
-or newer.
+skips a version that is already on npm (the hand-published first one, or a
+re-run) instead of failing the release, and runs `npm install -g npm@latest`
+because trusted publishing needs npm 11.5.1 or newer.
 
 ## Secrets and configuration
 
