@@ -196,7 +196,7 @@ export async function handleFixFileDownload(
 			headers: {
 				...headers,
 				"content-type": "text/plain; charset=utf-8",
-				"content-disposition": 'attachment; filename="AGENT-PROMPT.md"',
+				"content-disposition": 'attachment; filename="AGENT-PROMPT.txt"',
 			},
 		});
 	}

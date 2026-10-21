@@ -1,6 +1,14 @@
 "use client";
 
-import { Download, Pencil, Wand } from "lucide-react";
+import {
+	Bot,
+	ChevronDown,
+	Copy,
+	Download,
+	MapPin,
+	Pencil,
+	Wand,
+} from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import type {
 	FixFilePreview,
@@ -11,8 +19,11 @@ import {
 	buttonClass,
 	type CodeTab,
 	CodeWindow,
-	CopyButton,
 	code,
+	Menu,
+	Tooltip,
+	useToast,
+	writeLoaded,
 } from "../../ui";
 import { ARRIVE_FADE, useArrival, useArrivalLive } from "../arrival";
 import { relativeTime } from "../relative-time";
@@ -69,6 +80,7 @@ function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
 			// A cut file is copied whole: fetched on click from its download.
 			load: file.previewOf === null ? undefined : () => fetchText(href),
 			copyLabel: `Copy ${file.name}`,
+			status: <FileStatus file={file} />,
 			actions: (
 				<a
 					href={href}
@@ -82,6 +94,79 @@ function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
 			),
 		};
 	});
+}
+
+/**
+ * The status bar line of a file: where it goes, and for a file cut to a
+ * preview a chip with the sizes (the full sentence in its tooltip).
+ */
+function FileStatus({ file }: { file: FixFilePreview }) {
+	return (
+		<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 px-4 py-2.5 text-[12.5px] leading-relaxed text-code-muted">
+			<p className="flex min-w-0 flex-1 basis-64 gap-2">
+				<MapPin aria-hidden="true" className="mt-[0.3em] size-3.5 shrink-0" />
+				<span className="min-w-0 break-words">{file.target}</span>
+			</p>
+			{file.previewOf !== null ? (
+				<Tooltip
+					content={`Showing the first ${formatSize(FIX_PREVIEW_MAX)} of ${file.name} (${formatSize(file.previewOf)}). Download for the full file.`}
+				>
+					<span className="shrink-0 cursor-default whitespace-nowrap rounded-full border border-code-line px-2.5">
+						{`Preview: ${formatSize(FIX_PREVIEW_MAX)} of ${formatSize(file.previewOf)}`}
+					</span>
+				</Tooltip>
+			) : null}
+		</div>
+	);
+}
+
+/**
+ * The agent prompt (the zip's AGENT-PROMPT.md) is long, so it is not a
+ * button of its own: a menu copies it (fetched on click) or downloads it.
+ */
+function PromptMenu({ auditId }: { auditId: string }) {
+	const { toast } = useToast();
+	const href = `/api/audits/${auditId}/fix-files/prompt`;
+	async function copyPrompt() {
+		try {
+			await writeLoaded(() => fetchText(href));
+			toast("Prompt copied");
+		} catch {
+			toast("Could not copy the prompt. Download it instead.", {
+				tone: "fail",
+			});
+		}
+	}
+	return (
+		<Menu
+			label="Prompt for your agent"
+			header={
+				<p className="max-w-64 text-sm text-muted">
+					One prompt that tells your coding agent where each file goes and what
+					to fill in.
+				</p>
+			}
+			trigger={
+				<Button
+					variant="secondary"
+					size="sm"
+					icon={<Bot aria-hidden="true" className="size-4" />}
+				>
+					Prompt for your agent
+					<ChevronDown aria-hidden="true" className="size-4" />
+				</Button>
+			}
+			items={[
+				{ label: "Copy to clipboard", icon: Copy, onSelect: copyPrompt },
+				{
+					label: "Download AGENT-PROMPT.txt",
+					icon: Download,
+					href,
+					download: true,
+				},
+			]}
+		/>
+	);
 }
 
 function builtLine(result: FixFilesPreview, url: string): string {
@@ -256,14 +341,7 @@ export function FixFilesPanel() {
 								// Nothing to copy or download when every file was skipped.
 								files.length > 0 ? (
 									<>
-										{view.hasPrompt ? (
-											<CopyButton
-												load={() =>
-													fetchText(`/api/audits/${auditId}/fix-files/prompt`)
-												}
-												label="Copy prompt for your agent"
-											/>
-										) : null}
+										{view.hasPrompt ? <PromptMenu auditId={auditId} /> : null}
 										<a
 											href={`/api/audits/${auditId}/fix-files/zip`}
 											download
@@ -282,24 +360,16 @@ export function FixFilesPanel() {
 					{result ? (
 						<div className="mt-5">
 							{current ? (
-								<>
-									<p className="mb-2 text-sm">{current.target}</p>
-									<CodeWindow
-										label="Fix files"
-										tabs={fileTabs(auditId, files)}
-										value={index}
-										onValueChange={(next) => {
-											const file = files[next];
-											if (file) setActiveKind(file.kind);
-										}}
-										codeClassName="max-h-[28rem] overflow-y-auto"
-									/>
-									{current.previewOf !== null ? (
-										<p className="mt-2 text-sm text-muted">
-											{`Showing the first ${formatSize(FIX_PREVIEW_MAX)} of ${current.name} (${formatSize(current.previewOf)}). Download for the full file.`}
-										</p>
-									) : null}
-								</>
+								<CodeWindow
+									label="Fix files"
+									tabs={fileTabs(auditId, files)}
+									value={index}
+									onValueChange={(next) => {
+										const file = files[next];
+										if (file) setActiveKind(file.kind);
+									}}
+									codeClassName="max-h-[24rem] overflow-y-auto"
+								/>
 							) : null}
 							{result.skipped.length > 0 ? (
 								<ul className="mt-3 space-y-1 text-sm text-muted">

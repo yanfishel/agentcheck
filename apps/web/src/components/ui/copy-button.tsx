@@ -101,7 +101,7 @@ export function CopyButton({
  * the text loads (Safari drops it across an await); without ClipboardItem the
  * text is loaded first and written as plain text.
  */
-async function writeLoaded(load: () => Promise<string>): Promise<void> {
+export async function writeLoaded(load: () => Promise<string>): Promise<void> {
 	if (typeof ClipboardItem !== "undefined" && navigator.clipboard.write) {
 		const blob = load().then(
 			(loaded) => new Blob([loaded], { type: "text/plain" }),

@@ -426,7 +426,7 @@ describe("fix files handlers", () => {
 					"text/plain; charset=utf-8",
 				);
 				expect(res.headers.get("content-disposition")).toBe(
-					'attachment; filename="AGENT-PROMPT.md"',
+					'attachment; filename="AGENT-PROMPT.txt"',
 				);
 				expect(res.headers.get("x-content-type-options")).toBe("nosniff");
 				expect(res.headers.get("cache-control")).toBe("private, no-store");

@@ -23,6 +23,8 @@ export type CodeTab = {
 	copyLabel: string;
 	/** Extra controls for this tab in the window bar, after Copy (e.g. a Download link). */
 	actions?: ReactNode;
+	/** A line about this tab in the status bar under the code (e.g. where the file goes). */
+	status?: ReactNode;
 };
 
 /**
@@ -52,6 +54,7 @@ export function CodeWindow({
 	const [own, setOwn] = useState(0);
 	const active = value ?? own;
 	const current = tabs[active] ?? tabs[0];
+	const hasStatus = tabs.some((tab) => tab.status);
 	const select = (next: number) => {
 		setOwn(next);
 		onValueChange?.(next);
@@ -60,7 +63,8 @@ export function CodeWindow({
 		<Tabs.Root
 			value={active}
 			onValueChange={(next) => select(Number(next))}
-			className="overflow-hidden rounded-[14px] border border-code-line bg-code-bg shadow-card"
+			// Dark scrollbars on the dark window in both themes.
+			className="overflow-hidden rounded-[14px] border border-code-line bg-code-bg shadow-card [color-scheme:dark] [scrollbar-color:var(--code-dot)_transparent]"
 		>
 			<div className="flex items-end gap-2 bg-code-bar px-3 pt-2">
 				<span
@@ -152,6 +156,22 @@ export function CodeWindow({
 					</Tabs.Panel>
 				))}
 			</div>
+			{/* The status bar keeps every tab's line in one grid cell too, so it
+			    is as tall as the longest line and never moves the page. */}
+			{hasStatus ? (
+				<div className="grid border-t border-code-line bg-code-bar">
+					{tabs.map((tab, index) => (
+						<div
+							key={tab.label}
+							inert={index !== active}
+							aria-hidden={index !== active || undefined}
+							className={`[grid-area:1/1] min-w-0${index !== active ? " invisible" : ""}`}
+						>
+							{tab.status}
+						</div>
+					))}
+				</div>
+			) : null}
 			{footer}
 		</Tabs.Root>
 	);

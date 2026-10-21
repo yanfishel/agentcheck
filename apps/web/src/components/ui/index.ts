@@ -4,7 +4,7 @@ export { Chip, type ChipTone, chipClass, statusTone } from "./chip";
 export { code } from "./code-tokens";
 export { type CodeTab, CodeWindow } from "./code-window";
 export { Collapsible } from "./collapsible";
-export { CopyButton } from "./copy-button";
+export { CopyButton, writeLoaded } from "./copy-button";
 export { Dialog } from "./dialog";
 export { EmptyState } from "./empty-state";
 export { Field, Input } from "./field";
