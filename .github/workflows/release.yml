@@ -1,6 +1,8 @@
-# A `vX.Y.Z` tag runs the commit gate, then publishes the service images as
-# `:vX.Y.Z` and the CLI to npm as `agentcheck-dev`. A manual run publishes images
-# tagged `:sha-<short>` for a trial deploy and does not touch npm.
+# A `vX.Y.Z` tag runs the commit gate, sets the tag's version in every
+# package, publishes the service images as `:vX.Y.Z` and the CLI to npm as
+# `agentcheck-dev`, then deploys (after the production environment's
+# reviewer approves). A manual run publishes images tagged `:sha-<short>`
+# for a trial and touches neither npm nor the server.
 name: Release
 
 on:
@@ -12,27 +14,20 @@ permissions:
   contents: read
 
 jobs:
-  version:
-    name: Tag matches the package versions
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - run: node scripts/check-release-version.mjs "$GITHUB_REF_NAME"
-
   gate:
     uses: ./.github/workflows/ci.yml
 
   images:
-    needs: [version, gate]
-    # A manual run skips `version`; a failed one still stops the release.
-    if: ${{ !cancelled() && needs.gate.result == 'success' && needs.version.result != 'failure' }}
+    needs: gate
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v7
+      - name: Version from the tag
+        if: github.ref_type == 'tag'
+        run: node scripts/set-version.mjs "${GITHUB_REF_NAME#v}"
       - name: Image tag
         id: tag
         run: |
@@ -82,9 +77,9 @@ jobs:
     name: Publish the CLI to npm
     # Switched on by the repository variable NPM_PUBLISH=true once the package
     # exists on npm with this repository as its trusted publisher; until then a
-    # release is images only.
+    # release is images and a deploy.
     if: github.ref_type == 'tag' && vars.NPM_PUBLISH == 'true'
-    needs: [version, gate]
+    needs: gate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -97,6 +92,8 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org
+      - name: Version from the tag
+        run: node scripts/set-version.mjs "${GITHUB_REF_NAME#v}"
       # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships an older one.
       - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
@@ -118,3 +115,12 @@ jobs:
         run: pnpm --filter agentcheck-dev publish --access public --no-git-checks
         env:
           NPM_CONFIG_PROVENANCE: "true"
+
+  deploy:
+    name: Deploy to the server
+    if: github.ref_type == 'tag'
+    needs: images
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit

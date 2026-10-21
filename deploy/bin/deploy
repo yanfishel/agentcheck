@@ -1,0 +1,85 @@
+#!/bin/sh
+# Deploys one release on the server. Reads a tar of the stack files from
+# stdin (deploy/ in the repository: only the paths listed below are
+# accepted), installs them, sets the tag in .env, pulls the images and
+# restarts the stack, then checks that migrate exited 0 and web and worker
+# run. Runs as the forced command of the CI deploy key (through ci); a
+# rollback is the same call with an earlier tag.
+# Usage: deploy vX.Y.Z
+# Tests only: STACK_DIR overrides /srv/agentcheck, DEPLOY_SETTLE_SECONDS the
+# wait before the health check.
+set -eu
+
+tag=${1:-}
+dir=${STACK_DIR:-/srv/agentcheck}
+allowed="docker-compose.yml seccomp-chromium.json bin/ci bin/set-env bin/deploy"
+
+if ! printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+	echo "rejected: tag ${tag:-(none)} is not vX.Y.Z" >&2
+	exit 1
+fi
+[ -d "$dir" ] || {
+	echo "rejected: $dir does not exist" >&2
+	exit 1
+}
+
+# The files land in a staging directory first; nothing in $dir changes
+# until every one of them has been checked.
+umask 077
+staging=$(mktemp -d "$dir/.deploy.XXXXXX")
+trap 'rm -rf "$staging"' EXIT
+tar -xf - -C "$staging"
+(cd "$staging" && find . -mindepth 1 ! -type d) | sed 's#^\./##' | while IFS= read -r file; do
+	[ -f "$staging/$file" ] && [ ! -L "$staging/$file" ] || {
+		echo "rejected: $file is not a regular file" >&2
+		exit 1
+	}
+	case " $allowed " in
+	*" $file "*) ;;
+	*)
+		echo "rejected: $file is not a stack file" >&2
+		exit 1
+		;;
+	esac
+done
+
+# Install: a rename per file, so a script that is running (this one) keeps
+# its old inode and a reader never sees a half-written file.
+mkdir -p "$dir/bin"
+installed=""
+for file in $allowed; do
+	[ -f "$staging/$file" ] || continue
+	case $file in bin/*) chmod 755 "$staging/$file" ;; *) chmod 600 "$staging/$file" ;; esac
+	mv -f "$staging/$file" "$dir/$file"
+	installed="$installed $file"
+done
+[ -z "$installed" ] || echo "installed:$installed"
+
+env_file="$dir/.env"
+if [ -f "$env_file" ] && grep -q '^AGENTCHECK_VERSION=' "$env_file"; then
+	sed -i "s/^AGENTCHECK_VERSION=.*/AGENTCHECK_VERSION=$tag/" "$env_file"
+else
+	printf 'AGENTCHECK_VERSION=%s\n' "$tag" >>"$env_file"
+	chmod 600 "$env_file"
+fi
+echo "AGENTCHECK_VERSION=$tag"
+
+cd "$dir"
+docker compose pull --quiet
+docker compose up -d
+# web and worker start only after migrate exited 0 (depends_on); a few
+# seconds later they must still be running (a bad environment would have
+# stopped them by now).
+sleep "${DEPLOY_SETTLE_SECONDS:-5}"
+status=$(docker compose ps -a --format '{{.Service}} {{.State}} {{.ExitCode}}')
+printf '%s\n' "$status"
+ok=1
+printf '%s\n' "$status" | grep -q '^migrate exited 0$' || ok=0
+printf '%s\n' "$status" | grep -q '^web running' || ok=0
+printf '%s\n' "$status" | grep -q '^worker running' || ok=0
+if [ "$ok" != 1 ]; then
+	echo "deploy of $tag failed: see the services above" >&2
+	docker compose logs --tail 40 migrate web worker >&2 || true
+	exit 1
+fi
+echo "deployed $tag"

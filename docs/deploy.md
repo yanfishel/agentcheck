@@ -9,7 +9,7 @@ access and DNS live with the operator, not in this repository.
 | On the server | From the repo | What |
 |---|---|---|
 | `/srv/edge/` | `deploy/edge/` | The shared front door: Caddy on 80/443, owns the Docker network `edge`; one file per site in `sites/` |
-| `/srv/agentcheck/` | `deploy/docker-compose.yml`, `deploy/seccomp-chromium.json`, `deploy/bin/set-env` | web, worker, a one-shot `migrate`, postgres; publishes no ports |
+| `/srv/agentcheck/` | `deploy/docker-compose.yml`, `deploy/seccomp-chromium.json`, `deploy/bin/{ci,set-env,deploy}` | web, worker, a one-shot `migrate`, postgres; publishes no ports. The stack files are installed by every deploy |
 | `/srv/agentcheck/.env` | `deploy/.env.example` (keys only) | Configuration and secrets, mode 600, root only |
 
 Images: `ghcr.io/yanfishel/agentcheck-web:<tag>` and `-worker:<tag>`, public,
@@ -36,41 +36,53 @@ says so).
 
 ## Release and deploy
 
-1. `node scripts/set-version.mjs X.Y.Z` sets the version in every released
-   package (`packages/core`, `packages/db`, `apps/cli`, `apps/web`,
-   `apps/worker`; the footer, every report and the CLI show the engine's).
-   Open a pull request with that change and merge it.
-2. `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z` from the merged
-   `main`. The workflow runs the commit gate (the `CI` workflow), then builds
-   and pushes both images and publishes the CLI to npm. The tag must equal the version of every package in
-   `scripts/release-packages.mjs` (`RELEASE_PACKAGES`, shared by `set-version.mjs`
-   and `check-release-version.mjs`); a new released package is added there. A manual run of
-   "Release" builds `:sha-<short>` for a trial and does not publish to npm.
-3. On the server:
+A release is one command from the merged `main`:
 
-   ```sh
-   cd /srv/agentcheck
-   sed -i 's/^AGENTCHECK_VERSION=.*/AGENTCHECK_VERSION=vX.Y.Z/' .env
-   docker compose pull && docker compose up -d
-   docker compose ps -a          # migrate: exited 0; web, worker: running
-   docker compose logs -f web worker
-   ```
+```sh
+gh release create vX.Y.Z --generate-notes
+```
 
-   `web` and `worker` start only after `migrate` exited 0. Never deploy
-   `latest`.
+It creates the tag and a GitHub release with the merged pull requests as
+notes; the `Release` workflow does the rest:
 
-**Rollback:** put the previous tag in `AGENTCHECK_VERSION` and run the same
-two commands. Migrations are additive; a release with one that is not says so.
+1. **Gate**: the `CI` workflow on the tag.
+2. **Version**: the repository keeps the placeholder `0.0.0-dev` in the five
+   released packages (`scripts/release-packages.mjs`; a new released package
+   is added there); `node scripts/set-version.mjs X.Y.Z` writes the tag's
+   version before anything is built, so the footer, every report and the CLI
+   show it. No version bump is ever committed.
+3. **Images**: `ghcr.io/yanfishel/agentcheck-web:vX.Y.Z` and `-worker:vX.Y.Z`.
+4. **npm**: the CLI, when the repository variable `NPM_PUBLISH` is `true`
+   (below).
+5. **Deploy** (`.github/workflows/deploy.yml`): the job waits in the
+   `production` environment for its reviewer's approval (Actions → the run →
+   Review deployments), then sends the stack files (`deploy/docker-compose.yml`,
+   `seccomp-chromium.json`, `bin/ci`, `bin/set-env`, `bin/deploy`) as a tar
+   over ssh to `deploy vX.Y.Z` on the server. `deploy/bin/deploy` accepts only
+   those paths, installs them, writes `AGENTCHECK_VERSION`, runs
+   `docker compose pull` and `up -d`, and fails the job unless `migrate`
+   exited 0 and `web` and `worker` are running (their logs are printed then).
+   `web` and `worker` start only after `migrate` exited 0. Never `latest`.
 
-**Changing the stack files** (`deploy/`): copy the changed files to
-`/srv/agentcheck` (or `/srv/edge`) and run `docker compose up -d` there; for a
-Caddyfile change `docker compose restart caddy` in `/srv/edge`.
-`deploy/test/stacks.test.ts` and `set-env.test.ts` pin the stack: no `ports`
-in the AgentCheck compose, `web` on `edge` as `agentcheck-web`, only the edge
-Caddy publishing 80/443/443-udp, each service given only the variables it
-reads (never the whole `.env`), and `set-env` rejecting any name outside the
-three Clerk keys before it writes and quoting the values so Compose takes
-them literally. The images carry no tests (`.dockerignore`).
+A manual run of "Release" builds images tagged `:sha-<short>` for a trial and
+neither publishes nor deploys.
+
+**Rollback:** Actions → Deploy → Run workflow with the previous tag (the same
+approval). Migrations are additive; a release with one that is not says so.
+
+**Changing the stack files** (`deploy/`): they reach the server with the
+next deploy (or a manual Deploy run of the current tag). The edge stack
+(`deploy/edge/`) is still copied by hand to `/srv/edge`; for a Caddyfile change
+`docker compose restart caddy` there.
+`deploy/test/stacks.test.ts`, `set-env.test.ts` and `deploy.test.ts` pin the
+stack: no `ports` in the AgentCheck compose, `web` on `edge` as
+`agentcheck-web`, only the edge Caddy publishing 80/443/443-udp, each service
+given only the variables it reads (never the whole `.env`), `set-env`
+rejecting any name outside the three Clerk keys before it writes and quoting
+the values so Compose takes them literally, `ci` refusing any command but
+`set-env` and `deploy vX.Y.Z`, and `deploy` refusing other tags and files
+outside the list before it touches anything. The images carry no tests
+(`.dockerignore`).
 
 **The CLI on npm.** The `npm` job of the release workflow publishes
 `apps/cli` as `agentcheck-dev` (npm refuses the bare name as too close to
@@ -98,11 +110,12 @@ because trusted publishing needs npm 11.5.1 or newer.
 - The Clerk keys (`CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`,
   `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`) live in GitHub repository secrets. To
   change one: update the secret, run **Actions → Sync server secrets**, then
-  `docker compose up -d web` on the server. The workflow logs in with a deploy
-  key that can only run `set-env` (forced command in root's
-  `authorized_keys`), which accepts just those three names and prints names,
-  never values. Repository secret `DEPLOY_SSH_KEY`, variables `DEPLOY_HOST` and
-  `DEPLOY_KNOWN_HOSTS`.
+  redeploy the current tag (Actions → Deploy). The workflows log in with a
+  deploy key whose forced command in root's `authorized_keys` is
+  `/srv/agentcheck/bin/ci`: it runs only `set-env` (accepts just those three
+  names and prints names, never values) or `deploy vX.Y.Z`. Repository
+  secret `DEPLOY_SSH_KEY`, variables `DEPLOY_HOST` and `DEPLOY_KNOWN_HOSTS`;
+  the `production` environment names the reviewer who approves deploys.
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is also baked into the web image at
   build time (Next inlines `NEXT_PUBLIC_*` into the browser code): a new
   publishable key needs a new release, not only a sync.

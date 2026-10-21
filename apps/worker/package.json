@@ -1,6 +1,6 @@
 {
 	"name": "@agentcheck/worker",
-	"version": "0.1.5",
+	"version": "0.0.0-dev",
 	"private": true,
 	"description": "Queue worker that runs audits behind the network guard.",
 	"type": "module",

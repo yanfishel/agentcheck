@@ -1,4 +1,6 @@
-// Sets one version in every released package.json (the tag is then v<version>).
+// Sets one version in every released package.json. The repository keeps the
+// placeholder 0.0.0-dev; the release workflow sets the tag's version before
+// it builds, so the images, the CLI and every report carry the real one.
 // Usage: node scripts/set-version.mjs 0.1.2 [repo root]
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -7,7 +9,7 @@ import { RELEASE_PACKAGES } from "./release-packages.mjs";
 
 const [version = "", root = fileURLToPath(new URL("..", import.meta.url))] =
 	process.argv.slice(2);
-if (!/^\d+\.\d+\.\d+$/.test(version)) {
+if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
 	console.error(`Version ${version || "(none)"} is not X.Y.Z`);
 	process.exit(1);
 }
