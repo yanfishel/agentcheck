@@ -64,12 +64,46 @@ async function markUri(): Promise<string> {
 	return dataUri(svg);
 }
 
-/** The grade inside the brand frame, the spark in the corner (as GradeMark). */
-function gradeMark(grade: OgGrade): string {
-	const color = gradeColor(grade);
-	const fontSize = grade.length > 1 ? 34 : 44;
+/**
+ * The brand frame with the spark in the corner (as GradeMark). No SVG text:
+ * the resvg inside next/og has no fonts of its own, so the letters are drawn
+ * as HTML text over this picture (GradeSeal).
+ */
+export function gradeFrame(grade: OgGrade): string {
 	return dataUri(
-		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path stroke="${color}" d="M52 22H29Q16 22 16 35V71Q16 84 29 84H65Q78 84 78 71V48"/><path stroke="#fff" d="M78 6Q80.5 19.5 94 22Q80.5 24.5 78 38Q75.5 24.5 62 22Q75.5 19.5 78 6Z"/></g><text x="47" y="66" text-anchor="middle" font-size="${fontSize}" font-weight="800" font-family="${FONT}, Arial" fill="${color}">${grade}</text></svg>`,
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path stroke="${gradeColor(grade)}" d="M52 22H29Q16 22 16 35V71Q16 84 29 84H65Q78 84 78 71V48"/><path stroke="#fff" d="M78 6Q80.5 19.5 94 22Q80.5 24.5 78 38Q75.5 24.5 62 22Q75.5 19.5 78 6Z"/></g></svg>`,
+	);
+}
+
+/** The grade seal: the frame with the letters centred in it (x 47, y 53 of 100). */
+function GradeSeal(props: { grade: OgGrade }) {
+	const scale = 1.5;
+	const fontSize = (props.grade.length > 1 ? 34 : 44) * scale;
+	return (
+		<div
+			style={{ display: "flex", position: "relative", width: 150, height: 150 }}
+		>
+			{/* biome-ignore lint/performance/noImgElement: ImageResponse renders plain img only. */}
+			<img src={gradeFrame(props.grade)} width={150} height={150} alt="" />
+			<div
+				style={{
+					position: "absolute",
+					left: 0,
+					top: 53 * scale - fontSize / 2,
+					width: 94 * scale,
+					height: fontSize,
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					fontSize,
+					fontWeight: 800,
+					lineHeight: 1,
+					color: gradeColor(props.grade),
+				}}
+			>
+				{props.grade}
+			</div>
+		</div>
 	);
 }
 
@@ -234,8 +268,7 @@ function ReportPicture(props: {
 					marginLeft: -19,
 				}}
 			>
-				{/* biome-ignore lint/performance/noImgElement: ImageResponse renders plain img only. */}
-				<img src={gradeMark(props.grade)} width={150} height={150} alt="" />
+				<GradeSeal grade={props.grade} />
 				<div style={{ display: "flex", flexDirection: "column" }}>
 					<div style={{ fontSize: 30, opacity: 0.8 }}>AI readiness of</div>
 					<div

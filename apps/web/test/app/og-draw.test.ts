@@ -3,6 +3,7 @@ import {
 	drawReportOg,
 	drawSiteOg,
 	fitHost,
+	gradeFrame,
 	hostFontSize,
 } from "@/app/_og/draw";
 
@@ -48,6 +49,18 @@ describe("fitHost", () => {
 			expect(result.startsWith("…")).toBe(true);
 			expect(result.endsWith(host.slice(-20))).toBe(true);
 			expect(28 * 0.6 * result.length).toBeLessThanOrEqual(890);
+		}
+	});
+});
+
+describe("gradeFrame", () => {
+	it("draws no SVG text, which has no font inside next/og in production", () => {
+		for (const grade of ["A+", "A", "B", "C", "D", "F"] as const) {
+			const svg = Buffer.from(
+				gradeFrame(grade).split(",")[1] ?? "",
+				"base64",
+			).toString();
+			expect(svg).not.toContain("<text");
 		}
 	});
 });
