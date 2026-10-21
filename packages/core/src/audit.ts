@@ -13,9 +13,10 @@ import {
 import { createAuditContext } from "./context.ts";
 import { type Favicon, fetchFavicon } from "./favicon.ts";
 import { createFetcher, type Fetcher, type NetworkOptions } from "./http.ts";
+import type { FinishedCheck } from "./progress.ts";
 import { CHECKS } from "./registry.ts";
 import { buildCategoryResults, gradeFor, overallScore } from "./scoring.ts";
-import type { AuditResult, CategoryId, Check, CheckResult } from "./types.ts";
+import type { AuditResult, Check } from "./types.ts";
 import { VERSION } from "./version.ts";
 
 export interface AuditOptions {
@@ -31,6 +32,8 @@ export interface AuditOptions {
 	network?: NetworkOptions;
 	/** Opt-in: receives the site's favicon when one is found. Never affects the result. */
 	onFavicon?: (icon: Favicon) => void;
+	/** Opt-in: called once per check as it settles (a crashed check too). Never affects the result. */
+	onCheck?: (check: FinishedCheck) => void;
 	/** @internal tests only: time cap for the favicon fetch (default FAVICON_BUDGET_MS). */
 	faviconBudgetMs?: number;
 }
@@ -49,6 +52,8 @@ export interface GuardedAuditOptionsInput {
 	onScreenshot?: (shot: Screenshot) => void;
 	/** Opt-in: receives the site's favicon when one is found. */
 	onFavicon?: (icon: Favicon) => void;
+	/** Opt-in: called once per check as it settles. */
+	onCheck?: (check: FinishedCheck) => void;
 }
 
 /**
@@ -59,13 +64,14 @@ export function guardedAuditOptions(
 	opts: GuardedAuditOptionsInput,
 ): Pick<
 	AuditOptions,
-	"network" | "renderer" | "userAgent" | "toolVersion" | "onFavicon"
+	"network" | "renderer" | "userAgent" | "toolVersion" | "onFavicon" | "onCheck"
 > {
 	return {
 		userAgent: opts.userAgent,
 		toolVersion: opts.toolVersion,
 		network: { blockPrivate: true },
 		...(opts.onFavicon && { onFavicon: opts.onFavicon }),
+		...(opts.onCheck && { onCheck: opts.onCheck }),
 		renderer: opts.browser
 			? createGuardedBrowserRenderer({
 					...opts.rendererOptions,
@@ -112,31 +118,42 @@ async function execute(
 	);
 	const checks = opts.checks ?? CHECKS;
 	const favicon = opts.onFavicon
-		? startFavicon(fetcher, ctx.$, ctx.targetUrl, opts.faviconBudgetMs)
+		? startFavicon(
+				fetcher,
+				ctx.$,
+				ctx.targetUrl,
+				opts.onFavicon,
+				opts.faviconBudgetMs,
+			)
 		: null;
 
 	const results = await Promise.all(
-		checks.map(
-			async (check): Promise<CheckResult & { category: CategoryId }> => {
-				const base = {
-					id: check.id,
-					title: check.title,
-					weight: check.weight,
-					category: check.category,
+		checks.map(async (check): Promise<FinishedCheck> => {
+			const base = {
+				id: check.id,
+				title: check.title,
+				weight: check.weight,
+				category: check.category,
+			};
+			let result: FinishedCheck;
+			try {
+				result = { ...base, ...(await check.run(ctx)) };
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				result = {
+					...base,
+					status: "fail",
+					message: `Check crashed: ${message}`,
+					remediation: "This is a bug in AgentCheck; please report it.",
 				};
-				try {
-					return { ...base, ...(await check.run(ctx)) };
-				} catch (err) {
-					const message = err instanceof Error ? err.message : String(err);
-					return {
-						...base,
-						status: "fail",
-						message: `Check crashed: ${message}`,
-						remediation: "This is a bug in AgentCheck; please report it.",
-					};
-				}
-			},
-		),
+			}
+			try {
+				opts.onCheck?.(result);
+			} catch {
+				// A failing consumer never affects the audit.
+			}
+			return result;
+		}),
 	);
 
 	let browser: AuditResult["browser"] = {
@@ -156,16 +173,9 @@ async function execute(
 				: { used: false, reason: outcome.reason };
 	}
 
-	if (favicon && opts.onFavicon) {
-		const icon = await favicon();
-		if (icon) {
-			try {
-				opts.onFavicon(icon);
-			} catch {
-				// A failing consumer never affects the audit.
-			}
-		}
-	}
+	// Delivered to onFavicon as soon as it is fetched; awaited here so nothing
+	// is in flight when the fetcher closes.
+	await favicon?.();
 
 	const categories = buildCategoryResults(results);
 	const score = overallScore(categories);
@@ -182,22 +192,32 @@ async function execute(
 }
 
 /**
- * Starts the favicon fetch now and returns a getter that settles within the
- * budget (counted from the start). At the budget the icon requests are aborted
- * so nothing is left in flight when the fetcher closes; the fetch never rejects.
+ * Starts the favicon fetch now and hands the icon to `onIcon` the moment it is
+ * fetched. The returned promise settles within the budget (counted from the
+ * start): at the budget the icon requests are aborted so nothing is left in
+ * flight when the fetcher closes; it never rejects.
  */
 function startFavicon(
 	fetcher: Fetcher,
 	$: CheerioAPI,
 	pageUrl: URL,
+	onIcon: (icon: Favicon) => void,
 	budgetMs = FAVICON_BUDGET_MS,
-): () => Promise<Favicon | null> {
+): () => Promise<void> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), budgetMs);
 	const pending = fetchFavicon(fetcher, $, pageUrl, {
 		signal: controller.signal,
 	})
 		.catch(() => null)
+		.then((icon) => {
+			if (!icon) return;
+			try {
+				onIcon(icon);
+			} catch {
+				// A failing consumer never affects the audit.
+			}
+		})
 		.finally(() => clearTimeout(timer));
 	return () => pending;
 }
