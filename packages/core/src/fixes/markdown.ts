@@ -15,6 +15,8 @@ interface DomNode {
 	name?: string;
 	attribs?: Record<string, string>;
 	children?: DomNode[];
+	/** The previous sibling (domhandler), used to find an accordion's trigger. */
+	prev?: DomNode | null;
 }
 
 const DROPPED = new Set([
@@ -109,10 +111,42 @@ function attr(node: DomNode, name: string): string | undefined {
 	return node.attribs?.[name];
 }
 
+/** The element right before `node` among its siblings, if any. */
+function previousElement(node: DomNode): DomNode | undefined {
+	let cursor = node.prev;
+	while (cursor && !isElement(cursor)) cursor = cursor.prev;
+	return cursor ?? undefined;
+}
+
+/** True when `node` is or holds a disclosure button (a few levels deep). */
+function hasDisclosure(node: DomNode, depth = 0): boolean {
+	if (isDisclosure(node)) return true;
+	if (depth >= 4) return false;
+	return elementChildren(node).some((child) => hasDisclosure(child, depth + 1));
+}
+
+/** A button that opens or closes content, marked by `aria-expanded`. */
+function isDisclosure(node: DomNode): boolean {
+	return (
+		tagName(node) === "button" && attr(node, "aria-expanded") !== undefined
+	);
+}
+
 function isSkipped(node: DomNode, ctx: Ctx): boolean {
 	const name = tagName(node);
-	if (DROPPED.has(name) || ctx.tooDeep.has(node)) return true;
-	if (attr(node, "hidden") !== undefined) return true;
+	if (ctx.tooDeep.has(node)) return true;
+	// A disclosure button (an accordion's question, a "details"-like trigger)
+	// labels the content it opens, so its text stays; other controls go.
+	if (DROPPED.has(name) && !isDisclosure(node)) return true;
+	// hidden="until-found" is content the browser reveals on find-in-page or a
+	// text fragment (collapsed FAQ answers), so it stays; any other hidden goes.
+	const hidden = attr(node, "hidden");
+	if (hidden !== undefined && hidden.trim().toLowerCase() !== "until-found") {
+		// An accordion's panel sits right after its disclosure button; servers
+		// render it plain hidden and the browser flips it to until-found later.
+		const before = previousElement(node);
+		if (!before || !hasDisclosure(before)) return true;
+	}
 	if (attr(node, "aria-hidden")?.trim().toLowerCase() === "true") return true;
 	if (!ctx.chrome) return false;
 	if (CHROME.has(name)) return true;
@@ -246,14 +280,43 @@ class InlineWriter {
 		}
 		const block = !INLINE.has(tagName(node));
 		if (block) this.append(" ");
-		for (const child of node.children ?? []) this.node(child);
+		this.children(node);
 		if (block) this.append(" ");
+	}
+
+	/**
+	 * Renders the children. Elements stacked without any text between them
+	 * (`<span>80</span><span>of 100</span>` in a flex column, a figure and
+	 * its caption) usually sit on separate lines on screen, so a space goes
+	 * between two of them when both sides end and start in a word; "$" and
+	 * "99", or a word split across elements inside running text, stay glued.
+	 */
+	children(node: DomNode) {
+		const kids = node.children ?? [];
+		const stacked = isStacked(kids, this.ctx);
+		let previous: DomNode | undefined;
+		for (const child of kids) {
+			if (!isElement(child)) {
+				this.node(child);
+				continue;
+			}
+			if (isSkipped(child, this.ctx)) continue;
+			if (stacked && previous) this.separate(previous, child);
+			this.node(child);
+			previous = child;
+		}
+	}
+
+	/** A space between two stacked siblings when their words would touch. */
+	separate(previous: DomNode, next: DomNode) {
+		if (isSpace(this.out[this.out.length - 1])) return;
+		if (gluesWords(previous, next, this.ctx)) this.append(" ");
 	}
 
 	/** Renders children in a fresh writer; edge spaces stay outside the markup. */
 	private inner(node: DomNode) {
 		const sub = new InlineWriter(this.ctx);
-		for (const child of node.children ?? []) sub.node(child);
+		sub.children(node);
 		return {
 			text: finishInline(sub.out).replaceAll("\n", " "),
 			lead: isSpace(sub.out[0]) ? " " : "",
@@ -319,8 +382,30 @@ function hasBlock(node: DomNode, ctx: Ctx): boolean {
 
 function inlineOf(node: DomNode, ctx: Ctx): string {
 	const writer = new InlineWriter(ctx);
-	for (const child of node.children ?? []) writer.node(child);
+	writer.children(node);
 	return finishInline(writer.out);
+}
+
+const WORD = /[\p{L}\p{N}]/u;
+
+/** Two or more elements and no text between them: a column of elements, not a sentence. */
+function isStacked(kids: DomNode[], ctx: Ctx): boolean {
+	return (
+		kids.filter((kid) => isElement(kid) && !isSkipped(kid, ctx)).length > 1 &&
+		!kids.some((kid) => kid.type === "text" && (kid.data ?? "").trim())
+	);
+}
+
+/** True when `left`'s text ends in a word and `right`'s starts with one. */
+function gluesWords(left: DomNode, right: DomNode, ctx: Ctx): boolean {
+	const before = rawText(left, ctx).trimEnd();
+	const after = rawText(right, ctx).trimStart();
+	return (
+		before.length > 0 &&
+		after.length > 0 &&
+		WORD.test(before[before.length - 1] ?? "") &&
+		WORD.test(after[0] ?? "")
+	);
 }
 
 /** Prefixes the first line with `first` and every other non-empty line with `rest`. */
@@ -425,6 +510,8 @@ function renderBlocks(nodes: DomNode[], ctx: Ctx): string[] {
 		flush();
 		if (block) blocks.push(block);
 	};
+	const stacked = isStacked(nodes, ctx);
+	let previous: DomNode | undefined;
 	for (const node of nodes) {
 		if (node.type === "text") {
 			writer.node(node);
@@ -447,11 +534,15 @@ function renderBlocks(nodes: DomNode[], ctx: Ctx): string[] {
 		} else if (name === "table") {
 			push(renderTable(node, ctx));
 		} else if (INLINE.has(name) && (name === "a" || !hasBlock(node, ctx))) {
+			if (stacked && previous) writer.separate(previous, node);
 			writer.node(node);
+			previous = node;
+			continue;
 		} else {
 			flush();
 			blocks.push(...renderBlocks(node.children ?? [], ctx));
 		}
+		previous = undefined;
 	}
 	flush();
 	return blocks;
