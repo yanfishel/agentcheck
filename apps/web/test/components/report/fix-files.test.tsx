@@ -13,6 +13,7 @@ import { FixFilesFooter } from "@/components/report/fix-files/footer";
 import { FixFilesPanel } from "@/components/report/fix-files/panel";
 import { FixFilesProvider } from "@/components/report/fix-files/provider";
 import { takeRerun } from "@/components/rerun-intent";
+import { ToastProvider } from "@/components/ui";
 import type { FixFilesPreview, FixFilesView } from "@/server/fix-files";
 
 vi.mock("next/navigation", () => ({
@@ -114,25 +115,31 @@ function setup(
 	role: "owner" | "admin" | "other" = "owner",
 ) {
 	render(
-		<FixFilesProvider
-			auditId="a1"
-			url="https://example.com"
-			finalUrl="https://www.example.com/"
-			mode="quick"
-			role={role}
-			initial={initial}
-		>
-			<FixFilesPanel />
-			{CATEGORY_IDS.map((id) => (
-				<div key={id} data-testid={`footer-${id}`}>
-					<FixFilesFooter categoryId={id} />
-				</div>
-			))}
-		</FixFilesProvider>,
+		<ToastProvider>
+			<FixFilesProvider
+				auditId="a1"
+				url="https://example.com"
+				finalUrl="https://www.example.com/"
+				mode="quick"
+				role={role}
+				initial={initial}
+			>
+				<FixFilesPanel />
+				{CATEGORY_IDS.map((id) => (
+					<div key={id} data-testid={`footer-${id}`}>
+						<FixFilesFooter categoryId={id} />
+					</div>
+				))}
+			</FixFilesProvider>
+		</ToastProvider>,
 	);
 }
 
 const panel = () => screen.getByRole("region", { name: "Fix files" });
+const openPromptMenu = () =>
+	userEvent.click(
+		within(panel()).getByRole("button", { name: "Prompt for your agent" }),
+	);
 const posts = () =>
 	fetchMock.mock.calls.filter(([, init]) => init?.method === "POST");
 
@@ -424,7 +431,7 @@ describe("Fix files", () => {
 		});
 		expect(
 			within(panel()).queryByRole("button", {
-				name: "Copy prompt for your agent",
+				name: "Prompt for your agent",
 			}),
 		).toBeNull();
 		expect(
@@ -471,7 +478,7 @@ describe("Fix files", () => {
 		}
 	});
 
-	it("Download zip and Copy prompt", async () => {
+	it("Download zip, and the prompt menu copies the prompt", async () => {
 		setup(done);
 		const zip = within(panel()).getByRole("link", { name: "Download zip" });
 		expect(zip).toHaveAttribute("href", "/api/audits/a1/fix-files/zip");
@@ -482,34 +489,43 @@ describe("Fix files", () => {
 		expect(file).toHaveAttribute("href", "/api/audits/a1/fix-files/robots.txt");
 		const prompt = "You are working in the repository of https://example.com/.";
 		fetchMock.mockResolvedValue(new Response(prompt));
+		await openPromptMenu();
 		await userEvent.click(
-			within(panel()).getByRole("button", {
-				name: "Copy prompt for your agent",
-			}),
+			await screen.findByRole("menuitem", { name: "Copy to clipboard" }),
 		);
 		expect(fetchMock).toHaveBeenCalledWith(
 			"/api/audits/a1/fix-files/prompt",
 			expect.objectContaining({ cache: "no-store" }),
 		);
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(prompt);
-		expect(
-			await within(panel()).findByRole("button", { name: "Copied" }),
-		).toBeInTheDocument();
+		expect(await screen.findByText("Prompt copied")).toBeInTheDocument();
+	});
+
+	it("the prompt menu downloads the prompt as a text file", async () => {
+		setup(done);
+		await openPromptMenu();
+		const link = await screen.findByRole("menuitem", {
+			name: "Download AGENT-PROMPT.txt",
+		});
+		expect(link).toHaveAttribute("href", "/api/audits/a1/fix-files/prompt");
+		expect(link).toHaveAttribute("download");
 	});
 
 	it("a failed prompt fetch does not show Copied", async () => {
 		setup(done);
 		fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
+		await openPromptMenu();
 		await userEvent.click(
-			within(panel()).getByRole("button", {
-				name: "Copy prompt for your agent",
-			}),
+			await screen.findByRole("menuitem", { name: "Copy to clipboard" }),
 		);
 		await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 		expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+		expect(screen.queryByText("Prompt copied")).toBeNull();
 		expect(
-			within(panel()).queryByRole("button", { name: "Copied" }),
-		).toBeNull();
+			await screen.findByText(
+				"Could not copy the prompt. Download it instead.",
+			),
+		).toBeInTheDocument();
 	});
 
 	describe("a file cut to a preview", () => {
@@ -532,18 +548,23 @@ describe("Fix files", () => {
 			);
 		};
 
-		it("shows the note with the sizes under the window", async () => {
+		it("shows a chip with the sizes in the status bar", async () => {
 			await openCut();
 			expect(
-				within(panel()).getByText(
-					"Showing the first 20 KB of llms-full.txt (1.2 MB). Download for the full file.",
-				),
+				within(panel()).getByText("Preview: 20 KB of 1.2 MB"),
 			).toBeVisible();
 		});
 
-		it("has no note for a file shown whole", () => {
+		it("has no chip for a file shown whole", () => {
 			setup(cut);
-			expect(within(panel()).queryByText(/Showing the first/)).toBeNull();
+			// Every tab's status line is in the page; only the cut file has a chip.
+			expect(within(panel()).getAllByText(/^Preview:/)).toHaveLength(1);
+			// It belongs to another tab: hidden from the page and from screen readers.
+			expect(
+				within(panel())
+					.getByText("Preview: 20 KB of 1.2 MB")
+					.closest('[aria-hidden="true"]'),
+			).not.toBeNull();
 		});
 
 		it("Copy fetches the full file", async () => {
