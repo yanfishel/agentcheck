@@ -7,6 +7,7 @@ import { ArrivalProvider, Arrive } from "./report/arrival";
 import {
 	CategorySection,
 	type CategorySummary,
+	WaitingSection,
 } from "./report/category-section";
 import { CategoryTiles } from "./report/category-tiles";
 import { CheckRow } from "./report/check-row";
@@ -137,14 +138,15 @@ function ReportBand({
  * rest at page width; `example` is the landing's static sample: the same band on
  * a rounded card, an Example chip, lower heading levels, no actions.
  *
- * A partial result (an audit still running) draws a placeholder tile for each
- * category not in yet, sections only for the categories that are, and keeps
- * the action row's place empty; asides and footers wait for the finished
- * report. With `animate` the pieces that appear after the first render arrive
- * animated (tiles pop and count up, sections, Fix files and the action row
- * fade and rise in, and a band that replaces `band` when the audit finishes
- * pops its ring in with a count-up). Tiles and sections are keyed by category,
- * so a later result never remounts them.
+ * A partial result (an audit still running) draws a placeholder tile and a
+ * waiting row for each category not in yet, and the action row the caller
+ * passes (drawn inert while the audit runs) with `notice` under it; asides and
+ * footers wait for the finished report. With `animate` the pieces that appear
+ * after the first render arrive animated (tiles pop and count up, a section
+ * fades and rises in over its waiting row and opens itself when it has
+ * problems, and a band that replaces `band` when the audit finishes pops its
+ * ring in with a count-up). Tiles and section slots are keyed by category, so
+ * a later result never remounts them.
  */
 export function AuditReport({
 	result,
@@ -174,7 +176,7 @@ export function AuditReport({
 	screenshot?: ScreenshotSources;
 	/** The site's icon on the band; without it a globe holds the place. */
 	favicon?: string;
-	/** The Fix files block, between the tiles and the sections (report page only). */
+	/** The Fix files block, between the tiles and the sections, with its own top margin (report page only). */
 	fixFiles?: ReactNode;
 	/** A last row inside each category section (the Fix files footer). */
 	categoryFooter?: (categoryId: string) => ReactNode;
@@ -182,7 +184,7 @@ export function AuditReport({
 	categoryAside?: (category: CategorySummary) => ReactNode;
 	/** Replaces the score band (the running page draws its own). */
 	band?: ReactNode;
-	/** Shown in the action row's place while the audit runs (the queue messages). */
+	/** Shown under the action row while the audit runs (the queue messages). */
 	notice?: ReactNode;
 	/** Pieces that appear after the first render arrive animated. */
 	animate?: boolean;
@@ -211,20 +213,32 @@ export function AuditReport({
 				({ id }) =>
 					result.categories.find((category) => category.id === id) ?? [],
 			);
+	// Every category has a slot in the sections, waiting until it is in.
+	const slots = complete
+		? complete.categories.map((category) => ({
+				id: category.id,
+				title: category.title,
+				category,
+			}))
+		: CATEGORIES.map(({ id, title }) => ({
+				id,
+				title,
+				category: categories.find((category) => category.id === id),
+			}));
 
 	return (
 		<article className="w-full">
 			<ArrivalProvider animate={animate}>
 				{band}
 				<div className={example ? "" : "mx-auto w-full max-w-page px-4"}>
-					{/* The action row's place is held while the audit runs, so the
-					    tiles do not move when it arrives. */}
+					{/* The action row is in place from the start (inert while the
+					    audit runs), so it turns on at done without moving anything. */}
 					{!example && (actions || !complete) ? (
-						<Arrive
-							present={Boolean(complete && actions)}
-							className="mt-4 min-h-[34px]"
-						>
-							{complete ? actions : notice}
+						<Arrive present={Boolean(actions)} className="mt-4 min-h-[34px]">
+							{actions}
+							{!complete && notice ? (
+								<div className={actions ? "mt-3" : undefined}>{notice}</div>
+							) : null}
 						</Arrive>
 					) : null}
 					<div className="mt-6">
@@ -238,21 +252,26 @@ export function AuditReport({
 							}))}
 						/>
 					</div>
-					{fixFiles ? (
-						<div className="mt-6 empty:hidden">{fixFiles}</div>
-					) : null}
+					{fixFiles}
 					<div className="mt-6 space-y-3">
-						{categories.map((category) => {
+						{slots.map(({ id, title, category }) => {
+							const heading = example ? "h4" : "h2";
+							if (!category) {
+								return (
+									<Arrive key={id} present={false}>
+										<WaitingSection id={id} title={title} heading={heading} />
+									</Arrive>
+								);
+							}
 							const summary = summarize(category);
 							return (
-								<Arrive key={category.id} present>
+								<Arrive key={id} present>
 									<CategorySection
 										category={summary}
-										heading={example ? "h4" : "h2"}
+										heading={heading}
 										footer={complete ? categoryFooter?.(category.id) : null}
 										aside={complete ? categoryAside?.(summary) : null}
 										defaultOpen={
-											complete !== null &&
 											defaultOpen === "problems" &&
 											summary.warn + summary.fail > 0
 										}

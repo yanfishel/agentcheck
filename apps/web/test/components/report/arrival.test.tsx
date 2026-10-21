@@ -119,6 +119,23 @@ function sectionTitles(): string[] {
 	);
 }
 
+/** The section rows waiting for their category. */
+function waitingRows(): HTMLElement[] {
+	return Array.from(document.querySelectorAll('section[aria-busy="true"]'));
+}
+
+/** One slot per category in the sections list, in order. */
+function slots(): HTMLElement[] {
+	const first = document.querySelector("section")?.parentElement;
+	return Array.from(first?.parentElement?.children ?? []) as HTMLElement[];
+}
+
+function expanded(title: string): string | null {
+	return screen
+		.getByRole("button", { name: new RegExp(title) })
+		.getAttribute("aria-expanded");
+}
+
 function arrivals(): Element[] {
 	return Array.from(document.querySelectorAll('[class*="animate-arrive-"]'));
 }
@@ -157,17 +174,42 @@ describe("partial report", () => {
 		expect(tile("AI Manifests").innerHTML).not.toContain("animate-pulse");
 	});
 
-	it("renders sections only for present categories, in category order", () => {
+	it("renders waiting rows for categories not yet in", () => {
 		render(report(partial(semantics, manifests), true));
 		expect(sectionTitles()).toEqual([
 			"category-ai-manifests",
 			"category-content-semantics",
 		]);
 		expect(screen.getByText("Content & Semantics message")).toBeTruthy();
-		// No actions, asides or footers until the report is done.
-		expect(screen.queryByText("Run again")).toBeNull();
+		// Every category has its row, in category order; the missing ones wait.
+		expect(slots().map((slot) => slot.textContent)).toEqual([
+			expect.stringContaining("AI Manifests"),
+			"Bot Access",
+			expect.stringContaining("Content & Semantics"),
+			"Agentic Actionability",
+		]);
+		const rows = waitingRows();
+		expect(rows).toHaveLength(2);
+		for (const row of rows) {
+			expect(row.querySelector("button")).toBeNull();
+			expect(row.innerHTML).toContain("animate-pulse");
+		}
+		// The actions are in place; asides and footers wait for the finished report.
+		expect(screen.getByText("Run again")).toBeTruthy();
 		expect(document.body.textContent).not.toContain("FOOTER-");
 		expect(document.body.textContent).not.toContain("ASIDE-");
+	});
+
+	it("a waiting row becomes the section in the same slot", () => {
+		const view = render(report(partial(manifests), true));
+		const slot = waitingRows()[0]?.parentElement;
+		expect(slot?.textContent).toBe("Bot Access");
+
+		view.rerender(report(partial(manifests, bots), true));
+		const section = document.getElementById("category-bot-access");
+		expect(section?.closest("section")?.parentElement).toBe(slot);
+		expect(slot?.querySelector('[aria-busy="true"]')).toBeNull();
+		expect(waitingRows()).toHaveLength(2);
 	});
 
 	it("animates a tile that fills while animate is on", async () => {
@@ -192,9 +234,6 @@ describe("partial report", () => {
 		view.rerender(report(done, true));
 		expect(tile("AI Manifests")).toBe(placeholder);
 		expect(screen.getByText("Run again")).toBeTruthy();
-		expect(
-			screen.getByText("Run again").closest('[class*="animate-arrive-rise"]'),
-		).toBeTruthy();
 	});
 
 	it("renders a done report without arrival animations", () => {
@@ -226,13 +265,39 @@ describe("partial report", () => {
 		expect(tile("AI Manifests").textContent).toContain("80");
 	});
 
-	it("opens a section with problems when the report is done", () => {
-		const view = render(report(partial(manifests), true));
-		const trigger = () =>
-			screen.getByRole("button", { name: /AI Manifests/ }) as HTMLElement;
-		expect(trigger().getAttribute("aria-expanded")).toBe("false");
+	it("opens an arriving section with problems, leaves a clean one closed", async () => {
+		const view = render(report(partial(), true));
+		view.rerender(report(partial(manifests, bots), true));
+		// Mounted closed, then opened by the accordion, so its height animates.
+		expect(expanded("AI Manifests")).toBe("false");
+		await advance(100);
+		expect(expanded("AI Manifests")).toBe("true");
+		expect(expanded("Bot Access")).toBe("false");
+
+		// The finished report leaves them as they are.
 		view.rerender(report(done, true));
-		expect(trigger().getAttribute("aria-expanded")).toBe("true");
+		await advance(100);
+		expect(expanded("AI Manifests")).toBe("true");
+		expect(expanded("Bot Access")).toBe("false");
+	});
+
+	it("a reopened report opens problem sections without animation", () => {
+		render(report(done, false));
+		expect(expanded("AI Manifests")).toBe("true");
+		expect(expanded("Bot Access")).toBe("false");
+	});
+
+	it("a reload mid-run opens the problem sections already in at once", () => {
+		render(report(partial(manifests, bots), true));
+		expect(expanded("AI Manifests")).toBe("true");
+		expect(expanded("Bot Access")).toBe("false");
+	});
+
+	it("with reduced motion an arriving section with problems opens at once", () => {
+		reducedMotion = true;
+		const view = render(report(partial(), true));
+		view.rerender(report(partial(manifests), true));
+		expect(expanded("AI Manifests")).toBe("true");
 	});
 });
 
@@ -242,6 +307,7 @@ describe("Fix files while the check runs", () => {
 		kinds: FixFilesView["kinds"],
 		pending: boolean,
 		result: AuditResult | PartialAuditView = partial(bots),
+		kindsSettled = false,
 	): ReactElement {
 		return (
 			<FixFilesProvider
@@ -251,6 +317,7 @@ describe("Fix files while the check runs", () => {
 				role={OWNER}
 				initial={{ ...none, kinds }}
 				pending={pending}
+				kindsSettled={kindsSettled}
 			>
 				<AuditReport result={result} animate fixFiles={<FixFilesPanel />} />
 			</FixFilesProvider>
@@ -283,11 +350,59 @@ describe("Fix files while the check runs", () => {
 		);
 	});
 
-	it("the block rises in when the first file is called for", () => {
+	const panel = () => screen.queryByRole("region", { name: "Fix files" });
+
+	it("Fix files waits, then shows its files", () => {
 		const view = render(fixFiles([], true, partial()));
-		expect(screen.queryByRole("region", { name: "Fix files" })).toBeNull();
+		// Waiting from the start: a pulsing line in place of the text, Generate off.
+		expect(panel()?.getAttribute("aria-busy")).toBe("true");
+		expect(panel()?.innerHTML).toContain("animate-pulse");
+		expect(panel()?.textContent).not.toContain("built from");
+		expect(
+			(
+				screen.getByRole("button", {
+					name: "Generate fix files",
+				}) as HTMLButtonElement
+			).disabled,
+		).toBe(true);
+
 		view.rerender(fixFiles(["robots"], true));
-		const panel = screen.getByRole("region", { name: "Fix files" });
-		expect(panel.className).toContain("animate-arrive-rise");
+		expect(panel()?.getAttribute("aria-busy")).toBeNull();
+		expect(panel()?.innerHTML).not.toContain("animate-pulse");
+		expect(panel()?.textContent).toContain(
+			"robots.txt built from your site's own pages. Available when the check finishes.",
+		);
+	});
+
+	it("Fix files collapses when settled with nothing to fix", async () => {
+		const view = render(fixFiles([], true, partial()));
+		view.rerender(fixFiles([], true, partial(manifests), true));
+		// Height and opacity go to zero first, then the block is gone.
+		expect(panel()).not.toBeNull();
+		expect(panel()?.closest('[class*="grid-rows-[0fr]"]')).not.toBeNull();
+		await advance(600);
+		expect(panel()).toBeNull();
+
+		// It stays gone, also when the audit finishes.
+		view.rerender(fixFiles([], false, done));
+		expect(panel()).toBeNull();
+	});
+
+	it("collapses at once with reduced motion", () => {
+		reducedMotion = true;
+		const view = render(fixFiles([], true, partial()));
+		expect(panel()).not.toBeNull();
+		view.rerender(fixFiles([], true, partial(manifests), true));
+		expect(panel()).toBeNull();
+	});
+
+	it("a reload after the kinds settled empty shows no block", () => {
+		render(fixFiles([], true, partial(manifests), true));
+		expect(panel()).toBeNull();
+	});
+
+	it("no Fix files block on a done report without kinds", () => {
+		render(fixFiles([], false, done));
+		expect(panel()).toBeNull();
 	});
 });

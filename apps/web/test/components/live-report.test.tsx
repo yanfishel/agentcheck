@@ -4,6 +4,8 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LiveReport, QUEUE_STALL_MS } from "@/components/live-report";
+import { ReportActions } from "@/components/report-actions";
+import { ToastProvider } from "@/components/ui";
 import type { FixFilesView } from "@/server/fix-files";
 
 const router = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn() }));
@@ -241,6 +243,34 @@ describe("LiveReport while the audit runs", () => {
 		expect(button.disabled).toBe(true);
 	});
 
+	it("draws a waiting row for every section and a waiting Fix files block", () => {
+		render(live({ status: "running" }));
+		expect(
+			document.querySelectorAll('section[aria-busy="true"]:not(#fix-files)'),
+		).toHaveLength(4);
+		expect(
+			screen
+				.getByRole("region", { name: "Fix files" })
+				.getAttribute("aria-busy"),
+		).toBe("true");
+	});
+
+	it("collapses Fix files once the kinds are settled empty", async () => {
+		render(live({ status: "running" }));
+		body = {
+			status: "running",
+			progress: {
+				categories: [bots],
+				hasFavicon: false,
+				fixKinds: [],
+				fixKindsSettled: true,
+			},
+		};
+		await advance(1_000);
+		await advance(1_000);
+		expect(screen.queryByRole("region", { name: "Fix files" })).toBeNull();
+	});
+
 	it("refreshes when the audit finishes", async () => {
 		render(live({ status: "running" }));
 		body = { status: "done", progress: null };
@@ -324,6 +354,55 @@ describe("LiveReport when the audit finishes", () => {
 		await advance(5_000);
 		expect(arrivals()).toHaveLength(0);
 		expect(fetch).not.toHaveBeenCalled();
+	});
+});
+
+describe("LiveReport actions", () => {
+	const actionProps = {
+		auditId: "a1",
+		mode: "quick" as const,
+		url: URL_,
+		canRerun: true,
+		canShare: true,
+		shareToken: null,
+		shareUrl: null,
+		exportBase: "/api/audits/a1/export",
+		badgeUrl: null,
+	};
+
+	function withActions(props: Partial<Props>): ReactElement {
+		return <ToastProvider>{live(props)}</ToastProvider>;
+	}
+
+	it("actions are present and inert while running, active at done", () => {
+		const view = render(
+			withActions({
+				status: "running",
+				pendingActions: <ReportActions {...actionProps} pending />,
+			}),
+		);
+		const share = screen.getByRole("button", { name: "Share", hidden: true });
+		const row = share.closest("[inert]");
+		expect(row).not.toBeNull();
+		expect(row).toHaveClass("opacity-45");
+		const slot = row?.parentElement;
+
+		view.rerender(
+			withActions({
+				...finished(),
+				final: {
+					result,
+					actions: <ReportActions {...actionProps} score={85} />,
+					now: Date.parse(result.timestamp),
+				},
+			}),
+		);
+		// The same row in the same place turns on: nothing remounts or moves.
+		const active = screen.getByRole("button", { name: "Share" });
+		expect(active).toBe(share);
+		expect(active.closest("[inert]")).toBeNull();
+		expect(active.closest(".opacity-45")).toBeNull();
+		expect(row?.parentElement).toBe(slot);
 	});
 });
 

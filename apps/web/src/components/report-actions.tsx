@@ -74,7 +74,8 @@ export function ReportActions({
 
 	return (
 		<div
-			className={`flex flex-wrap items-start justify-between gap-2${pending ? " opacity-45" : ""}`}
+			// When the audit finishes the same row turns on with a short fade.
+			className={`flex flex-wrap items-start justify-between gap-2 motion-safe:transition-opacity motion-safe:duration-300${pending ? " opacity-45" : ""}`}
 			inert={pending}
 		>
 			{/* Left: run it again (and, after a quick check, as a full one). */}

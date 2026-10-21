@@ -56,7 +56,10 @@ export interface FinalReport {
  * tiles and sections that arrive while the audit runs stay the same elements
  * when it finishes. While queued or running it polls the audit's status, fills
  * in the categories that are complete, shows the site's icon once fetched and
- * the Fix files that the arrived categories call for (Generate waits); on done
+ * the Fix files that the arrived categories call for (Generate waits; the
+ * block collapses once the kinds are settled with none), with the action row
+ * in place but inert (`pendingActions`, the same element type as
+ * `final.actions`, so the row stays and turns on at done); on done
  * or failed it refreshes the page, which hands it `final` (a failure renders
  * the failure view instead). Pieces arrive animated only if this page watched
  * the audit run: a report opened when done stays still.
@@ -191,6 +194,7 @@ export function LiveReport({
 					: { ...fixFiles.initial, kinds: progress?.fixKinds ?? [] }
 			}
 			pending={!done}
+			kindsSettled={progress?.fixKindsSettled ?? false}
 		>
 			{done ? (
 				<AuditReport

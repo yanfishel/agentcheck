@@ -1,11 +1,15 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { CategoryIcon } from "../category-meta";
+import { CategoryIcon, type CategoryId } from "../category-meta";
 import { Chip, Collapsible } from "../ui";
+import { useArrivalLive } from "./arrival";
 import { type CategoryResult, categoryTone } from "./markers";
 
 const OPEN_EVENT = "agentcheck:open-category";
+/** An arriving section opens this long after it mounts closed, so the accordion animates its height. */
+const ARRIVAL_OPEN_DELAY_MS = 60;
 
 /** Asks the accordion of a category to open (used by the score tiles). */
 export function openCategory(id: string): void {
@@ -61,7 +65,47 @@ function Summary({ category }: { category: CategorySummary }) {
 	);
 }
 
-/** One category card: an accordion whose panel holds the check rows. */
+/** The card's outer box, shared by a section and its waiting row. */
+const CARD =
+	"rounded-[14px] border border-line bg-surface px-4 py-1 shadow-card";
+
+/**
+ * A section's place while its category is not in yet: the icon and title, a
+ * pulsing chip where the score goes and a faded chevron; not openable.
+ */
+export function WaitingSection({
+	id,
+	title,
+	heading,
+}: {
+	id: CategoryId;
+	title: string;
+	heading: "h2" | "h4";
+}) {
+	const Heading = heading;
+	return (
+		<section aria-busy="true" className={CARD}>
+			{/* The height of a section's closed header, so nothing moves on arrival. */}
+			<div className="flex items-center gap-3 py-2">
+				<Heading className="flex min-w-0 flex-auto items-center gap-3 font-bold">
+					<CategoryIcon id={id} size="sm" />
+					{title}
+				</Heading>
+				<span className="h-6 w-16 rounded-full bg-surface-2 motion-safe:animate-pulse" />
+				<ChevronDown
+					aria-hidden="true"
+					className="size-4 shrink-0 text-muted/40"
+				/>
+			</div>
+		</section>
+	);
+}
+
+/**
+ * One category card: an accordion whose panel holds the check rows. Open from
+ * the start with `defaultOpen`; a section that arrives while its report
+ * animates mounts closed and then opens, so the accordion animates its height.
+ */
 export function CategorySection({
 	category,
 	defaultOpen,
@@ -79,15 +123,16 @@ export function CategorySection({
 	aside?: ReactNode;
 	children: ReactNode;
 }) {
-	const [open, setOpen] = useState(defaultOpen);
-	// A section that arrived while its audit ran opens when the finished report
-	// calls for it, as the report opens it on a fresh load.
-	const [wasDefaultOpen, setWasDefaultOpen] = useState(defaultOpen);
-	if (wasDefaultOpen !== defaultOpen) {
-		setWasDefaultOpen(defaultOpen);
-		if (defaultOpen) setOpen(true);
-	}
+	const live = useArrivalLive();
+	const [openOnArrival] = useState(() => defaultOpen && live);
+	const [open, setOpen] = useState(defaultOpen && !openOnArrival);
 	const anchor = categoryAnchor(category.id);
+
+	useEffect(() => {
+		if (!openOnArrival) return;
+		const timer = setTimeout(() => setOpen(true), ARRIVAL_OPEN_DELAY_MS);
+		return () => clearTimeout(timer);
+	}, [openOnArrival]);
 
 	useEffect(() => {
 		function onOpen(event: Event) {
@@ -107,7 +152,7 @@ export function CategorySection({
 
 	const Heading = heading;
 	return (
-		<section className="rounded-[14px] border border-line bg-surface px-4 py-1 shadow-card">
+		<section className={CARD}>
 			{category.checks === 0 ? (
 				<Heading id={anchor} className="py-2 pr-6">
 					<Summary category={category} />

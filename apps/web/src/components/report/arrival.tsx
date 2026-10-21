@@ -42,6 +42,11 @@ export function ArrivalProvider({
 	);
 }
 
+/** Whether pieces that appear now arrive animated (see `ArrivalProvider`). */
+export function useArrivalLive(): boolean {
+	return useContext(ArrivalContext);
+}
+
 /**
  * Whether a piece arrived while the viewer watched: it mounted present, or
  * turned present, while arrivals animate. Once true it stays true, so the

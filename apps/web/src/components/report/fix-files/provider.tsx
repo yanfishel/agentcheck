@@ -47,6 +47,8 @@ type FixFilesContext = {
 	canStart: boolean;
 	/** The audit still runs: nothing can be generated until it finishes. */
 	pending: boolean;
+	/** `view.kinds` is final: the audit finished, or every category the kinds come from is in. */
+	kindsSettled: boolean;
 	start(): void;
 	openFile(kind: FixKind): void;
 	activeKind: FixKind | null;
@@ -77,6 +79,7 @@ export function FixFilesProvider({
 	role,
 	initial,
 	pending = false,
+	kindsSettled = false,
 	children,
 }: {
 	auditId: string;
@@ -93,6 +96,8 @@ export function FixFilesProvider({
 	 * `initial` (the finished audit's view) is taken over.
 	 */
 	pending?: boolean;
+	/** While pending: every category the kinds come from is in, so they no longer change. */
+	kindsSettled?: boolean;
 	children: ReactNode;
 }) {
 	const [view, setView] = useState<FixFilesView>(initial);
@@ -238,6 +243,7 @@ export function FixFilesProvider({
 			gaveUp,
 			canStart,
 			pending,
+			kindsSettled: !pending || kindsSettled,
 			start,
 			openFile,
 			activeKind,
@@ -254,6 +260,7 @@ export function FixFilesProvider({
 			gaveUp,
 			canStart,
 			pending,
+			kindsSettled,
 			start,
 			openFile,
 			activeKind,
