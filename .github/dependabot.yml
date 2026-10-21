@@ -12,3 +12,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # One pull request for all action updates, so they do not queue up
+      # behind each other on the CI gate.
+      actions:
+        patterns: ["*"]
