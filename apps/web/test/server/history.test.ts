@@ -18,6 +18,7 @@ const audit = (over: Partial<Audit>): Audit => {
 		mode: "quick",
 		status: "done",
 		result: null,
+		partial: null,
 		score: 80,
 		grade: "B",
 		error: null,
