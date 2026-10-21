@@ -1,4 +1,5 @@
 import {
+	audits,
 	claimAudit,
 	completeAudit,
 	createAudit,
@@ -10,6 +11,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 let handle: TestDbHandle;
 vi.mock("@/server/current-user", () => ({ getDb: () => handle.db }));
+vi.mock("server-only", () => ({}));
+vi.mock("next/headers", () => ({
+	headers: async () => new Headers({ host: "localhost:3000" }),
+}));
 
 import { generateMetadata } from "@/app/r/[shareToken]/page";
 
@@ -55,8 +60,35 @@ describe("shared report metadata", () => {
 		expect(m.title).toBe(title);
 		expect(m.description).toBe(description);
 		expect(m.openGraph).toMatchObject({ title, description });
-		expect(m.twitter).toMatchObject({ card: "summary", title, description });
+		expect(m.twitter).toMatchObject({
+			card: "summary_large_image",
+			title,
+			description,
+		});
+		expect(m.openGraph?.images).toEqual([
+			{
+				url: `http://localhost:3000/api/shared/${TOKEN}/og.png`,
+				width: 1200,
+				height: 630,
+				alt: "AgentCheck: example.com scores 78/100 (B)",
+			},
+		]);
 		expect(m.robots).toEqual({ index: false });
+	});
+
+	it("gives an unfinished shared audit the generic fallback without a picture", async () => {
+		await handle.db.insert(audits).values({
+			url: "https://example.com/",
+			host: "example.com",
+			mode: "quick",
+			userId: "owner",
+			status: "queued",
+			shareToken: TOKEN,
+		});
+		const m = await meta(TOKEN);
+		// An unfinished audit has no shared view at all: the generic fallback.
+		expect(m.openGraph).toBeUndefined();
+		expect(m.twitter).toBeUndefined();
 	});
 
 	it("keeps the generic fallback for an unknown token", async () => {

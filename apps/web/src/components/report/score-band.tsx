@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { SiteIcon } from "../site-icon";
 import { Gauge } from "./gauge";
 import { GradeMark, gradeStroke } from "./grade-mark";
+import { ScoreConfetti } from "./score-confetti";
 import { type ScreenshotSources, ScreenshotThumb } from "./screenshot-thumb";
 
 export { gradeStroke };
@@ -110,6 +111,7 @@ export function ScoreBand({
 	surface = true,
 	screenshot,
 	favicon,
+	celebrate = false,
 }: {
 	result: AuditResult;
 	chips: ReactNode;
@@ -120,7 +122,12 @@ export function ScoreBand({
 	screenshot?: ScreenshotSources;
 	/** The site's icon beside the URL; without it a globe holds the place. */
 	favicon?: string;
+	/** Fire confetti from the ring (a full report that scores 100). */
+	celebrate?: boolean;
 }) {
+	const ring = (
+		<ScoreRing score={result.score} grade={result.grade} large={!surface} />
+	);
 	const Heading = heading;
 	return (
 		<section
@@ -135,7 +142,7 @@ export function ScoreBand({
 			<div
 				className={`grid grid-cols-[auto_1fr] items-center gap-x-5 gap-y-4 ${screenshot ? "md:grid-cols-[auto_1fr_auto]" : ""}`}
 			>
-				<ScoreRing score={result.score} grade={result.grade} large={!surface} />
+				{celebrate ? <ScoreConfetti>{ring}</ScoreConfetti> : ring}
 				<div
 					className={`order-last col-span-2 min-w-0 ${screenshot ? "md:order-none md:col-span-1" : "sm:order-none sm:col-span-1 sm:flex sm:items-end sm:gap-5"}`}
 				>

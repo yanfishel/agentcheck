@@ -13,7 +13,8 @@
 			"!.claude/skills/clerk*",
 			"!skills-lock.json",
 			"!packages/db/drizzle",
-			"!apps/web/public/example"
+			"!apps/web/public/example",
+			"!docs/superpowers"
 		]
 	},
 	"formatter": {

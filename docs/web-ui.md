@@ -117,13 +117,21 @@ components and the copy.
   holds its URL (`https://agentcheck.dev`, a constant because the landing is
   built before the server's env exists) and the root metadata (metadataBase,
   OpenGraph, Twitter card); `app/robots.ts`, `app/sitemap.ts`,
-  `app/opengraph-image.tsx` (our font from `app/_og/`, each font URL a literal
-  or the bundler loads one file for both weights); `public/llms.txt`,
+  `app/opengraph-image.tsx` (built at build time, `drawSiteOg`; our font from
+  `app/_og/`, each font URL a literal or the bundler loads one file for both
+  weights); `public/llms.txt`,
   `public/llms-full.txt` and `public/index.md` are hand-kept, and
   `test/app/ai-ready.test.tsx` fails when a landing heading is missing from
   `index.md` or `llms-full.txt`, so change them with the landing's copy. The
   landing carries JSON-LD (`landing/structured-data.tsx`) and
   `<link rel="alternate" type="text/markdown" href="/index.md">`.
+- OG pictures are drawn only in `app/_og/draw.tsx`: `drawSiteOg` (the site
+  picture) and `drawReportOg` (a shared report's, served at
+  `/api/shared/[token]/og.png`). Report layout: brand row with the score ring
+  top right, the grade seal before "AI readiness of" + host, the call line at
+  the bottom, the hero grid with 64px cells. A long host shrinks, then is cut
+  from the left with "…". Grade letters are HTML text, never SVG `<text>`: the
+  production renderer has no fonts for SVG text.
 - On a phone (below `sm`) the header shows the mark only; the name stays for
   screen readers.
 - Same-page anchors scroll smoothly (`scroll-behavior` on `<html>` with
@@ -137,6 +145,13 @@ components and the copy.
   (`flex-auto min-w-0`) and the chips in another; chips that do not fit
   beside the whole title wrap under it. The title never gets a zero basis: at
   320 px that left it a sliver of the line and its words ran under the chips.
+- Confetti: a done full report (`mode === "full"`) with a total score of 100
+  fires one salvo from the band's ring (`report/score-confetti.tsx`, four shots
+  350 ms apart, `canvas-confetti` loaded by a dynamic `import()` only then), on
+  every open of the report page and of the shared one. Never on a quick check,
+  on the landing example or with `prefers-reduced-motion: reduce` (checked
+  before the import, so nothing is downloaded). It fires once per mount, so the
+  polling `router.refresh()` does not repeat it; no loop, no setting.
 
 ## Account-gated actions
 

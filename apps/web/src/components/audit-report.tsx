@@ -129,6 +129,7 @@ export function AuditReport({
 				surface={false}
 				screenshot={screenshot}
 				favicon={favicon}
+				celebrate={mode === "full" && result.score === 100}
 			/>
 		</PlumBand>
 	);

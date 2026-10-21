@@ -421,3 +421,22 @@ describe("checkMarker", () => {
 		expect(checkMarker(status)).toBe(marker);
 	});
 });
+
+describe("AuditReport confetti", () => {
+	const perfect = { ...result, score: 100, grade: "A+" as const };
+	const has = (node: ReactElement) => render(node).includes("data-confetti");
+
+	it("wraps the ring of a full report that scores 100", () => {
+		expect(has(<AuditReport result={perfect} mode="full" />)).toBe(true);
+	});
+
+	it("skips a quick 100, a full 99 and the landing example", () => {
+		expect(has(<AuditReport result={perfect} mode="quick" />)).toBe(false);
+		expect(
+			has(<AuditReport result={{ ...perfect, score: 99 }} mode="full" />),
+		).toBe(false);
+		expect(
+			has(<AuditReport result={perfect} mode="full" variant="example" />),
+		).toBe(false);
+	});
+});
