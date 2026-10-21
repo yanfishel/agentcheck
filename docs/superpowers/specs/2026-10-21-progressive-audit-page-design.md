@@ -146,3 +146,38 @@ they are.
   (fake timers, mocked fetch), reduced motion.
 - Updating `CLAUDE.md` (engine and worker rules, the option keys) and
   `docs/web-ui.md` (the running page).
+
+## Revision 2: the whole report in place from the start (agreed 2026-10-21)
+
+After seeing the first build live, the author asked for every part of the
+report to be on the page from the first moment, in a quiet waiting state, and
+to fill in as data arrives. Approved live in
+`2026-10-21-progressive-audit-page/spike-v2.tsx` (scenarios "site with errors"
+and "site at 100"). This replaces the parts of "What the viewer sees" it
+contradicts; everything else above stands.
+
+- **Action row.** Run again, Full check (after a quick check), Share, Get
+  badge and Export are in their place from the start (the same buttons the
+  finished report will show to this viewer), faded and inactive (not
+  clickable, not focusable); at done they turn fully on with a short fade.
+  Nothing in the row moves.
+- **Sections.** All four category sections are there from the start as
+  waiting rows: icon and title as usual, a pulsing chip where the score goes,
+  a faded chevron, not openable. When a category arrives its row becomes the
+  real section: with warnings or failures it **opens itself** with the
+  accordion's own height animation; without, it stays closed but becomes
+  openable. Opening a section pushes the rows under it down smoothly; that is
+  accepted. A reopened finished report is unchanged (sections with problems
+  open, nothing animates); a reload mid-run shows the categories already in
+  as filled sections, open per the same rule, without animation.
+- **Fix files.** On a page that would show the block (today's rules on who
+  sees it), the block is there from the start in a waiting state: muted icon
+  and title, a pulsing line in place of the text, Generate inactive. When the
+  arrived categories call for fix files, the text appears ("… built from your
+  site's own pages. Available when the check finishes.") and the button stays
+  inactive until done. When every category that fix files are built from has
+  arrived and none calls for a file, the block **collapses** (height and
+  opacity to zero, ~0.5 s) and the sections below move up; it stays gone.
+  The author chose collapsing over a permanent "nothing to fix" state.
+- **Reduced motion.** Sections open and the Fix files block disappears
+  without animation; the waiting pulses are static.
