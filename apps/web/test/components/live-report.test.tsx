@@ -180,6 +180,21 @@ describe("LiveReport while the audit runs", () => {
 		expect(fetch).toHaveBeenCalledWith("/api/audits/a1", expect.anything());
 	});
 
+	it("starts filled in from the server's progress, without animation", () => {
+		render(
+			live({
+				status: "running",
+				initialProgress: {
+					categories: [manifests],
+					hasFavicon: false,
+					fixKinds: [],
+				},
+			}),
+		);
+		expect(tile("AI Manifests").textContent).toContain("80");
+		expect(tile("AI Manifests").className).not.toContain("animate-arrive-pop");
+	});
+
 	it("shows the favicon once the status says so", async () => {
 		render(live({ status: "running" }));
 		expect(urlLine().querySelector("img")).toBeNull();

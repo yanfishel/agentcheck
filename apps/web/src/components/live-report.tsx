@@ -69,6 +69,7 @@ export function LiveReport({
 	queuedMs,
 	final,
 	fixFiles,
+	initialProgress = null,
 }: {
 	id: string;
 	status: ActiveStatus | "done";
@@ -79,6 +80,8 @@ export function LiveReport({
 	/** The finished audit; set with `status === "done"`. */
 	final?: FinalReport;
 	fixFiles: { role: FixFilesRole; initial: FixFilesView };
+	/** The progress the server knew when it rendered, so a reload mid-run starts filled in. */
+	initialProgress?: AuditProgressData | null;
 }) {
 	const router = useRouter();
 	const done = initialStatus === "done" && final !== undefined;
@@ -86,7 +89,9 @@ export function LiveReport({
 	const [status, setStatus] = useState<ActiveStatus>(
 		initialStatus === "queued" ? "queued" : "running",
 	);
-	const [progress, setProgress] = useState<AuditProgressData | null>(null);
+	const [progress, setProgress] = useState<AuditProgressData | null>(
+		initialProgress,
+	);
 	const [gone, setGone] = useState(false);
 	const [gaveUp, setGaveUp] = useState(false);
 	const [stalled, setStalled] = useState(

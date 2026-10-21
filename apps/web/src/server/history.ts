@@ -46,7 +46,8 @@ export function groupAuditsByUrl(audits: Audit[]): HistoryGroup[] {
 		};
 		const group = groups.get(audit.url);
 		const shot = audit.hasScreenshot ? audit.id : null;
-		const icon = audit.hasFavicon ? audit.id : null;
+		// A running audit may already have its favicon; history shows finished data only.
+		const icon = audit.status === "done" && audit.hasFavicon ? audit.id : null;
 		if (group) {
 			group.all.push(run);
 			group.screenshotId ??= shot;

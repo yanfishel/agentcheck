@@ -8,6 +8,7 @@ import { type FinalReport, LiveReport } from "../../../components/live-report";
 import type { FixFilesRole } from "../../../components/report/fix-files/provider";
 import { ReportActions } from "../../../components/report-actions";
 import {
+	auditStatusBody,
 	canViewAudit,
 	currentViewer,
 	requireAuditAccess,
@@ -118,6 +119,9 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 				mode={audit.mode}
 				queuedMs={Date.now() - audit.createdAt.getTime()}
 				final={final}
+				initialProgress={
+					audit.status === "done" ? null : auditStatusBody(audit).progress
+				}
 				fixFiles={{ role, initial: fixFiles }}
 			/>
 		);
