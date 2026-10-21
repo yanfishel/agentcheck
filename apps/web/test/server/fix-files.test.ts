@@ -431,7 +431,7 @@ describe("fix files handlers", () => {
 				expect(res.headers.get("x-content-type-options")).toBe("nosniff");
 				expect(res.headers.get("cache-control")).toBe("private, no-store");
 				expect(await res.text()).toContain(
-					"npx agentcheck https://www.codeframe.pro/",
+					"npx agentcheck-dev https://www.codeframe.pro/",
 				);
 			}
 		});

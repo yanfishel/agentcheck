@@ -66,12 +66,12 @@ No tool can promise that, and anyone who does is selling something. A good score
 The CLI runs the same engine. Fail the build when the score drops.
 
 ```sh
-npx agentcheck https://your-site.com
-npx agentcheck https://your-site.com --threshold=85 --format=json   # in CI
-npx agentcheck fix https://your-site.com   # write the files that fix it
+npx agentcheck-dev https://your-site.com
+npx agentcheck-dev https://your-site.com --threshold=85 --format=json   # in CI
+npx agentcheck-dev fix https://your-site.com   # write the files that fix it
 ```
 
-The CLI is [agentcheck on npm](https://www.npmjs.com/package/agentcheck); the source is at https://github.com/yanfishel/agentcheck (MIT).
+The CLI is [agentcheck-dev on npm](https://www.npmjs.com/package/agentcheck-dev); the source is at https://github.com/yanfishel/agentcheck (MIT).
 
 ## Badge
 

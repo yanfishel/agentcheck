@@ -17,7 +17,7 @@ web service, Docker.
 
 ```sh
 pnpm install
-pnpm --filter agentcheck build
+pnpm --filter agentcheck-dev build
 node apps/cli/dist/cli.mjs https://example.com   # the CLI from source
 ```
 

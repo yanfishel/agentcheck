@@ -9,9 +9,9 @@
 See how ChatGPT, Claude, Perplexity and browser agents read your site,
 and get the files that fix what they trip over.
 
-[**Check your site at agentcheck.dev**](https://agentcheck.dev) · [`npx agentcheck <url>`](#for-developers)
+[**Check your site at agentcheck.dev**](https://agentcheck.dev) · [`npx agentcheck-dev <url>`](#for-developers)
 
-[![npm](https://img.shields.io/npm/v/agentcheck?color=6e2a5e)](https://www.npmjs.com/package/agentcheck)
+[![npm](https://img.shields.io/npm/v/agentcheck-dev?color=6e2a5e)](https://www.npmjs.com/package/agentcheck-dev)
 [![CI](https://github.com/yanfishel/agentcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/yanfishel/agentcheck/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/node-%3E%3D22.18-3c873a)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0a7bbb)](LICENSE)
@@ -52,7 +52,7 @@ and the `<head>` tags, built from your own pages.
 **Audit from the terminal**
 
 ```sh
-npx agentcheck https://your-site.com
+npx agentcheck-dev https://your-site.com
 ```
 
 ```text
@@ -69,7 +69,7 @@ npx agentcheck https://your-site.com
 **Fail the build**
 
 ```sh
-npx agentcheck "$URL" --threshold=85 --format=json
+npx agentcheck-dev "$URL" --threshold=85 --format=json
 ```
 
 Exits non-zero below the threshold; stdout is the JSON
@@ -84,7 +84,7 @@ Browser checks use your installed Chrome, or
 ### Let your coding agent fix it
 
 ```sh
-npx agentcheck fix https://your-site.com
+npx agentcheck-dev fix https://your-site.com
 ```
 
 ```text
@@ -114,7 +114,7 @@ browser. Details: [docs/spec.md](docs/spec.md).
 |---|---|
 | `packages/core` | The audit engine, reporters and fix-file generator |
 | `packages/db` | PostgreSQL schema, migrations and the job queue |
-| `apps/cli` | The `agentcheck` CLI on npm |
+| `apps/cli` | The CLI, `agentcheck-dev` on npm |
 | `apps/web` | The agentcheck.dev web app (Next.js) |
 | `apps/worker` | The queue worker that runs audits for the service |
 | `deploy` | Docker images and the Compose stack ([docs/deploy.md](docs/deploy.md)) |

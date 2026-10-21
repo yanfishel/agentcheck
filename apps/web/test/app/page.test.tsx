@@ -41,7 +41,7 @@ describe("Home", () => {
 		]) {
 			expect(html).toContain(text);
 		}
-		expect(html).toContain("https://www.npmjs.com/package/agentcheck");
+		expect(html).toContain("https://www.npmjs.com/package/agentcheck-dev");
 		// Each guide card shows its weight as a ring, from the scoring module.
 		for (const weight of [20, 30, 25]) {
 			expect(html).toContain(`aria-label="${weight}% of the score"`);
