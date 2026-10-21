@@ -17,7 +17,7 @@ jobs:
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: node scripts/check-release-version.mjs "$GITHUB_REF_NAME"
 
   gate:
@@ -32,7 +32,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Image tag
         id: tag
         run: |
@@ -79,7 +79,7 @@ jobs:
       contents: read
       id-token: write # npm trusted publishing (OIDC) and the provenance attestation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
