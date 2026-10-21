@@ -1,4 +1,4 @@
-import type { AuditResult, CheckResult } from "../types.ts";
+import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 import type { FixKind } from "./types.ts";
 
 const FIXED_BY: Record<FixKind, string[]> = {
@@ -38,5 +38,20 @@ export function fixKindsFor(
 	);
 	return FIX_KIND_ORDER.filter((kind) =>
 		FIXED_BY[kind].some((id) => failing.has(id)),
+	);
+}
+
+/**
+ * True once every check that decides a fix kind is among the given
+ * categories, so `fixKindsFor` on them can no longer grow.
+ */
+export function fixKindsSettled(
+	categories: Pick<CategoryResult, "checks">[],
+): boolean {
+	const have = new Set(
+		categories.flatMap((category) => category.checks).map((check) => check.id),
+	);
+	return Object.values(FIXED_BY).every((ids) =>
+		ids.every((id) => have.has(id)),
 	);
 }

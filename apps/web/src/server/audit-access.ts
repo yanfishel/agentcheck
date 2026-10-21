@@ -1,6 +1,10 @@
 import "server-only";
 import type { AuditResult } from "@agentcheck/core";
-import { type FixKind, fixKindsFor } from "@agentcheck/core/fixes";
+import {
+	type FixKind,
+	fixKindsFor,
+	fixKindsSettled,
+} from "@agentcheck/core/fixes";
 import { completeCategories } from "@agentcheck/core/progress";
 import {
 	type Audit,
@@ -48,6 +52,8 @@ export interface AuditProgressData {
 	categories: AuditResult["categories"];
 	hasFavicon: boolean;
 	fixKinds: FixKind[];
+	/** Every check that decides a fix kind is in, so `fixKinds` can no longer grow. */
+	fixKindsSettled: boolean;
 }
 
 /** The public status of an audit, as returned by `GET /api/audits/[id]`. */
@@ -73,6 +79,7 @@ function progressOf(audit: Audit): AuditProgressData | null {
 		categories,
 		hasFavicon: audit.hasFavicon,
 		fixKinds: fixKindsFor({ categories }),
+		fixKindsSettled: fixKindsSettled(categories),
 	};
 }
 

@@ -292,4 +292,39 @@ describe("ReportActions", () => {
 			mode: "full",
 		});
 	});
+
+	describe("pending", () => {
+		it("draws the viewer's buttons faded and inert, and opens nothing", async () => {
+			setup({ pending: true, score: undefined, mode: "quick" });
+			for (const name of ["Run again", "Full check", "Share", "Get badge"]) {
+				expect(
+					screen.getByRole("button", { name, hidden: true }),
+				).toBeInTheDocument();
+			}
+			const row = screen
+				.getByRole("button", { name: "Share", hidden: true })
+				.closest("[inert]");
+			expect(row).not.toBeNull();
+			expect(row).toHaveClass("opacity-45");
+			// The browser keeps inert content out of focus and clicks; jsdom does not, so a click must still open nothing.
+			await userEvent.click(
+				screen.getByRole("button", { name: "Share", hidden: true }),
+			);
+			expect(screen.queryByRole("dialog")).toBeNull();
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it("follows the same viewer rules as the finished report", () => {
+			setup({ pending: true, score: undefined, canRerun: false, mode: "full" });
+			expect(
+				screen.queryByRole("button", { name: "Run again", hidden: true }),
+			).toBeNull();
+			expect(
+				screen.queryByRole("button", { name: "Full check", hidden: true }),
+			).toBeNull();
+			expect(
+				screen.getByRole("button", { name: "Export", hidden: true }),
+			).toBeInTheDocument();
+		});
+	});
 });

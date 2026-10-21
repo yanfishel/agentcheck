@@ -36,11 +36,13 @@ export function ReportActions({
 	shareUrl,
 	exportBase,
 	badgeUrl,
+	pending = false,
 }: {
 	auditId: string;
 	mode: "quick" | "full";
 	url: string;
-	score: number;
+	/** Required unless `pending`: the share text and the badge need it. */
+	score?: number;
 	canRerun: boolean;
 	/** The viewer owns the audit, so it can be shared. */
 	canShare: boolean;
@@ -48,6 +50,12 @@ export function ReportActions({
 	shareUrl: string | null;
 	exportBase: string;
 	badgeUrl: string | null;
+	/**
+	 * The audit has not finished: the same buttons this viewer gets once it
+	 * has, drawn faded and inert so nothing can be pressed or focused and no
+	 * dialog can open.
+	 */
+	pending?: boolean;
 }) {
 	const [share, setShare] = useState<Share | null>(
 		shareToken && shareUrl ? { token: shareToken, url: shareUrl } : null,
@@ -65,7 +73,10 @@ export function ReportActions({
 	}
 
 	return (
-		<div className="flex flex-wrap items-start justify-between gap-2">
+		<div
+			className={`flex flex-wrap items-start justify-between gap-2${pending ? " opacity-45" : ""}`}
+			inert={pending}
+		>
 			{/* Left: run it again (and, after a quick check, as a full one). */}
 			{canRerun ? (
 				<div className="flex flex-wrap items-start gap-2">
@@ -118,7 +129,7 @@ export function ReportActions({
 					]}
 				/>
 			</div>
-			{canShare ? (
+			{canShare && !pending && score !== undefined ? (
 				<ShareDialog
 					open={shareOpen}
 					onOpenChange={setShareOpen}
@@ -128,27 +139,31 @@ export function ReportActions({
 					text={`AI readiness of ${hostOf(url)}: ${score}/100 on AgentCheck`}
 				/>
 			) : null}
-			<BadgeDialog
-				open={badgeOpen}
-				onOpenChange={setBadgeOpen}
-				score={score}
-				badgeUrl={badgeFor(share, shareToken, badgeUrl)}
-				shareUrl={share?.url ?? null}
-				onShare={requestShare}
-			/>
-			<AccountDialog
-				open={prompt === "guest"}
-				onOpenChange={(open) => setPrompt(open ? "guest" : null)}
-				title="Sharing needs an account"
-				description="Shared links belong to an account. Sign up or sign in, run the check from your account, and share that report."
-			/>
-			<Dialog
-				open={prompt === "not-owner"}
-				onOpenChange={(open) => setPrompt(open ? "not-owner" : null)}
-				title="Share it from your account"
-				description="Only the account that ran this check can share it. Run it again from your account and share that report."
-				actions={<RerunButton url={url} mode={mode} />}
-			/>
+			{pending || score === undefined ? null : (
+				<>
+					<BadgeDialog
+						open={badgeOpen}
+						onOpenChange={setBadgeOpen}
+						score={score}
+						badgeUrl={badgeFor(share, shareToken, badgeUrl)}
+						shareUrl={share?.url ?? null}
+						onShare={requestShare}
+					/>
+					<AccountDialog
+						open={prompt === "guest"}
+						onOpenChange={(open) => setPrompt(open ? "guest" : null)}
+						title="Sharing needs an account"
+						description="Shared links belong to an account. Sign up or sign in, run the check from your account, and share that report."
+					/>
+					<Dialog
+						open={prompt === "not-owner"}
+						onOpenChange={(open) => setPrompt(open ? "not-owner" : null)}
+						title="Share it from your account"
+						description="Only the account that ran this check can share it. Run it again from your account and share that report."
+						actions={<RerunButton url={url} mode={mode} />}
+					/>
+				</>
+			)}
 		</div>
 	);
 }

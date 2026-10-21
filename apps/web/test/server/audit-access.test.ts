@@ -192,6 +192,39 @@ describe("auditStatusBody", () => {
 			expect(body).not.toHaveProperty("partial");
 		});
 
+		it("progress carries fixKindsSettled", () => {
+			const inCategory = (
+				category: FinishedCheck["category"],
+				ids: string[],
+			): FinishedCheck[] =>
+				ids.map((id) => ({ ...finished(id, id, "pass"), category }));
+			const more = [
+				...inCategory("bot-access", [
+					"ai-bots-allowed",
+					"noai-directives",
+					"asset-access",
+				]),
+				...inCategory("content-semantics", [
+					"heading-hierarchy",
+					"structured-data",
+					"opengraph",
+					"content-density",
+				]),
+			];
+			const all = {
+				...manifests,
+				...Object.fromEntries(more.map((c) => [c.id, c])),
+			};
+			expect(
+				auditStatusBody(audit({ status: "running", partial: all })).progress
+					?.fixKindsSettled,
+			).toBe(true);
+			expect(
+				auditStatusBody(audit({ status: "running", partial: manifests }))
+					.progress?.fixKindsSettled,
+			).toBe(false);
+		});
+
 		it.each<AuditStatus>(["queued", "done", "failed"])(
 			"is null for a %s audit even with partial data present",
 			(status) => {
@@ -206,6 +239,7 @@ describe("auditStatusBody", () => {
 				categories: [],
 				hasFavicon: false,
 				fixKinds: [],
+				fixKindsSettled: false,
 			});
 		});
 

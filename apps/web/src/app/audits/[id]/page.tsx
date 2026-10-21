@@ -74,9 +74,28 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 			role === "other" || !result ? null : await getFixFiles(getDb(), audit.id),
 		);
 		let final: FinalReport | undefined;
-		if (result) {
+		const token = audit.shareToken;
+		const canRerun = viewer !== null || audit.mode === "quick";
+		const canShare = viewer !== null && viewer.id === audit.userId;
+		let pendingActions: ReactNode;
+		if (!result) {
+			// The same buttons the finished report will show this viewer, inert.
+			pendingActions = (
+				<ReportActions
+					pending
+					auditId={audit.id}
+					mode={audit.mode}
+					url={audit.url}
+					canRerun={canRerun}
+					canShare={canShare}
+					shareToken={token}
+					shareUrl={null}
+					exportBase={`/api/audits/${audit.id}/export`}
+					badgeUrl={null}
+				/>
+			);
+		} else {
 			const requestHeaders = await headers();
-			const token = audit.shareToken;
 			final = {
 				result,
 				now: Date.now(),
@@ -95,8 +114,8 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 						mode={audit.mode}
 						url={audit.url}
 						score={result.score}
-						canRerun={viewer !== null || audit.mode === "quick"}
-						canShare={viewer !== null && viewer.id === audit.userId}
+						canRerun={canRerun}
+						canShare={canShare}
 						shareToken={token}
 						shareUrl={token ? shareUrlFromHeaders(token, requestHeaders) : null}
 						exportBase={`/api/audits/${audit.id}/export`}

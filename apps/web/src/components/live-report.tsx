@@ -70,6 +70,7 @@ export function LiveReport({
 	final,
 	fixFiles,
 	initialProgress = null,
+	pendingActions,
 }: {
 	id: string;
 	status: ActiveStatus | "done";
@@ -82,6 +83,8 @@ export function LiveReport({
 	fixFiles: { role: FixFilesRole; initial: FixFilesView };
 	/** The progress the server knew when it rendered, so a reload mid-run starts filled in. */
 	initialProgress?: AuditProgressData | null;
+	/** The action row as the finished report will show it, drawn inert while the audit runs. */
+	pendingActions?: ReactNode;
 }) {
 	const router = useRouter();
 	const done = initialStatus === "done" && final !== undefined;
@@ -230,6 +233,7 @@ export function LiveReport({
 							</p>
 						) : null
 					}
+					actions={pendingActions}
 					animate
 				/>
 			)}

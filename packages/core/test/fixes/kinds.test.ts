@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fixKindsFor } from "../../src/fixes/kinds.ts";
+import { fixKindsFor, fixKindsSettled } from "../../src/fixes/kinds.ts";
 import type { AuditResult, CheckResult, Status } from "../../src/types.ts";
 
 function check(id: string, status: Status, details?: string[]): CheckResult {
@@ -129,5 +129,50 @@ describe("fixKindsFor", () => {
 				]),
 			),
 		).toEqual([]);
+	});
+});
+
+describe("fixKindsSettled", () => {
+	const SOURCES = [
+		"llms-txt",
+		"llms-txt-format",
+		"llms-full-txt",
+		"markdown-twin",
+		"ai-bots-allowed",
+		"opengraph",
+		"structured-data",
+	];
+	const category = (checks: string[]) => ({
+		checks: checks.map((id) => check(id, "pass")),
+	});
+
+	it("is false until every fix source check is in", () => {
+		expect(
+			fixKindsSettled([
+				category([
+					"llms-txt",
+					"llms-txt-format",
+					"llms-full-txt",
+					"markdown-twin",
+				]),
+			]),
+		).toBe(false);
+		expect(fixKindsSettled([])).toBe(false);
+	});
+
+	it("is true once all source checks are in, in any order", () => {
+		expect(
+			fixKindsSettled([
+				category(["opengraph", "structured-data", "heading-hierarchy"]),
+				category(["ai-bots-allowed", "noai-directives"]),
+				category([
+					"markdown-twin",
+					"llms-full-txt",
+					"llms-txt-format",
+					"llms-txt",
+				]),
+			]),
+		).toBe(true);
+		expect(fixKindsSettled([category([...SOURCES].reverse())])).toBe(true);
 	});
 });

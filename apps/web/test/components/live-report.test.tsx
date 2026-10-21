@@ -78,6 +78,7 @@ type Body = {
 		categories: CategoryResult[];
 		hasFavicon: boolean;
 		fixKinds: FixFilesView["kinds"];
+		fixKindsSettled: boolean;
 	} | null;
 };
 
@@ -170,7 +171,12 @@ describe("LiveReport while the audit runs", () => {
 
 		body = {
 			status: "running",
-			progress: { categories: [manifests], hasFavicon: false, fixKinds: [] },
+			progress: {
+				categories: [manifests],
+				hasFavicon: false,
+				fixKinds: [],
+				fixKindsSettled: false,
+			},
 		};
 		await advance(1_000);
 		expect(tile("AI Manifests").className).toContain("animate-arrive-pop");
@@ -188,6 +194,7 @@ describe("LiveReport while the audit runs", () => {
 					categories: [manifests],
 					hasFavicon: false,
 					fixKinds: [],
+					fixKindsSettled: false,
 				},
 			}),
 		);
@@ -201,7 +208,12 @@ describe("LiveReport while the audit runs", () => {
 
 		body = {
 			status: "running",
-			progress: { categories: [], hasFavicon: true, fixKinds: [] },
+			progress: {
+				categories: [],
+				hasFavicon: true,
+				fixKinds: [],
+				fixKindsSettled: false,
+			},
 		};
 		await advance(1_000);
 		const img = urlLine().querySelector("img");
@@ -217,6 +229,7 @@ describe("LiveReport while the audit runs", () => {
 				categories: [bots],
 				hasFavicon: false,
 				fixKinds: ["robots"],
+				fixKindsSettled: false,
 			},
 		};
 		await advance(1_000);
@@ -251,7 +264,12 @@ describe("LiveReport when the audit finishes", () => {
 		const view = render(live({ status: "running" }));
 		body = {
 			status: "running",
-			progress: { categories: [manifests], hasFavicon: false, fixKinds: [] },
+			progress: {
+				categories: [manifests],
+				hasFavicon: false,
+				fixKinds: [],
+				fixKindsSettled: false,
+			},
 		};
 		await advance(1_000);
 		const running = tile("AI Manifests");
@@ -282,6 +300,7 @@ describe("LiveReport when the audit finishes", () => {
 				categories: [bots],
 				hasFavicon: false,
 				fixKinds: ["robots"],
+				fixKindsSettled: false,
 			},
 		};
 		await advance(1_000);
