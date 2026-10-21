@@ -138,6 +138,7 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 				mode={audit.mode}
 				queuedMs={Date.now() - audit.createdAt.getTime()}
 				final={final}
+				pendingActions={pendingActions}
 				initialProgress={
 					audit.status === "done" ? null : auditStatusBody(audit).progress
 				}
