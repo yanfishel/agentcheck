@@ -374,6 +374,15 @@ describe("Fix files while the check runs", () => {
 		);
 	});
 
+	it("Fix files keeps the page's width with long file lines", () => {
+		render(fixFiles(["robots"], true));
+		// The collapse wrapper is a grid: its one column must not grow to the
+		// widest line of a file (a long line scrolls inside the code window).
+		expect(panel()?.parentElement?.parentElement?.className).toContain(
+			"grid-cols-[minmax(0,1fr)]",
+		);
+	});
+
 	it("Fix files collapses when settled with nothing to fix", async () => {
 		const view = render(fixFiles([], true, partial()));
 		view.rerender(fixFiles([], true, partial(manifests), true));

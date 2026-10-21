@@ -213,9 +213,11 @@ export function FixFilesPanel() {
 
 	return (
 		// Collapsing: height (the grid row), opacity and the margin go to zero.
+		// The one column is minmax(0, 1fr): an auto column would grow to the
+		// widest line of a file and push the card past the page.
 		<div
 			inert={collapsing}
-			className={`grid motion-safe:transition-[grid-template-rows,opacity,margin] motion-safe:duration-500 motion-safe:ease-out ${collapsing ? "mt-0 grid-rows-[0fr] opacity-0" : "mt-6 grid-rows-[1fr]"}`}
+			className={`grid grid-cols-[minmax(0,1fr)] motion-safe:transition-[grid-template-rows,opacity,margin] motion-safe:duration-500 motion-safe:ease-out ${collapsing ? "mt-0 grid-rows-[0fr] opacity-0" : "mt-6 grid-rows-[1fr]"}`}
 		>
 			<div className={collapsing ? "min-h-0 overflow-hidden" : "min-h-0"}>
 				<section
