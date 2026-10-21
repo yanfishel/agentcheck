@@ -80,7 +80,10 @@ jobs:
 
   npm:
     name: Publish the CLI to npm
-    if: github.ref_type == 'tag'
+    # Switched on by the repository variable NPM_PUBLISH=true once the package
+    # exists on npm with this repository as its trusted publisher; until then a
+    # release is images only.
+    if: github.ref_type == 'tag' && vars.NPM_PUBLISH == 'true'
     needs: [version, gate]
     runs-on: ubuntu-latest
     permissions:
