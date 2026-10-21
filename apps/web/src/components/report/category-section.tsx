@@ -29,14 +29,20 @@ export type CategorySummary = Pick<
 function Summary({ category }: { category: CategorySummary }) {
 	return (
 		<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-			<CategoryIcon id={category.id} size="sm" />
-			<span className="min-w-0 flex-1">
-				<span className="block font-bold">{category.title}</span>
-				{category.skipReason ? (
-					<span className="block text-sm font-normal text-muted">
-						{category.skipReason}
-					</span>
-				) : null}
+			{/* Icon and title stay together and keep their natural width (flex-auto),
+			    so chips that do not fit beside the whole title wrap under it; with a
+			    zero basis the title got a sliver of the line and its words overflowed
+			    under the chips on narrow screens. */}
+			<span className="flex min-w-0 flex-auto items-center gap-3">
+				<CategoryIcon id={category.id} size="sm" />
+				<span className="min-w-0 flex-1">
+					<span className="block font-bold">{category.title}</span>
+					{category.skipReason ? (
+						<span className="block text-sm font-normal text-muted">
+							{category.skipReason}
+						</span>
+					) : null}
+				</span>
 			</span>
 			<span className="flex flex-wrap gap-1.5">
 				{category.status === "skipped" || category.score === null ? (
