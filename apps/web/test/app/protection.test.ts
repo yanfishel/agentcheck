@@ -25,6 +25,8 @@ const PUBLIC = new Set([
 	// Public by design: the share token is the capability; 404 otherwise.
 	"api/shared/[token]/badge.svg/route.ts",
 	// Public by design: the share token is the capability; 404 otherwise.
+	"api/shared/[token]/og.png/route.ts",
+	// Public by design: the share token is the capability; 404 otherwise.
 	"api/shared/[token]/export/route.ts",
 	// Public by design: the share token is the capability; 404 otherwise.
 	"api/shared/[token]/screenshot/route.ts",

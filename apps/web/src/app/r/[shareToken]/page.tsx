@@ -1,8 +1,11 @@
 import { getAuditByShareToken } from "@agentcheck/db";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AuditReport } from "../../../components/audit-report";
 import { getDb } from "../../../server/current-user";
+import { publicOrigin } from "../../../server/share";
+import { OG_SIZE } from "../../_og/draw";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +22,40 @@ export async function generateMetadata({
 		audit.score !== null && audit.grade
 			? `AI readiness score ${audit.score}/100 (${audit.grade}) on AgentCheck`
 			: undefined;
+	if (audit.score === null || !audit.grade) {
+		return {
+			title,
+			description,
+			robots,
+			openGraph: {
+				title,
+				description,
+				siteName: "AgentCheck",
+				type: "website",
+			},
+			twitter: { card: "summary", title, description },
+		};
+	}
+	const host = new URL(audit.url).hostname;
+	const images = [
+		{
+			url: `${publicOrigin(await headers())}/api/shared/${shareToken}/og.png`,
+			...OG_SIZE,
+			alt: `AgentCheck: ${host} scores ${audit.score}/100 (${audit.grade})`,
+		},
+	];
 	return {
 		title,
 		description,
 		robots,
-		openGraph: { title, description, siteName: "AgentCheck", type: "website" },
-		twitter: { card: "summary", title, description },
+		openGraph: {
+			title,
+			description,
+			siteName: "AgentCheck",
+			type: "website",
+			images,
+		},
+		twitter: { card: "summary_large_image", title, description, images },
 	};
 }
 
