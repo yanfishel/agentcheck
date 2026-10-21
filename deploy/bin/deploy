@@ -28,7 +28,9 @@ fi
 umask 077
 staging=$(mktemp -d "$dir/.deploy.XXXXXX")
 trap 'rm -rf "$staging"' EXIT
-tar -xf - -C "$staging"
+# As root, tar would keep the archive's owner (the CI runner's user id);
+# the stack files belong to root.
+tar --no-same-owner -xf - -C "$staging"
 (cd "$staging" && find . -mindepth 1 ! -type d) | sed 's#^\./##' | while IFS= read -r file; do
 	[ -f "$staging/$file" ] && [ ! -L "$staging/$file" ] || {
 		echo "rejected: $file is not a regular file" >&2
