@@ -3,6 +3,7 @@ import {
 	type AuditResult,
 	defaultUserAgent,
 	type Favicon,
+	type FinishedCheck,
 	type GuardedAuditOptionsInput,
 	guardedAuditOptions,
 	type Screenshot,
@@ -68,6 +69,8 @@ interface FakeStore extends AuditStore {
 	failed: Array<{ id: string; error: string }>;
 	requeued: Array<{ audit: Pick<Audit, "id" | "mode">; delaySeconds: number }>;
 	claims: Array<{ id: string; jobId: string }>;
+	recorded: Array<{ id: string; jobId: string; check: FinishedCheck }>;
+	savedFavicons: Array<{ id: string; jobId: string; icon: Favicon }>;
 }
 
 function fakeStore(
@@ -81,6 +84,16 @@ function fakeStore(
 		failed: [],
 		requeued: [],
 		claims: [],
+		recorded: [],
+		savedFavicons: [],
+		recordCheck: async (id, jobId, check) => {
+			store.recorded.push({ id, jobId, check });
+			return true;
+		},
+		saveFavicon: async (id, jobId, icon) => {
+			store.savedFavicons.push({ id, jobId, icon });
+			return true;
+		},
 		claim: async (id, jobId) => {
 			store.claims.push({ id, jobId });
 			return typeof claim === "function" ? claim() : claim;
@@ -131,6 +144,7 @@ describe("processAudit", () => {
 		if (!opts) throw new Error("no options");
 		expect(Object.keys(opts).sort()).toEqual([
 			"network",
+			"onCheck",
 			"onFavicon",
 			"renderer",
 			"toolVersion",
@@ -174,6 +188,7 @@ describe("processAudit", () => {
 		if (!opts) throw new Error("no options");
 		expect(Object.keys(opts).sort()).toEqual([
 			"network",
+			"onCheck",
 			"onFavicon",
 			"renderer",
 			"toolVersion",
@@ -207,6 +222,64 @@ describe("processAudit", () => {
 		});
 		await processAudit(deps(store, { auditOptions }), { auditId: ID }, JOB_ID);
 		expect(store.completed[0]?.data).toMatchObject({ favicon: icon });
+	});
+
+	const CHECK: FinishedCheck = {
+		id: "llms-txt",
+		title: "llms.txt",
+		weight: 1,
+		status: "pass",
+		message: "ok",
+		category: "ai-manifests",
+	};
+
+	it("records each finished check with the job id", async () => {
+		const second: FinishedCheck = { ...CHECK, id: "llms-full-txt" };
+		const store = fakeStore();
+		const audit = vi.fn(async (_t: string, o: AuditOptions) => {
+			o.onCheck?.(CHECK);
+			o.onCheck?.(second);
+			return RESULT;
+		});
+		await processAudit(deps(store, { audit }), { auditId: ID }, JOB_ID);
+		expect(store.recorded).toEqual([
+			{ id: ID, jobId: JOB_ID, check: CHECK },
+			{ id: ID, jobId: JOB_ID, check: second },
+		]);
+	});
+
+	it("saves the favicon when it arrives and still passes it to complete", async () => {
+		const icon: Favicon = {
+			contentType: "image/png",
+			body: new Uint8Array([5]),
+		};
+		const store = fakeStore();
+		const audit = vi.fn(async (_t: string, o: AuditOptions) => {
+			o.onFavicon?.(icon);
+			return RESULT;
+		});
+		await processAudit(deps(store, { audit }), { auditId: ID }, JOB_ID);
+		expect(store.savedFavicons).toEqual([{ id: ID, jobId: JOB_ID, icon }]);
+		expect(store.completed[0]?.data).toMatchObject({ favicon: icon });
+	});
+
+	it("a failing recordCheck neither fails the audit nor throws", async () => {
+		const store = fakeStore();
+		store.recordCheck = () => Promise.reject(new Error("db down"));
+		const audit = vi.fn(async (_t: string, o: AuditOptions) => {
+			o.onCheck?.(CHECK);
+			return RESULT;
+		});
+		const log = vi.fn<Logger>();
+		await expect(
+			processAudit(deps(store, { audit, log }), { auditId: ID }, JOB_ID),
+		).resolves.toBe("done");
+		await Promise.resolve();
+		expect(log).toHaveBeenCalledWith(
+			"warn",
+			"audit.partial_error",
+			expect.objectContaining({ auditId: ID, error: "db down" }),
+		);
 	});
 
 	it("never asks a quick audit for a screenshot", async () => {
