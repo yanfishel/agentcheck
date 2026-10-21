@@ -92,11 +92,19 @@ in the repository, npm accepts the job's OIDC identity (repository
 `yanfishel/agentcheck`, workflow `release.yml`) and attaches a provenance
 attestation. The trusted publisher is configured on npmjs.com in the package's
 settings, which exist only once the package does: the first version is
-published by the maintainer from a clean checkout of the tag
-(`pnpm --filter agentcheck-dev build && pnpm --filter agentcheck-dev publish --access public`),
-then the publisher is added, the repository variable `NPM_PUBLISH` is set to
-`true` (until then the job is skipped and a release is images only), and every
-later tag publishes itself. The job
+published by the maintainer from a clean checkout of the tag, in a real
+terminal (npm's 2FA opens the browser; pnpm's publish cannot):
+
+```sh
+node scripts/set-version.mjs X.Y.Z        # the checkout holds 0.0.0-dev
+pnpm --filter agentcheck-dev build
+cd apps/cli && pnpm pack                  # resolves the catalog: versions
+npm publish agentcheck-dev-X.Y.Z.tgz --access public --provenance=false
+```
+
+Then the publisher is added, the repository variable `NPM_PUBLISH` is set to
+`true` (until then the job is skipped and a release is images and a deploy),
+and every later tag publishes itself. The job
 skips a version that is already on npm (the hand-published first one, or a
 re-run) instead of failing the release, and runs `npm install -g npm@latest`
 because trusted publishing needs npm 11.5.1 or newer.
