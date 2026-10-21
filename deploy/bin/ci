@@ -1,0 +1,22 @@
+#!/bin/sh
+# The forced command of the CI deploy key, so it is all that key can run.
+# Routes the command the workflow asked for (SSH_ORIGINAL_COMMAND) to one of
+# the two scripts next to it; anything else is refused. From the workflows:
+#   ssh root@host set-env        < NAME=value lines     (Sync server secrets)
+#   ssh root@host deploy vX.Y.Z  < tar of deploy/ files (Release, Deploy)
+set -eu
+
+dir=$(dirname "$0")
+stack=${STACK_DIR:-/srv/agentcheck}
+case ${SSH_ORIGINAL_COMMAND:-} in
+set-env)
+	exec "$dir/set-env" "$stack/.env"
+	;;
+"deploy v"*)
+	exec "$dir/deploy" "${SSH_ORIGINAL_COMMAND#deploy }"
+	;;
+*)
+	echo "rejected: unknown command" >&2
+	exit 1
+	;;
+esac

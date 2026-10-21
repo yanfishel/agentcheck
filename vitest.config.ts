@@ -4,5 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		include: ["scripts/**/*.test.ts", "deploy/test/**/*.test.ts"],
+		// These spawn sh, tar and node several times per test; slow on Windows.
+		testTimeout: 30_000,
 	},
 });

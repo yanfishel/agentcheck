@@ -1,6 +1,6 @@
 {
 	"name": "@agentcheck/db",
-	"version": "0.1.5",
+	"version": "0.0.0-dev",
 	"private": true,
 	"description": "Database schema, clients and migrations (Drizzle ORM + PostgreSQL).",
 	"type": "module",

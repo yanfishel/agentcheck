@@ -1,0 +1,61 @@
+# Deploys a released tag to the server: the release workflow calls it after
+# the images are pushed, and a manual run deploys any earlier tag (a
+# rollback). The job waits for the production environment's reviewer.
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to deploy (vX.Y.Z)
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to deploy (vX.Y.Z), e.g. an earlier one to roll back
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - name: The tag is vX.Y.Z
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ! printf '%s\n' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::tag '$TAG' is not vX.Y.Z"
+            exit 1
+          fi
+      - name: Deploy ${{ inputs.tag }}
+        env:
+          TAG: ${{ inputs.tag }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          set -eu
+          for name in DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DEPLOY_HOST; do
+            if [ -z "$(printenv "$name" || true)" ]; then
+              echo "::error::$name is not set (repository secret or variable)"
+              exit 1
+            fi
+          done
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The stack files travel with the tag; the server's deploy script
+          # accepts only these paths.
+          tar -cf - -C deploy docker-compose.yml seccomp-chromium.json bin/ci bin/set-env bin/deploy \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "root@$DEPLOY_HOST" "deploy $TAG"
