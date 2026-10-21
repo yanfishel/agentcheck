@@ -130,7 +130,9 @@ function ReportBand({
 }
 
 /**
- * Server component: a pure rendering of an audit result. `full` puts the score on
+ * A pure rendering of an audit result, without "use client": a server
+ * component on the shared page and the landing, rendered on the client inside
+ * `LiveReport` on the audit page. `full` puts the score on
  * a full-width plum band (the page must not wrap it in a width container) and the
  * rest at page width; `example` is the landing's static sample: the same band on
  * a rounded card, an Example chip, lower heading levels, no actions.
@@ -140,8 +142,9 @@ function ReportBand({
  * the action row's place empty; asides and footers wait for the finished
  * report. With `animate` the pieces that appear after the first render arrive
  * animated (tiles pop and count up, sections, Fix files and the action row
- * fade and rise in). Tiles and sections are keyed by category, so a later
- * result never remounts them.
+ * fade and rise in, and a band that replaces `band` when the audit finishes
+ * pops its ring in with a count-up). Tiles and sections are keyed by category,
+ * so a later result never remounts them.
  */
 export function AuditReport({
 	result,
@@ -156,6 +159,7 @@ export function AuditReport({
 	categoryFooter,
 	categoryAside,
 	band: bandOverride,
+	notice,
 	animate = false,
 	now = Date.now(),
 }: {
@@ -178,6 +182,8 @@ export function AuditReport({
 	categoryAside?: (category: CategorySummary) => ReactNode;
 	/** Replaces the score band (the running page draws its own). */
 	band?: ReactNode;
+	/** Shown in the action row's place while the audit runs (the queue messages). */
+	notice?: ReactNode;
 	/** Pieces that appear after the first render arrive animated. */
 	animate?: boolean;
 	now?: number;
@@ -208,8 +214,8 @@ export function AuditReport({
 
 	return (
 		<article className="w-full">
-			{band}
 			<ArrivalProvider animate={animate}>
+				{band}
 				<div className={example ? "" : "mx-auto w-full max-w-page px-4"}>
 					{/* The action row's place is held while the audit runs, so the
 					    tiles do not move when it arrives. */}
@@ -218,7 +224,7 @@ export function AuditReport({
 							present={Boolean(complete && actions)}
 							className="mt-4 min-h-[34px]"
 						>
-							{complete ? actions : null}
+							{complete ? actions : notice}
 						</Arrive>
 					) : null}
 					<div className="mt-6">

@@ -152,6 +152,29 @@ components and the copy.
   on the landing example or with `prefers-reduced-motion: reduce` (checked
   before the import, so nothing is downloaded). It fires once per mount, so the
   polling `router.refresh()` does not repeat it; no loop, no setting.
+- The audit page (`/audits/[id]`) is one `LiveReport` (`components/live-report.tsx`)
+  from queued to done, rendering one `AuditReport` at one place, so the
+  refresh at the end updates the running report instead of replacing it
+  (tiles and sections keyed by category stay the same elements; only the band
+  is replaced). While queued or running it polls `/api/audits/[id]` every
+  second (5 minutes, then "Reload the page"; the queue stall message after
+  30 s queued, both in the action row's held place) and fills in from its
+  `progress`: four pulsing placeholder tiles; the band with the spinning
+  "Queued"/"Running" ring, the globe and the waiting brand mark; the site's
+  icon pops in over the globe when fetched. A category whose checks are all
+  in pops its tile in (scale 0.94→1, opacity 0.4→1, 520 ms, slight overshoot)
+  with its gauge and number counting up (700 ms, ease-out), and its section
+  fades and rises in (4 px, 480 ms) at its own place in category order, with
+  its real check rows; Fix files rises in as soon as a file is called for,
+  with Generate disabled. On done the last tile and section arrive, the ring
+  pops in and counts up to the total (900 ms), the screenshot rises in where
+  the brand mark was (the grade fades in without one), the action row rises
+  into its held place, asides and footers appear, sections with problems
+  open, Generate turns on, and confetti keeps its rule. Nothing in the first
+  render animates, so a report opened when done (or reloaded) stays still;
+  with `prefers-reduced-motion: reduce` everything appears in place (all
+  arrival classes are `motion-safe:`, count-ups jump to the value). A failed
+  audit shows `AuditFailed`; partial tiles are not kept.
 
 ## Account-gated actions
 
@@ -195,7 +218,7 @@ components and the copy.
   X, LinkedIn, Facebook, Reddit, Hacker News, Bluesky, Email from
   `share-targets.ts`, the system share sheet where available, Stop sharing).
   Get badge goes through the same flow.
-- Fix files (owner only): the block `FixFilesPanel` (`components/report/fix-files/`) sits between the category tiles and the category sections, only on a done audit that has a fixable failure, and not on the shared page. It has four states: Generate fix files, running (disabled "Generating…" with progress or a plain line, polled like `AuditProgress`), failed (error and Try again, up to 3 attempts), done (Copy prompt for your agent, Download zip, one `CodeWindow` with a tab per file with Copy and Download, the target line, skipped files with reasons, and the "Fill in by hand (N)" plaque). The page gets at most the first 20 KB of each file (`FIX_PREVIEW_MAX`); under the window a cut file has a muted line "Showing the first 20 KB of llms-full.txt (1.2 MB). Download for the full file." Copy always copies the whole file: a cut file and the agent prompt are fetched from their downloads on click (`CopyButton` with `load`, a `ClipboardItem` with a promised blob so Safari keeps the gesture), and a failed fetch never shows "Copied". A guest who clicks Generate gets `AccountDialog` (the press is remembered, see the Full check rule: after sign-in the check runs again from their account and the files come from that report); a signed-in non-owner, and anyone on an anonymous audit, the "run it from your account" dialog with Run again (as Share). The admin sees finished files read-only, without Generate.
+- Fix files (owner only): the block `FixFilesPanel` (`components/report/fix-files/`) sits between the category tiles and the category sections, on an audit with a fixable failure (while it runs, as soon as the categories that are in call for a file: Generate disabled and the status line ends with " Available when the check finishes."), and not on the shared page. It has four states: Generate fix files, running (disabled "Generating…" with progress or a plain line, polled like `LiveReport`), failed (error and Try again, up to 3 attempts), done (Copy prompt for your agent, Download zip, one `CodeWindow` with a tab per file with Copy and Download, the target line, skipped files with reasons, and the "Fill in by hand (N)" plaque). The page gets at most the first 20 KB of each file (`FIX_PREVIEW_MAX`); under the window a cut file has a muted line "Showing the first 20 KB of llms-full.txt (1.2 MB). Download for the full file." Copy always copies the whole file: a cut file and the agent prompt are fetched from their downloads on click (`CopyButton` with `load`, a `ClipboardItem` with a promised blob so Safari keeps the gesture), and a failed fetch never shows "Copied". A guest who clicks Generate gets `AccountDialog` (the press is remembered, see the Full check rule: after sign-in the check runs again from their account and the files come from that report); a signed-in non-owner, and anyone on an anonymous audit, the "run it from your account" dialog with Run again (as Share). The admin sees finished files read-only, without Generate.
 - Category footer (`fix-files/footer.tsx`): a row at the bottom of a category section that has a failed check a file fixes (never Agentic Actionability): all applicable files of this category (for example robots.txt, or llms.txt, llms-full.txt and the markdown twin) and a secondary Generate fix files button with the same access flows; while running the button says "Generating…", when done the row is a link "Open <file> in Fix files" that selects the first file's tab, failed offers Try again.
 - Report actions: Run again and (after a quick check) Full check on the left;
   Share, Get badge, Export on the right.

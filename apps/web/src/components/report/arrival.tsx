@@ -12,6 +12,8 @@ import { prefersReducedMotion } from "./count-up";
 /** The tile pop and the fade-and-rise, motion-safe only (globals.css). */
 export const ARRIVE_POP = "motion-safe:animate-arrive-pop";
 export const ARRIVE_RISE = "motion-safe:animate-arrive-rise";
+/** The fade alone, for a piece whose own transform must stay (the band's grade). */
+export const ARRIVE_FADE = "motion-safe:animate-arrive-fade";
 
 /** Pieces that appear now arrive animated: the report animates, has mounted, and motion is welcome. */
 const ArrivalContext = createContext(false);

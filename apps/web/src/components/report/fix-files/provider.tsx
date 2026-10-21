@@ -89,16 +89,24 @@ export function FixFilesProvider({
 	initial: FixFilesView;
 	/**
 	 * The audit still runs: the kinds follow `initial.kinds` as categories
-	 * arrive, and Generate waits (disabled) until this turns false.
+	 * arrive, and Generate waits (disabled) until this turns false, when
+	 * `initial` (the finished audit's view) is taken over.
 	 */
 	pending?: boolean;
 	children: ReactNode;
 }) {
 	const [view, setView] = useState<FixFilesView>(initial);
-	const [pendingKinds, setPendingKinds] = useState(initial.kinds);
-	if (pending && initial.kinds.join() !== pendingKinds.join()) {
-		setPendingKinds(initial.kinds);
-		setView((current) => ({ ...current, kinds: initial.kinds }));
+	// While pending the kinds follow `initial`; when the audit finishes the
+	// finished report's view replaces the running one.
+	const [tracked, setTracked] = useState({
+		pending,
+		kinds: initial.kinds.join(),
+	});
+	const kinds = initial.kinds.join();
+	if (tracked.pending !== pending || (pending && tracked.kinds !== kinds)) {
+		setTracked({ pending, kinds });
+		if (pending) setView((current) => ({ ...current, kinds: initial.kinds }));
+		else if (tracked.pending) setView(initial);
 	}
 	const [starting, setStarting] = useState(false);
 	const [startError, setStartError] = useState<string | null>(null);
