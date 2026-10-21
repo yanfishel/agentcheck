@@ -26,6 +26,7 @@ import {
 	type NewAuditInput,
 	type QueueHandle,
 	setShareToken,
+	setUserBlocked,
 	users,
 } from "../src/index.ts";
 import { createTestDb, startTestQueue } from "../src/testing.ts";
@@ -762,6 +763,18 @@ describe("audits", () => {
 			expect((await setShareToken(db, audit.id, "u1", other))?.shareToken).toBe(
 				other,
 			);
+		});
+
+		it("hides the link while its owner is blocked, and shows it again after", async () => {
+			const db = await setup();
+			await seedUsers(db);
+			const audit = await doneAudit(db, "u1");
+			await setShareToken(db, audit.id, "u1", TOKEN);
+			await setUserBlocked(db, "u1", true);
+			expect(await getAuditByShareToken(db, TOKEN)).toBeNull();
+			await setUserBlocked(db, "u1", false);
+			expect((await getAuditByShareToken(db, TOKEN))?.id).toBe(audit.id);
+			expect((await getAudit(db, audit.id))?.shareToken).toBe(TOKEN);
 		});
 
 		it("returns null for another user, a running audit and an anonymous audit", async () => {

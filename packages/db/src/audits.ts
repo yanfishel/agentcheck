@@ -385,12 +385,16 @@ export async function getAuditByShareToken(
 	token: string,
 ): Promise<Audit | null> {
 	if (!SHARE_TOKEN_RE.test(token)) return null;
-	const [audit] = await db
-		.select()
+	// A blocked owner's links stop working for the time of the block; the
+	// token stays, so unblocking brings them back.
+	const [row] = await db
+		.select({ audit: audits, ownerBlocked: users.blocked })
 		.from(audits)
+		.leftJoin(users, eq(users.id, audits.userId))
 		.where(and(eq(audits.shareToken, token), eq(audits.status, "done")))
 		.limit(1);
-	return audit ?? null;
+	if (!row || row.ownerBlocked) return null;
+	return row.audit;
 }
 
 /**
