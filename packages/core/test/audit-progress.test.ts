@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { guardedAuditOptions, runAudit } from "../src/audit.ts";
 import type { FinishedCheck } from "../src/progress.ts";
 import { CHECKS } from "../src/registry.ts";
+import type { Check } from "../src/types.ts";
 import { mockRoutes } from "./helpers/mock-site.ts";
 
 const ICO = new Uint8Array([0, 0, 1, 0, 1, 0, 16, 16]);
@@ -47,13 +48,57 @@ describe("runAudit progress", () => {
 		expect(throwing).toEqual(plain);
 	});
 
-	it("onFavicon fires before runAudit resolves", async () => {
-		const order: string[] = [];
+	it("onFavicon fires while a slow check is still pending", async () => {
+		let release: () => void = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const slow: Check = {
+			id: "slow",
+			title: "Slow",
+			category: "bot-access",
+			weight: 1,
+			run: async () => {
+				await gate;
+				return { status: "pass", message: "ok" };
+			},
+		};
+		let icon = false;
+		const done = runAudit("https://example.com/", {
+			...base(),
+			checks: [slow],
+			onFavicon: () => {
+				icon = true;
+			},
+		});
+		await vi.waitFor(() => expect(icon).toBe(true), { timeout: 2000 });
+		release();
+		await done;
+	});
+
+	it("a crashed check still reaches onCheck with the crash result", async () => {
+		const boom: Check = {
+			id: "boom",
+			title: "Boom",
+			category: "bot-access",
+			weight: 1,
+			run: async () => {
+				throw new Error("kaput");
+			},
+		};
+		const seen: FinishedCheck[] = [];
 		await runAudit("https://example.com/", {
 			...base(),
-			onFavicon: () => order.push("favicon"),
-		}).then(() => order.push("resolved"));
-		expect(order).toEqual(["favicon", "resolved"]);
+			checks: [boom],
+			onCheck: (c) => seen.push(c),
+		});
+		expect(seen).toHaveLength(1);
+		expect(seen[0]).toMatchObject({
+			id: "boom",
+			category: "bot-access",
+			status: "fail",
+			message: "Check crashed: kaput",
+		});
 	});
 
 	it("guardedAuditOptions passes onCheck through", () => {
