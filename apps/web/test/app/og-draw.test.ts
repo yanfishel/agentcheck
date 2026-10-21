@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { drawReportOg, drawSiteOg, hostFontSize } from "@/app/_og/draw";
+import {
+	drawReportOg,
+	drawSiteOg,
+	fitHost,
+	hostFontSize,
+} from "@/app/_og/draw";
 
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
@@ -27,6 +32,22 @@ describe("hostFontSize", () => {
 			const host = "a".repeat(length);
 			const size = hostFontSize(host);
 			expect(size === 28 || size * 0.6 * length <= 890).toBe(true);
+		}
+	});
+});
+
+describe("fitHost", () => {
+	it("leaves a host that fits unchanged", () => {
+		expect(fitHost("atarcms.com")).toBe("atarcms.com");
+	});
+
+	it("keeps the tail of a host that does not fit, behind an ellipsis", () => {
+		for (const length of [71, 253]) {
+			const host = `${"a".repeat(length - 11)}.example.c`;
+			const result = fitHost(host);
+			expect(result.startsWith("…")).toBe(true);
+			expect(result.endsWith(host.slice(-20))).toBe(true);
+			expect(28 * 0.6 * result.length).toBeLessThanOrEqual(890);
 		}
 	});
 });

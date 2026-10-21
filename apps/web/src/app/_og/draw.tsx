@@ -46,6 +46,16 @@ export function hostFontSize(host: string): number {
 	);
 }
 
+/**
+ * The host as drawn: unchanged when it fits, otherwise an ellipsis and the
+ * tail, which keeps the registrable domain visible on one line at the floor size.
+ */
+export function fitHost(host: string): string {
+	if (hostFontSize(host) * 0.6 * host.length <= HOST_SPACE) return host;
+	const keep = Math.floor(HOST_SPACE / (0.6 * 28)) - 1;
+	return `…${host.slice(-keep)}`;
+}
+
 /** The favicon's mark, drawn white; its own style would recolour it. */
 async function markUri(): Promise<string> {
 	const svg = (await readFile(new URL("../icon.svg", import.meta.url), "utf8"))
@@ -203,6 +213,7 @@ function ReportPicture(props: {
 	grade: OgGrade;
 	mark: string;
 }) {
+	const host = fitHost(props.host);
 	return (
 		<Page>
 			<div
@@ -231,13 +242,13 @@ function ReportPicture(props: {
 						style={{
 							display: "flex",
 							whiteSpace: "nowrap",
-							fontSize: hostFontSize(props.host),
+							fontSize: hostFontSize(host),
 							fontWeight: 800,
 							letterSpacing: -2,
 							lineHeight: 1.05,
 						}}
 					>
-						{props.host}
+						{host}
 					</div>
 				</div>
 			</div>
