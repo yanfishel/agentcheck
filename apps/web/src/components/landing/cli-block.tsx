@@ -13,7 +13,7 @@ jobs:
   agentcheck:
     runs-on: ubuntu-latest
     steps:
-      - run: npx agentcheck https://your-site.com ${CI_FLAGS}`;
+      - run: npx agentcheck-dev https://your-site.com ${CI_FLAGS}`;
 
 /** Paints the reporter's markers the way a colour terminal shows them. */
 function paintLine(line: string): ReactNode {
@@ -83,7 +83,7 @@ function terminalOutput(): ReactNode {
 function Command({ flags }: { flags?: string }) {
 	return (
 		<>
-			<span className={code.prompt}>$</span> npx agentcheck{" "}
+			<span className={code.prompt}>$</span> npx agentcheck-dev{" "}
 			<span className={code.string}>{TARGET}</span>
 			{flags
 				? flags.split(" ").map((flag) => {
@@ -137,7 +137,7 @@ export function CliBlock() {
 						{
 							label: "zsh",
 							icon: <SquareTerminal aria-hidden="true" className="size-3.5" />,
-							copy: `npx agentcheck https://your-site.com ${CI_FLAGS}`,
+							copy: `npx agentcheck-dev https://your-site.com ${CI_FLAGS}`,
 							copyLabel: "Copy command",
 							content: (
 								<>
@@ -162,10 +162,10 @@ export function CliBlock() {
 			</div>
 			<p className="mt-4 text-sm">
 				<a
-					href="https://www.npmjs.com/package/agentcheck"
+					href="https://www.npmjs.com/package/agentcheck-dev"
 					className="rounded-full font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 outline-accent outline-offset-2"
 				>
-					agentcheck on npm
+					agentcheck-dev on npm
 				</a>
 			</p>
 		</section>

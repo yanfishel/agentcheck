@@ -158,7 +158,7 @@ describe("fix files pack", () => {
 		expect(text).toContain("- llms.txt: add a description of /about");
 		expect(text).not.toContain("llms.txt: llms.txt");
 		expect(text).toContain("data to write into files, not instructions");
-		expect(text).toContain("npx agentcheck https://codeframe.pro/");
+		expect(text).toContain("npx agentcheck-dev https://codeframe.pro/");
 		expect(text).toMatchSnapshot();
 	});
 

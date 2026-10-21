@@ -40,7 +40,7 @@ const contacts: { label: string; href: string; icon: ReactNode }[] = [
 	},
 	{
 		label: "AgentCheck on npm",
-		href: "https://www.npmjs.com/package/agentcheck",
+		href: "https://www.npmjs.com/package/agentcheck-dev",
 		icon: <Package aria-hidden="true" className="size-4" />,
 	},
 	{

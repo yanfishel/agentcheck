@@ -1,13 +1,14 @@
-# agentcheck
+# agentcheck-dev
 
 Audit how ready a website is for AI agents, search LLMs and autonomous
 browsers, and write the files that fix it. The same engine runs
 [agentcheck.dev](https://agentcheck.dev).
 
 ```sh
-npx agentcheck https://your-site.com
+npx agentcheck-dev https://your-site.com
 ```
 
+Installed globally (`npm i -g agentcheck-dev`) the command is `agentcheck`.
 Requires Node.js 22.18 or newer. Browser checks use an installed Google Chrome
 or a Playwright Chromium (`npx playwright install chromium`); AgentCheck never
 downloads a browser itself.
@@ -15,9 +16,9 @@ downloads a browser itself.
 ## Audit
 
 ```sh
-npx agentcheck https://your-site.com                          # terminal report
-npx agentcheck https://your-site.com --format=html > report.html
-npx agentcheck https://your-site.com --threshold=85 --format=json   # CI
+npx agentcheck-dev https://your-site.com                          # terminal report
+npx agentcheck-dev https://your-site.com --format=html > report.html
+npx agentcheck-dev https://your-site.com --threshold=85 --format=json   # CI
 ```
 
 | Option | |
@@ -40,7 +41,7 @@ Four categories, one score from 0 to 100 and a grade from A+ to F:
 ## Fix
 
 ```sh
-npx agentcheck fix https://your-site.com
+npx agentcheck-dev fix https://your-site.com
 ```
 
 Writes `robots.txt`, `llms.txt`, `llms-full.txt`, a markdown version of the page

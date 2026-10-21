@@ -75,7 +75,7 @@ export function readme(files: FixFiles, audit: ReadmeAudit): string {
 	lines.push(
 		"## Check the result",
 		"",
-		`After deploying, run \`npx agentcheck ${audit.url}\`.`,
+		`After deploying, run \`npx agentcheck-dev ${audit.url}\`.`,
 		"",
 	);
 	return lines.join("\n");
@@ -109,7 +109,7 @@ export function agentPrompt(files: FixFiles, audit: PackAudit): string {
 	lines.push(
 		"## How to check",
 		"",
-		`After deploying, run \`npx agentcheck ${audit.url}\` and confirm the score went up.`,
+		`After deploying, run \`npx agentcheck-dev ${audit.url}\` and confirm the score went up.`,
 		"",
 	);
 	return lines.join("\n");

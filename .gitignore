@@ -31,3 +31,6 @@ skills-lock.json
 .env.*
 !.env.example
 !.env.development
+
+# npm tarballs from `pnpm pack`
+*.tgz

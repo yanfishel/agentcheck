@@ -9,8 +9,8 @@ afterEach(cleanup);
 const tabs: [CodeTab, CodeTab] = [
 	{
 		label: "zsh",
-		content: "npx agentcheck",
-		copy: "npx agentcheck",
+		content: "npx agentcheck-dev",
+		copy: "npx agentcheck-dev",
 		copyLabel: "Copy command",
 	},
 	{
@@ -28,7 +28,7 @@ describe("CodeWindow", () => {
 			"aria-selected",
 			"true",
 		);
-		expect(screen.getByText("npx agentcheck")).toBeVisible();
+		expect(screen.getByText("npx agentcheck-dev")).toBeVisible();
 		expect(
 			screen.getByText("runs-on: ubuntu", { selector: "code" }),
 		).not.toBeVisible();

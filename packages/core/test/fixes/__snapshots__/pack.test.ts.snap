@@ -26,7 +26,7 @@ What it fixes:
 
 ## Check the result
 
-After deploying, run \`npx agentcheck https://codeframe.pro/\`.
+After deploying, run \`npx agentcheck-dev https://codeframe.pro/\`.
 "
 `;
 
@@ -64,6 +64,6 @@ Ask the user for these before finishing:
 
 ## How to check
 
-After deploying, run \`npx agentcheck https://codeframe.pro/\` and confirm the score went up.
+After deploying, run \`npx agentcheck-dev https://codeframe.pro/\` and confirm the score went up.
 "
 `;

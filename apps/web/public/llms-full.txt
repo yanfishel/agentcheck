@@ -74,12 +74,12 @@ No tool can promise that, and anyone who does is selling something. A good score
 The CLI runs the same engine. Fail the build when the score drops.
 
 ```sh
-npx agentcheck https://your-site.com
-npx agentcheck https://your-site.com --threshold=85 --format=json   # in CI
-npx agentcheck fix https://your-site.com   # write the files that fix it
+npx agentcheck-dev https://your-site.com
+npx agentcheck-dev https://your-site.com --threshold=85 --format=json   # in CI
+npx agentcheck-dev fix https://your-site.com   # write the files that fix it
 ```
 
-The CLI is [agentcheck on npm](https://www.npmjs.com/package/agentcheck); the source is at https://github.com/yanfishel/agentcheck (MIT).
+The CLI is [agentcheck-dev on npm](https://www.npmjs.com/package/agentcheck-dev); the source is at https://github.com/yanfishel/agentcheck (MIT).
 
 ### Badge
 
@@ -97,7 +97,7 @@ A quick check is free, needs no account and takes under a minute: https://agentc
 
 ## CLI reference
 
-Source: https://www.npmjs.com/package/agentcheck
+Source: https://www.npmjs.com/package/agentcheck-dev
 
 
 Audit how ready a website is for AI agents, search LLMs and autonomous
@@ -105,7 +105,7 @@ browsers, and write the files that fix it. The same engine runs
 [agentcheck.dev](https://agentcheck.dev).
 
 ```sh
-npx agentcheck https://your-site.com
+npx agentcheck-dev https://your-site.com
 ```
 
 Requires Node.js 22.18 or newer. Browser checks use an installed Google Chrome
@@ -115,9 +115,9 @@ downloads a browser itself.
 ### Audit
 
 ```sh
-npx agentcheck https://your-site.com                          # terminal report
-npx agentcheck https://your-site.com --format=html > report.html
-npx agentcheck https://your-site.com --threshold=85 --format=json   # CI
+npx agentcheck-dev https://your-site.com                          # terminal report
+npx agentcheck-dev https://your-site.com --format=html > report.html
+npx agentcheck-dev https://your-site.com --threshold=85 --format=json   # CI
 ```
 
 | Option | |
@@ -140,7 +140,7 @@ Four categories, one score from 0 to 100 and a grade from A+ to F:
 ### Fix
 
 ```sh
-npx agentcheck fix https://your-site.com
+npx agentcheck-dev fix https://your-site.com
 ```
 
 Writes `robots.txt`, `llms.txt`, `llms-full.txt`, a markdown version of the page

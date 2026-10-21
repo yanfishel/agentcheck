@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-AgentCheck audits a website's readiness for AI agents: a CLI (`npx agentcheck <url>`) and a hosted web service on the same engine. Product spec, scoring weights and CLI contract: @docs/spec.md
+AgentCheck audits a website's readiness for AI agents: a CLI (`npx agentcheck-dev <url>`) and a hosted web service on the same engine. Product spec, scoring weights and CLI contract: @docs/spec.md
 
 - Not launched yet (test mode): `https://agentcheck.dev` runs but has no real users, so changes need no redirects for old URLs, no deprecation shims and no compatibility for old data or routes. Migrations must still apply cleanly to the live database (a failing `migrate` stops the deploy). The CLI's `AuditResult` JSON contract counts as public. Remove this bullet at launch.
 - Web UI rules (brand, tokens, the plum band, components, icons, account-gated actions, copy): **read `docs/web-ui.md` before changing anything under `apps/web/src`.**
@@ -11,11 +11,11 @@ AgentCheck audits a website's readiness for AI agents: a CLI (`npx agentcheck <u
 ## Stack and tooling
 
 - TypeScript, ESM only (`"type": "module"`), Node >= 22.18. The CLI is published to npm with a `bin` entry, bundled to `apps/cli/dist/` with tsdown.
-- Layout: pnpm workspace — `packages/core` (`@agentcheck/core`, the audit engine), `packages/db` (`@agentcheck/db`, Drizzle schema, migrations, pg-boss queue), `apps/cli` (`agentcheck` CLI), `apps/web` (Next.js app, Clerk), `apps/worker` (`@agentcheck/worker`, pg-boss consumer that runs audits).
+- Layout: pnpm workspace — `packages/core` (`@agentcheck/core`, the audit engine), `packages/db` (`@agentcheck/db`, Drizzle schema, migrations, pg-boss queue), `apps/cli` (the CLI, `agentcheck-dev` on npm, command `agentcheck`), `apps/web` (Next.js app, Clerk), `apps/worker` (`@agentcheck/worker`, pg-boss consumer that runs audits).
 - Package manager: **pnpm** — never use npm/yarn to install, and don't commit other lockfiles.
 - Tests: Vitest. Lint + format: Biome (`pnpm check`, tabs + double quotes). No ESLint/Prettier.
 - Run from the repo root: `pnpm check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm capture`. Before reporting work done: `pnpm check && pnpm typecheck && pnpm test && pnpm build`.
-- Run a single test file: `pnpm --filter @agentcheck/core exec vitest run test/x.test.ts` (or `pnpm --filter agentcheck exec vitest run …` for the CLI); by name: add `-t "name"`.
+- Run a single test file: `pnpm --filter @agentcheck/core exec vitest run test/x.test.ts` (or `pnpm --filter agentcheck-dev exec vitest run …` for the CLI); by name: add `-t "name"`.
 - A PostToolUse hook (`.claude/hooks/biome-format.mjs`) auto-formats every edited file with Biome — expect files to change after Write/Edit (it also turns a never-reassigned `let` into `const`).
 - Line endings are LF (enforced by `.gitattributes`).
 

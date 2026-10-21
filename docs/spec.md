@@ -28,13 +28,13 @@ Four categories; the total score is 0–100 with a grade from A+ to F.
 
 ```bash
 # Page audit (terminal report)
-npx agentcheck https://example.com
+npx agentcheck-dev https://example.com
 
 # Single-file HTML report to stdout
-npx agentcheck https://example.com --format=html > agentcheck-report.html
+npx agentcheck-dev https://example.com --format=html > agentcheck-report.html
 
 # CI: fail the build below the threshold; stdout is the JSON only
-npx agentcheck https://example.com --threshold=85 --format=json
+npx agentcheck-dev https://example.com --threshold=85 --format=json
 ```
 
 Options: `--threshold=N`, `--format=terminal|json|html`, `--user-agent=STRING`
@@ -48,10 +48,10 @@ Fix files from the command line:
 
 ```bash
 # Audit, then write the files that fix what was found into ./agentcheck-fix
-npx agentcheck fix https://example.com
+npx agentcheck-dev fix https://example.com
 
 # Only an llms.txt and llms-full.txt, into ./out (skips the audit)
-npx agentcheck fix https://example.com --only=llms,llms-full --out=./out
+npx agentcheck-dev fix https://example.com --only=llms,llms-full --out=./out
 ```
 
 Options: `--out=DIR` (default `./agentcheck-fix`), `--only=KINDS` (comma-separated

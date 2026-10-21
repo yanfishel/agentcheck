@@ -12,7 +12,7 @@ describe("SiteFooter", () => {
 			"/privacy",
 			"/terms",
 			LEGAL.repo,
-			"https://www.npmjs.com/package/agentcheck",
+			"https://www.npmjs.com/package/agentcheck-dev",
 			"https://fishart.co.il",
 			`mailto:${LEGAL.email}`,
 		]) {

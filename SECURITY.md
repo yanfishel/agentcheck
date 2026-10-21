@@ -23,7 +23,7 @@ unless you prefer not to be named.
   - access control: owned audits, share links, fix files and the admin area;
   - handling of untrusted content from audited sites (screenshots, favicons,
     generated files).
-- The `agentcheck` CLI and the engine in this repository.
+- The `agentcheck` CLI (`agentcheck-dev` on npm) and the engine in this repository.
 
 Out of scope: findings that need a compromised account or machine, denial of
 service by volume, reports from automated scanners without a working impact,

@@ -71,14 +71,15 @@ Caddy publishing 80/443/443-udp, and `set-env` rejecting any name outside the
 three Clerk keys before it writes.
 
 **The CLI on npm.** The `npm` job of the release workflow publishes
-`apps/cli` as `agentcheck` with
+`apps/cli` as `agentcheck-dev` (npm refuses the bare name as too close to
+`agent-check`; the command stays `agentcheck`) with
 [trusted publishing](https://docs.npmjs.com/trusted-publishers/): no npm token
 in the repository, npm accepts the job's OIDC identity (repository
 `yanfishel/agentcheck`, workflow `release.yml`) and attaches a provenance
 attestation. The trusted publisher is configured on npmjs.com in the package's
 settings, which exist only once the package does: the first version is
 published by the maintainer from a clean checkout of the tag
-(`pnpm --filter agentcheck build && pnpm --filter agentcheck publish --access public`),
+(`pnpm --filter agentcheck-dev build && pnpm --filter agentcheck-dev publish --access public`),
 then the publisher is added and every later tag publishes itself. The job
 skips a version that is already on npm (the hand-published first one, or a
 re-run) instead of failing the release, and runs `npm install -g npm@latest`
