@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AuditReport } from "../../../components/audit-report";
+import { CheckNow } from "../../../components/landing/check-now";
 import { getDb } from "../../../server/current-user";
 import { publicOrigin } from "../../../server/share";
 import { OG_SIZE } from "../../_og/draw";
@@ -66,9 +67,10 @@ export default async function SharedReportPage({
 	const audit = await getAuditByShareToken(getDb(), shareToken);
 	if (!audit?.result) notFound();
 	// Only the report: actions (badge, export, share) belong to the owner's page.
-	// AuditReport draws the full-width band and keeps its own page width.
+	// AuditReport draws the full-width band and keeps its own page width; the
+	// start form's band invites the reader to check their own site.
 	return (
-		<main className="w-full pb-16">
+		<main className="w-full">
 			<AuditReport
 				result={audit.result}
 				mode={audit.mode}
@@ -84,6 +86,11 @@ export default async function SharedReportPage({
 				favicon={
 					audit.hasFavicon ? `/api/shared/${shareToken}/favicon` : undefined
 				}
+			/>
+			<CheckNow
+				id="check-yours"
+				title="How ready is your site?"
+				line="Run the same check on your own site. A quick check is free, needs no account and takes under a minute."
 			/>
 		</main>
 	);

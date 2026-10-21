@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { getCurrentUser } from "../server/current-user";
 import { BrandMark } from "./brand-mark";
+import { CheckSiteLink } from "./check-site-link";
 import { ThemeMenu } from "./theme-menu";
 import { UserMenu } from "./user-menu";
 
@@ -37,6 +38,7 @@ const looks: Record<
 		home: string;
 		link: string;
 		icon: string;
+		check: string;
 		avatar: string;
 		signUp: string;
 	}
@@ -47,6 +49,8 @@ const looks: Record<
 		home: "outline-accent-fg",
 		link: "whitespace-nowrap rounded-full px-2 py-1 text-accent-fg/85 hover:text-accent-fg focus-visible:outline-2 outline-accent-fg outline-offset-2",
 		icon: "grid size-8 place-items-center rounded-full bg-accent-fg/15 text-accent-fg hover:bg-accent-fg/25 focus-visible:outline-2 outline-accent-fg outline-offset-2",
+		check:
+			"inline-flex size-8 items-center justify-center whitespace-nowrap rounded-full border border-accent-fg/45 bg-accent-fg/15 font-semibold text-accent-fg hover:bg-accent-fg/25 focus-visible:outline-2 outline-accent-fg outline-offset-2 sm:absolute sm:top-1/2 sm:left-1/2 sm:size-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:gap-2 sm:px-4 sm:py-1.5",
 		avatar:
 			"grid size-8 place-items-center rounded-full hover:opacity-90 focus-visible:outline-2 outline-accent-fg outline-offset-2",
 		signUp:
@@ -58,6 +62,8 @@ const looks: Record<
 		home: "outline-accent",
 		link: "whitespace-nowrap rounded-full px-2 py-1 text-muted hover:text-foreground focus-visible:outline-2 outline-accent outline-offset-2",
 		icon: "grid size-8 place-items-center rounded-full text-muted hover:bg-accent-soft hover:text-foreground focus-visible:outline-2 outline-accent outline-offset-2",
+		check:
+			"inline-flex size-8 items-center justify-center whitespace-nowrap rounded-full border border-accent/40 bg-accent-soft font-semibold text-accent hover:border-accent focus-visible:outline-2 outline-accent outline-offset-2 sm:absolute sm:top-1/2 sm:left-1/2 sm:size-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:gap-2 sm:px-4 sm:py-1.5",
 		avatar:
 			"grid size-8 place-items-center rounded-full hover:opacity-90 focus-visible:outline-2 outline-accent outline-offset-2",
 		signUp:
@@ -73,7 +79,7 @@ export function SiteHeader({ tone = "band" }: { tone?: Tone }) {
 	const look = looks[tone];
 	return (
 		<header className={look.bar}>
-			<div className="mx-auto flex w-full max-w-page items-center justify-between gap-2 px-4 py-4 sm:gap-4">
+			<div className="relative mx-auto flex w-full max-w-page items-center justify-between gap-2 px-4 py-4 sm:gap-4">
 				<Link
 					href="/"
 					className={`flex shrink-0 items-center gap-2 rounded-xl text-base tracking-tight sm:gap-2.5 sm:text-xl focus-visible:outline-2 outline-offset-4 ${look.home}`}
@@ -88,6 +94,7 @@ export function SiteHeader({ tone = "band" }: { tone?: Tone }) {
 					aria-label="Main"
 					className="flex items-center gap-1.5 text-sm font-medium sm:gap-3"
 				>
+					<CheckSiteLink className={look.check} />
 					<Show when="signed-out">
 						<SignInButton mode="modal">
 							<button type="button" className={look.link}>

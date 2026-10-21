@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AuditFailed } from "../../../components/audit-failed";
+import { CheckNow } from "../../../components/landing/check-now";
 import { type FinalReport, LiveReport } from "../../../components/live-report";
 import type { FixFilesRole } from "../../../components/report/fix-files/provider";
 import { ReportActions } from "../../../components/report-actions";
@@ -148,6 +149,11 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 	}
 
 	// Report, progress and failure draw a full-width plum band under the header
-	// and keep their own page width.
-	return <main className="w-full pb-16">{content}</main>;
+	// and keep their own page width; the start form's band closes the page.
+	return (
+		<main className="w-full">
+			{content}
+			<CheckNow id="check-another" title="Check another site" />
+		</main>
+	);
 }
