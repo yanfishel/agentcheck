@@ -137,6 +137,29 @@ describe("AuditReport", () => {
 		);
 	});
 
+	it("puts the category aside under the header, outside the collapsed panel", () => {
+		const withAside = render(
+			<AuditReport
+				result={result}
+				mode="quick"
+				defaultOpen="none"
+				categoryAside={(category) =>
+					category.status === "skipped" ? (
+						<span data-testid="aside">Offer for {category.id}</span>
+					) : null
+				}
+			/>,
+		);
+		const skipped = section(withAside, "agentic-actionability");
+		expect(skipped).toContain("Offer for agentic-actionability");
+		// Outside the trigger button and after the (hidden) panel, as a sibling.
+		expect(skipped.indexOf("Offer for")).toBeGreaterThan(
+			skipped.lastIndexOf("hidden="),
+		);
+		expect(section(withAside, "ai-manifests")).not.toContain("Offer for");
+		expect(html).not.toContain("Offer for");
+	});
+
 	it("shows every check message, closed categories included", () => {
 		for (const message of [
 			"/llms.txt found and valid",

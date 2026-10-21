@@ -151,7 +151,16 @@ components and the copy.
 - `app/global-error.tsx` replaces the root layout when it fails: its own
   document, no header, footer or Clerk, never the error text.
 - Every Full check button (start form, `RerunButton` with `mode="full"`) gives a
-  guest, or any 401, `FullCheckDialog` instead of a request.
+  guest, or any 401, `FullCheckDialog` instead of a request. On a report page
+  the guest's press is the intent: `RerunButton` with `auditId` remembers it
+  (`full-check-intent.ts`, sessionStorage, keyed by the audit, 10 minutes) and,
+  once the viewer is signed in on that page, starts the full check by itself.
+  Only the press counts: closing the dialog without Sign in or Sign up forgets
+  it (`AccountDialog`'s `onDismiss`), and nothing ever starts without a press.
+- On a done quick report the skipped browser category carries `FullCheckOffer`
+  under its header (`CategorySection`'s `aside`, outside the collapsible
+  trigger, shown whether the panel is open or not): one line and the same
+  Full check button. Not on `/r/…` and not in the landing's example.
 - The shared report (`/r/[shareToken]`) is the report only: no actions
   (no Share, Get badge, Export, Run again), for anyone; the owner acts from
   their own report page.

@@ -61,6 +61,7 @@ export function CategorySection({
 	defaultOpen,
 	heading,
 	footer,
+	aside,
 	children,
 }: {
 	category: CategorySummary;
@@ -68,6 +69,8 @@ export function CategorySection({
 	heading: "h2" | "h4";
 	/** A last row under the checks (the Fix files footer). */
 	footer?: ReactNode;
+	/** A row under the header, shown whether the panel is open or not (the Full check offer). */
+	aside?: ReactNode;
 	children: ReactNode;
 }) {
 	const [open, setOpen] = useState(defaultOpen);
@@ -111,6 +114,9 @@ export function CategorySection({
 					{footer}
 				</Collapsible>
 			)}
+			{aside ? (
+				<div className="border-t border-line-soft py-3">{aside}</div>
+			) : null}
 		</section>
 	);
 }

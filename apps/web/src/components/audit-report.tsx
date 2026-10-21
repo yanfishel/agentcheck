@@ -61,6 +61,7 @@ export function AuditReport({
 	favicon,
 	fixFiles,
 	categoryFooter,
+	categoryAside,
 	now = Date.now(),
 }: {
 	result: AuditResult;
@@ -78,6 +79,8 @@ export function AuditReport({
 	fixFiles?: ReactNode;
 	/** A last row inside each category section (the Fix files footer). */
 	categoryFooter?: (categoryId: string) => ReactNode;
+	/** A row under a category's header, outside its panel (the Full check offer). */
+	categoryAside?: (category: CategorySummary) => ReactNode;
 	now?: number;
 }) {
 	const example = variant === "example";
@@ -157,6 +160,7 @@ export function AuditReport({
 								category={summary}
 								heading={example ? "h4" : "h2"}
 								footer={categoryFooter?.(category.id)}
+								aside={categoryAside?.(summary)}
 								defaultOpen={
 									defaultOpen === "problems" && summary.warn + summary.fail > 0
 								}
