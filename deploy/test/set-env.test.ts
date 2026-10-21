@@ -26,8 +26,8 @@ describe("set-env", () => {
 		expect(result.status).toBe(0);
 		const lines = readFileSync(file, "utf8").trim().split("\n");
 		expect(lines).toContain("A=1");
-		expect(lines).toContain("CLERK_SECRET_KEY=sk=abc");
-		expect(lines).toContain("CLERK_WEBHOOK_SIGNING_SECRET=whsec_new");
+		expect(lines).toContain("CLERK_SECRET_KEY='sk=abc'");
+		expect(lines).toContain("CLERK_WEBHOOK_SIGNING_SECRET='whsec_new'");
 		expect(lines.filter((l) => l.startsWith("CLERK_SECRET_KEY="))).toHaveLength(
 			1,
 		);
@@ -35,6 +35,21 @@ describe("set-env", () => {
 			"updated CLERK_SECRET_KEY\nupdated CLERK_WEBHOOK_SIGNING_SECRET\n",
 		);
 		expect(result.stdout + result.stderr).not.toContain("whsec_new");
+	});
+
+	it("quotes values so Compose keeps a dollar sign literal", () => {
+		const file = envFile("A=1\n");
+		const result = run(file, "CLERK_SECRET_KEY=sk_a$b\n");
+		expect(result.status).toBe(0);
+		expect(readFileSync(file, "utf8")).toBe("A=1\nCLERK_SECRET_KEY='sk_a$b'\n");
+	});
+
+	it("rejects a value with a single quote and writes nothing", () => {
+		const file = envFile("CLERK_SECRET_KEY='old'\n");
+		const result = run(file, "CLERK_SECRET_KEY=sk_it's\n");
+		expect(result.status).not.toBe(0);
+		expect(readFileSync(file, "utf8")).toBe("CLERK_SECRET_KEY='old'\n");
+		expect(result.stdout + result.stderr).not.toContain("sk_it");
 	});
 
 	it("rejects unknown names and writes nothing", () => {
@@ -83,14 +98,14 @@ describe("set-env", () => {
 		const file = envFile("# keys\nA=1\n\n# clerk\nCLERK_SECRET_KEY=old\n");
 		expect(run(file, "CLERK_SECRET_KEY=new\n").status).toBe(0);
 		expect(readFileSync(file, "utf8")).toBe(
-			"# keys\nA=1\n\n# clerk\nCLERK_SECRET_KEY=new\n",
+			"# keys\nA=1\n\n# clerk\nCLERK_SECRET_KEY='new'\n",
 		);
 	});
 
 	it("an empty value clears the key", () => {
 		const file = envFile("CLERK_SECRET_KEY=sk_live\n");
 		expect(run(file, "CLERK_SECRET_KEY=\n").status).toBe(0);
-		expect(readFileSync(file, "utf8")).toBe("CLERK_SECRET_KEY=\n");
+		expect(readFileSync(file, "utf8")).toBe("CLERK_SECRET_KEY=''\n");
 	});
 
 	it.skipIf(process.platform === "win32")("keeps the file mode 600", () => {

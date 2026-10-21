@@ -9,3 +9,9 @@
 **/coverage
 **/*.tsbuildinfo
 docs
+# Tests and their fixtures are not part of the images.
+**/test/
+**/*.test.ts
+**/*.test.tsx
+**/__snapshots__/
+**/vitest.config.*

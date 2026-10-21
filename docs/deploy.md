@@ -67,8 +67,10 @@ two commands. Migrations are additive; a release with one that is not says so.
 Caddyfile change `docker compose restart caddy` in `/srv/edge`.
 `deploy/test/stacks.test.ts` and `set-env.test.ts` pin the stack: no `ports`
 in the AgentCheck compose, `web` on `edge` as `agentcheck-web`, only the edge
-Caddy publishing 80/443/443-udp, and `set-env` rejecting any name outside the
-three Clerk keys before it writes.
+Caddy publishing 80/443/443-udp, each service given only the variables it
+reads (never the whole `.env`), and `set-env` rejecting any name outside the
+three Clerk keys before it writes and quoting the values so Compose takes
+them literally. The images carry no tests (`.dockerignore`).
 
 **The CLI on npm.** The `npm` job of the release workflow publishes
 `apps/cli` as `agentcheck-dev` (npm refuses the bare name as too close to
