@@ -37,6 +37,7 @@ function auditRow(mode: AuditMode): Audit {
 		mode,
 		status: "running",
 		result: null,
+		partial: null,
 		score: null,
 		grade: null,
 		error: null,

@@ -1,4 +1,9 @@
-import type { AuditResult, Favicon, Screenshot } from "@agentcheck/core";
+import type {
+	AuditResult,
+	Favicon,
+	FinishedCheck,
+	Screenshot,
+} from "@agentcheck/core";
 import {
 	and,
 	count,
@@ -155,7 +160,13 @@ export async function claimAudit(
 		}
 		const [audit] = await tx
 			.update(audits)
-			.set({ status: "running", startedAt: now(), claimedBy: jobId })
+			.set({
+				status: "running",
+				startedAt: now(),
+				claimedBy: jobId,
+				partial: null,
+				hasFavicon: false,
+			})
 			.where(
 				and(
 					eq(audits.id, id),
@@ -169,7 +180,11 @@ export async function claimAudit(
 				),
 			)
 			.returning();
-		if (audit) return { kind: "claimed", audit };
+		if (audit) {
+			// A reclaim starts the audit over: drop what the previous run saved.
+			await tx.delete(auditFavicons).where(eq(auditFavicons.auditId, id));
+			return { kind: "claimed", audit };
+		}
 		// Claimed by another job, or finished, between the read and the lock.
 		const [after] = await tx
 			.select({ status: audits.status })
@@ -212,8 +227,10 @@ export async function completeAudit(
 				score: data.score,
 				grade: data.grade,
 				error: null,
+				partial: null,
 				hasScreenshot: data.screenshot !== undefined,
-				hasFavicon: data.favicon !== undefined,
+				// An early favicon row stays valid when none is given here.
+				...(data.favicon !== undefined ? { hasFavicon: true } : {}),
 				finishedAt: now(),
 			})
 			.where(and(eq(audits.id, id), eq(audits.status, "running")))
@@ -228,12 +245,74 @@ export async function completeAudit(
 			});
 		}
 		if (data.favicon) {
-			await tx.insert(auditFavicons).values({
-				auditId: id,
-				contentType: data.favicon.contentType,
-				body: data.favicon.body,
-			});
+			await upsertFavicon(tx, id, data.favicon);
 		}
+		return true;
+	});
+}
+
+async function upsertFavicon(tx: Db, id: string, icon: Favicon) {
+	await tx
+		.insert(auditFavicons)
+		.values({ auditId: id, contentType: icon.contentType, body: icon.body })
+		.onConflictDoUpdate({
+			target: auditFavicons.auditId,
+			set: { contentType: icon.contentType, body: icon.body },
+		});
+}
+
+/**
+ * Adds a finished check to the `partial` map of a running audit, only for
+ * the job that claimed it. Returns `false` (and changes nothing) otherwise.
+ */
+export async function recordAuditCheck(
+	db: Db,
+	id: string,
+	jobId: string,
+	check: FinishedCheck,
+): Promise<boolean> {
+	if (!isUuid(id)) return false;
+	const updated = await db
+		.update(audits)
+		.set({
+			partial: sql`coalesce(${audits.partial}, '{}'::jsonb) || ${JSON.stringify({ [check.id]: check })}::jsonb`,
+		})
+		.where(
+			and(
+				eq(audits.id, id),
+				eq(audits.status, "running"),
+				eq(audits.claimedBy, jobId),
+			),
+		)
+		.returning({ id: audits.id });
+	return updated.length === 1;
+}
+
+/**
+ * Stores the favicon of a running audit before it finishes, only for the job
+ * that claimed it. Returns `false` (and changes nothing) otherwise.
+ */
+export async function saveAuditFavicon(
+	db: Db,
+	id: string,
+	jobId: string,
+	icon: Favicon,
+): Promise<boolean> {
+	if (!isUuid(id)) return false;
+	return db.transaction(async (tx) => {
+		const updated = await tx
+			.update(audits)
+			.set({ hasFavicon: true })
+			.where(
+				and(
+					eq(audits.id, id),
+					eq(audits.status, "running"),
+					eq(audits.claimedBy, jobId),
+				),
+			)
+			.returning({ id: audits.id });
+		if (updated.length !== 1) return false;
+		await upsertFavicon(tx, id, icon);
 		return true;
 	});
 }
@@ -284,14 +363,24 @@ export async function failAudit(
 	now: () => Date = systemNow,
 ): Promise<boolean> {
 	if (!isUuid(id)) return false;
-	const updated = await db
-		.update(audits)
-		.set({ status: "failed", error, finishedAt: now() })
-		.where(
-			and(eq(audits.id, id), inArray(audits.status, ["queued", "running"])),
-		)
-		.returning({ id: audits.id });
-	return updated.length === 1;
+	return db.transaction(async (tx) => {
+		const updated = await tx
+			.update(audits)
+			.set({
+				status: "failed",
+				error,
+				finishedAt: now(),
+				partial: null,
+				hasFavicon: false,
+			})
+			.where(
+				and(eq(audits.id, id), inArray(audits.status, ["queued", "running"])),
+			)
+			.returning({ id: audits.id });
+		if (updated.length !== 1) return false;
+		await tx.delete(auditFavicons).where(eq(auditFavicons.auditId, id));
+		return true;
+	});
 }
 
 /**
@@ -306,31 +395,49 @@ export async function failStaleAudits(
 ): Promise<number> {
 	const at = now();
 	const runningCutoff = new Date(at.getTime() - STALE_RUNNING_MS);
-	const running = await db
-		.update(audits)
-		.set({ status: "failed", error: STALE_ERROR, finishedAt: at })
-		.where(
-			and(eq(audits.status, "running"), lt(audits.startedAt, runningCutoff)),
-		)
-		.returning({ id: audits.id });
 	const queuedCutoff = new Date(at.getTime() - STALE_QUEUED_MS);
-	const queued = await db
-		.update(audits)
-		.set({ status: "failed", error: UNSCHEDULED_ERROR, finishedAt: at })
-		.where(
-			and(
-				eq(audits.status, "queued"),
-				lt(audits.queuedAt, queuedCutoff),
-				not(
-					hasLiveJob(
-						AUDIT_QUEUE,
-						sql`${sql.identifier("audits")}.${sql.identifier("id")}`,
+	return db.transaction(async (tx) => {
+		const running = await tx
+			.update(audits)
+			.set({
+				status: "failed",
+				error: STALE_ERROR,
+				finishedAt: at,
+				partial: null,
+				hasFavicon: false,
+			})
+			.where(
+				and(eq(audits.status, "running"), lt(audits.startedAt, runningCutoff)),
+			)
+			.returning({ id: audits.id });
+		const queued = await tx
+			.update(audits)
+			.set({
+				status: "failed",
+				error: UNSCHEDULED_ERROR,
+				finishedAt: at,
+				partial: null,
+				hasFavicon: false,
+			})
+			.where(
+				and(
+					eq(audits.status, "queued"),
+					lt(audits.queuedAt, queuedCutoff),
+					not(
+						hasLiveJob(
+							AUDIT_QUEUE,
+							sql`${sql.identifier("audits")}.${sql.identifier("id")}`,
+						),
 					),
 				),
-			),
-		)
-		.returning({ id: audits.id });
-	return running.length + queued.length;
+			)
+			.returning({ id: audits.id });
+		const ids = [...running, ...queued].map((r) => r.id);
+		if (ids.length > 0) {
+			await tx.delete(auditFavicons).where(inArray(auditFavicons.auditId, ids));
+		}
+		return ids.length;
+	});
 }
 
 /**
