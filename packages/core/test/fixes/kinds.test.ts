@@ -158,6 +158,8 @@ describe("fixKindsSettled", () => {
 		"content-signals",
 		"opengraph",
 		"structured-data",
+		"canonical",
+		"meta-description",
 	];
 	const category = (checks: string[]) => ({
 		checks: checks.map((id) => check(id, "pass")),
@@ -180,7 +182,13 @@ describe("fixKindsSettled", () => {
 	it("is true once all source checks are in, in any order", () => {
 		expect(
 			fixKindsSettled([
-				category(["opengraph", "structured-data", "heading-hierarchy"]),
+				category([
+					"opengraph",
+					"structured-data",
+					"heading-hierarchy",
+					"canonical",
+					"meta-description",
+				]),
 				category(["ai-bots-allowed", "noai-directives", "content-signals"]),
 				category([
 					"markdown-twin",

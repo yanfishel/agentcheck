@@ -341,10 +341,19 @@ async function generate(
 		}
 		const llmsLink =
 			!page.links.llms && (kinds.has("llms") || (await exists("/llms.txt")));
-		if (og || jsonLd || markdownHref || llmsLink) {
+		const canonical = !page.canonical;
+		const description = !page.description;
+		if (og || jsonLd || markdownHref || llmsLink || canonical || description) {
 			built.set(
 				"head",
-				buildHeadHtml(page, { og, jsonLd, markdownHref, llmsLink }),
+				buildHeadHtml(page, {
+					og,
+					jsonLd,
+					markdownHref,
+					llmsLink,
+					canonical,
+					description,
+				}),
 			);
 		} else {
 			skipped.push({

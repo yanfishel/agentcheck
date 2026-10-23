@@ -23,6 +23,9 @@ const FIXED_BY: Record<FixKind, Record<string, Needs>> = {
 		"structured-data": failing,
 		"markdown-twin": (c) => c.status === "warn",
 		"llms-txt-link": (c) => c.status === "fail",
+		// A missing tag only; a wrong one is the owner's to correct.
+		canonical: (c) => c.status === "fail",
+		"meta-description": (c) => c.status === "fail",
 	},
 };
 

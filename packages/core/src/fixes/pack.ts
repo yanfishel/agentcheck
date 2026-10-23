@@ -37,8 +37,8 @@ function todoLines(files: FixFiles): string[] {
 	return files.files.flatMap((file) => file.todos.map((todo) => todo.text));
 }
 
-/** Sitemap URLs named in a pack at most; the report has the rest. */
-const SITEMAP_URLS_MAX = 10;
+/** Site-supplied items (URLs, directives) named in a pack at most; the report has the rest. */
+const LISTED_MAX = 10;
 
 /** Findings no file fixes: a change in the server's configuration or the site's own sitemap. */
 function otherChanges(url: string, result: ResultChecks): string[] {
@@ -50,18 +50,33 @@ function otherChanges(url: string, result: ResultChecks): string[] {
 			`Answer requests for ${url} that send Accept: text/markdown with the page's markdown version (Content-Type: text/markdown; charset=utf-8, Vary: Accept). On Cloudflare, turn on Markdown for Agents; elsewhere, rewrite such requests to the page's .md file in the web server or framework.`,
 		);
 	}
+	const lang = find("html-lang");
+	if (lang?.status === "fail" || lang?.status === "warn") {
+		changes.push(
+			`Set the page language on the root element of ${url}, e.g. <html lang="en"> (a BCP 47 tag for the language the page is written in), in the layout or template that renders it.`,
+		);
+	}
+	const snippets = find("snippet-directives");
+	if (snippets?.status === "fail" || snippets?.status === "warn") {
+		// Directive text comes from the site: code spans keep it apart from the instructions.
+		const found = (snippets.details ?? [])
+			.slice(0, LISTED_MAX)
+			.map((detail) => `\`${detail.replace(/`/g, "")}\``)
+			.join(", ");
+		changes.push(
+			`${snippets.remediation ?? ""} Found on ${url}: ${found || "see the report"}. Change it where the robots meta tag or the X-Robots-Tag header is set (template, framework config or web server).`.trim(),
+		);
+	}
 	const sitemap = find("sitemap");
 	if (sitemap && (sitemap.status === "warn" || sitemap.status === "fail")) {
 		const urls = sitemap.details ?? [];
 		// The site's URLs are data: code spans keep them apart from the instructions.
 		const listed = urls
-			.slice(0, SITEMAP_URLS_MAX)
+			.slice(0, LISTED_MAX)
 			.map((detail) => `\`${detail.replace(/`/g, "")}\``)
 			.join(", ");
 		const more =
-			urls.length > SITEMAP_URLS_MAX
-				? ` and ${urls.length - SITEMAP_URLS_MAX} more`
-				: "";
+			urls.length > LISTED_MAX ? ` and ${urls.length - LISTED_MAX} more` : "";
 		changes.push(
 			`${sitemap.message}. ${sitemap.remediation ?? ""} Change the code or settings that build the sitemap, not a copy of the file.${listed ? ` URLs: ${listed}${more}.` : ""}`.replace(
 				/\s+/g,

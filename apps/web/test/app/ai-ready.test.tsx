@@ -95,6 +95,17 @@ describe("agentcheck.dev is AI-ready itself", () => {
 		});
 	});
 
+	it("the public pages carry a canonical URL and a description agents can quote", async () => {
+		const { metadata: privacy } = await import("@/app/privacy/page");
+		const { metadata: terms } = await import("@/app/terms/page");
+		expect(homeMetadata.alternates?.canonical).toBe("/");
+		expect(privacy.alternates?.canonical).toBe("/privacy");
+		expect(terms.alternates?.canonical).toBe("/terms");
+		const length = [...SITE.description].length;
+		expect(length).toBeGreaterThanOrEqual(50);
+		expect(length).toBeLessThanOrEqual(300);
+	});
+
 	it("the landing answers Accept: text/markdown with its twin, varying on Accept", async () => {
 		const rewrites = await nextConfig.rewrites?.();
 		const before = Array.isArray(rewrites) ? rewrites : rewrites?.beforeFiles;

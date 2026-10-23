@@ -26,6 +26,34 @@ const scriptBody = (content: string) =>
 	content.split('ld+json">')[1]?.split("\n</script>")[0] ?? "";
 
 describe("buildHeadHtml", () => {
+	it("adds a canonical without tracking parameters and a description from og:description", () => {
+		const file = buildHeadHtml(
+			page({
+				url: "https://codeframe.pro/pricing?plan=pro&utm_source=x",
+				ogDescription: 'Plans & "prices".',
+			}),
+			{ og: false, jsonLd: false, canonical: true, description: true },
+		);
+		expect(file.fixes).toEqual(["canonical", "meta-description"]);
+		expect(file.content).toContain(
+			'<link rel="canonical" href="https://codeframe.pro/pricing?plan=pro">',
+		);
+		expect(file.content).toContain(
+			'<meta name="description" content="Plans &amp; &quot;prices&quot;.">',
+		);
+		expect(file.todos).toEqual([]);
+	});
+
+	it("leaves a TODO description when the page has no og:description", () => {
+		const file = buildHeadHtml(page(), {
+			og: false,
+			jsonLd: false,
+			description: true,
+		});
+		expect(file.content).toContain('content="TODO: one or two sentences');
+		expect(file.todos).toHaveLength(1);
+	});
+
 	it("adds only the missing og tags", () => {
 		const file = buildHeadHtml(
 			page({ ogTitle: "Have", og: { "og:title": "Have" } }),

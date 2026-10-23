@@ -5,6 +5,7 @@ import { LEGAL } from "../../content/legal";
 
 export const metadata: Metadata = {
 	title: "Terms of Use — AgentCheck",
+	alternates: { canonical: "/terms" },
 	description: "The terms for using the hosted AgentCheck service.",
 };
 
