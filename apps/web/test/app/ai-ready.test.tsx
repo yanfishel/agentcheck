@@ -3,12 +3,14 @@ import { fileURLToPath } from "node:url";
 import { twinMarkdown } from "@agentcheck/core/fixes";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import ChecksPage, { metadata as checksMetadata } from "@/app/checks/page";
 import Home, { metadata as homeMetadata } from "@/app/page";
 import PrivacyPage, { metadata as privacyMetadata } from "@/app/privacy/page";
 import { GET as robotsRoute } from "@/app/robots.txt/route";
 import sitemap from "@/app/sitemap";
 import TermsPage, { metadata as termsMetadata } from "@/app/terms/page";
 import { ToastProvider } from "@/components/ui";
+import { FACTS_LINE } from "@/content/facts";
 import { LEGAL } from "@/content/legal";
 import { robotsTxt } from "@/content/robots";
 import { siteMetadata as rootMetadata, SITE } from "@/content/site";
@@ -62,6 +64,7 @@ describe("agentcheck.dev is AI-ready itself", () => {
 		const urls = entries.map((entry) => entry.url);
 		expect(urls).toEqual([
 			`${SITE.url}/`,
+			`${SITE.url}/checks`,
 			`${SITE.url}/privacy`,
 			`${SITE.url}/terms`,
 		]);
@@ -70,7 +73,7 @@ describe("agentcheck.dev is AI-ready itself", () => {
 				false,
 			);
 		}
-		expect(new Date(entries[1]?.lastModified ?? "").toISOString()).toBe(
+		expect(new Date(entries[2]?.lastModified ?? "").toISOString()).toBe(
 			new Date(`${LEGAL.updated} 00:00 UTC`).toISOString(),
 		);
 	});
@@ -128,6 +131,7 @@ describe("agentcheck.dev is AI-ready itself", () => {
 	});
 
 	it.each([
+		["checks", ChecksPage, checksMetadata],
 		["privacy", PrivacyPage, privacyMetadata],
 		["terms", TermsPage, termsMetadata],
 	] as const)(
@@ -144,6 +148,14 @@ describe("agentcheck.dev is AI-ready itself", () => {
 			});
 		},
 	);
+
+	it("index.md and llms-full.txt carry the landing's facts line, numbers from the engine", () => {
+		expect(FACTS_LINE).toMatch(/^25 checks in 4 categories/);
+		for (const file of ["index.md", "llms-full.txt"]) {
+			expect(publicFile(file), file).toContain(FACTS_LINE);
+		}
+		expect(landing()).toContain('href="/checks"');
+	});
 
 	it("the legal pages describe themselves as schema.org WebPages", () => {
 		const html = renderToStaticMarkup(<PrivacyPage />);

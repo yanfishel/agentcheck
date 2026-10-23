@@ -16,6 +16,8 @@ const PUBLIC = new Set([
 	// Static legal documents: no data, nothing to authorise.
 	"privacy/page.tsx",
 	"terms/page.tsx",
+	// The public list of checks: built from the engine, no data.
+	"checks/page.tsx",
 	// Static robots.txt: no data, nothing to authorise.
 	"robots.txt/route.ts",
 	// Anonymous quick audits are allowed by design; it authorises inside handleStartAudit.

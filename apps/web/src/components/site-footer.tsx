@@ -17,6 +17,7 @@ const iconLinkClass =
 const product = [
 	{ label: "How it works", href: "/#how" },
 	{ label: "What we check", href: "/#guide" },
+	{ label: "Every check", href: "/checks" },
 	{ label: "CLI", href: "/#cli" },
 	{ label: "README badge", href: "/#badge" },
 	{ label: "FAQ", href: "/#faq" },

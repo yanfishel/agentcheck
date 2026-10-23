@@ -7,6 +7,7 @@ const SITE_URL = "https://agentcheck.dev";
 /** Public pages and their markdown versions in public/. */
 const TWINS = [
 	["/", "/index.md"],
+	["/checks", "/checks.md"],
 	["/privacy", "/privacy.md"],
 	["/terms", "/terms.md"],
 ] as const;

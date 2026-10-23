@@ -18,19 +18,21 @@ An AI answer cites a handful of sources. Four things decide whether your site ca
 
 #### llms.txt is a table of contents for models
 
-Weight: 30% of the score (AI Manifests). A plain markdown file at the root that points to your important pages, plus markdown versions of those pages. *A young standard, and ten minutes of work.* See [llmstxt.org](https://llmstxt.org/).
+Weight: 30% of the score (AI Manifests). A plain markdown file at the root that points to your important pages, plus markdown versions of those pages that a page links to and serves to agents that ask for markdown. *A young standard, and ten minutes of work.* See [llmstxt.org](https://llmstxt.org/) and [RFC 8288 (Link)](https://www.rfc-editor.org/rfc/rfc8288).
 
 #### robots.txt says who may come in
 
-Weight: 20% (Bot Access). AI crawlers have their own names and obey robots.txt. Plenty of sites block them by accident with a rule copied years ago. *Your old robots.txt may not be a fan of ChatGPT.* See [OpenAI crawlers](https://developers.openai.com/api/docs/bots), [ClaudeBot](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), [PerplexityBot](https://docs.perplexity.ai/docs/resources/perplexity-crawlers), [Google-Extended](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers) and [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309).
+Weight: 20% (Bot Access). AI crawlers have their own names and obey robots.txt, which can now also say what they may do with your pages. Plenty of sites block them by accident with a rule copied years ago, or hide pages with a stray noindex, and a sitemap with dead links sends them nowhere. *Your old robots.txt may not be a fan of ChatGPT.* See [OpenAI crawlers](https://developers.openai.com/api/docs/bots), [ClaudeBot](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), [PerplexityBot](https://docs.perplexity.ai/docs/resources/perplexity-crawlers), [Google-Extended](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers), [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309), [contentsignals.org](https://contentsignals.org/) and [sitemaps.org](https://www.sitemaps.org/protocol.html).
 
 #### Structure tells it what the page is
 
-Weight: 25% (Content & Semantics). One h1, headings in order, JSON-LD and OpenGraph, and more real content than menus and footers. See [schema.org](https://schema.org/docs/gs.html), [Google structured data](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) and [Open Graph](https://ogp.me/).
+Weight: 25% (Content & Semantics). One h1, headings in order, a canonical URL, a description and a language, JSON-LD and OpenGraph, and real content in the HTML itself, not only after JavaScript runs. See [schema.org](https://schema.org/docs/gs.html), [Google structured data](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data), [Open Graph](https://ogp.me/) and [Google canonical URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls).
 
 #### Buttons with names let agents act
 
 Weight: 25% (Agentic Actionability). Browser agents book, buy and fill in forms. A div that pretends to be a button, or a captcha on a plain page, stops them. *Agents cannot click on vibes.* See [MDN: accessible name](https://developer.mozilla.org/en-US/docs/Glossary/Accessible_name) and [WAI-ARIA practices](https://www.w3.org/WAI/ARIA/apg/).
+
+25 checks in 4 categories, each based on a published standard. A full check also opens the page in a real browser and covers up to 10 pages of the site; every report looks for 13 agent protocols, and the fix files come from your own pages. [See every check](https://agentcheck.dev/checks).
 
 ### How it works
 
@@ -44,12 +46,14 @@ A saved audit of vite.dev, shown the way you will see your own.
 
 #### vite.dev
 
-Overall score 80 of 100, grade B (full check, Chrome). By category:
+Site score 80 of 100, grade B: the average of 10 pages (full check, Chrome). The home page itself scores 76, grade C. Its categories:
 
-- AI Manifests: 80/100, 1 fail (no markdown version of the page)
-- Bot Access: 100/100
-- Content & Semantics: 63/100, 1 warning (heading levels skip), 1 fail (no structured data)
+- AI Manifests: 75/100, 2 fails (no markdown version of the page, no markdown answer to Accept: text/markdown)
+- Bot Access: 77/100, 1 fail (no content signals), 2 warnings (sitemap entries without lastmod, a limit on what answers may quote)
+- Content & Semantics: 73/100, 2 warnings (heading levels skip, a short meta description), 1 fail (no structured data)
 - Agentic Actionability: 80/100, 1 warning (one link without an accessible name)
+
+Across the 10 pages, every one lacks structured data and a markdown answer to Accept: text/markdown.
 
 ### Fair questions
 
@@ -60,6 +64,10 @@ Partly. Good SEO helps, but AI crawlers have their own names in robots.txt, thei
 #### Should I let every AI bot in?
 
 That is your call. Some sites block training crawlers and allow search ones. The report shows what is open and what is closed, so it is a decision rather than an accident.
+
+#### How do you decide what to check?
+
+Every check rests on a published standard or documented practice: RFCs, llmstxt.org, schema.org, WCAG, the search engines' own guides. Where no standard exists we leave the thing out rather than invent a rule. The full list, with each rule and its source, is on the checks page.
 
 #### Does llms.txt really work?
 

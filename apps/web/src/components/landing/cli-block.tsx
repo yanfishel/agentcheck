@@ -58,7 +58,11 @@ function paintLine(line: string): ReactNode {
  * checks and remediation lines are left out so the window stays small.
  */
 function terminalOutput(): ReactNode {
-	const lines = renderTerminal(exampleAudit, { color: false })
+	// The command shown has no --crawl, so its output has no pages.
+	const lines = renderTerminal(
+		{ ...exampleAudit, crawl: undefined },
+		{ color: false },
+	)
 		.split("\n")
 		.filter((line) => !/^\s+✓ /.test(line) && !/^\s+→ /.test(line))
 		// Without their passing checks, categories no longer need blank lines between them.
@@ -133,6 +137,8 @@ export function CliBlock() {
 			<div className="mt-6">
 				<CodeWindow
 					label="Command line examples"
+					// The terminal report is long: it scrolls inside, like the fix files.
+					codeClassName="max-h-[24rem] overflow-y-auto"
 					tabs={[
 						{
 							label: "zsh",
