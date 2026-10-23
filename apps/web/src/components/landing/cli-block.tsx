@@ -137,6 +137,7 @@ export function CliBlock() {
 						{
 							label: "zsh",
 							icon: <SquareTerminal aria-hidden="true" className="size-3.5" />,
+							language: "shell-session",
 							copy: `npx agentcheck-dev https://your-site.com ${CI_FLAGS}`,
 							copyLabel: "Copy command",
 							content: (
@@ -153,6 +154,7 @@ export function CliBlock() {
 						{
 							label: ".github/workflows/agentcheck.yml",
 							icon: <FileCode aria-hidden="true" className="size-3.5" />,
+							language: "yaml",
 							copy: WORKFLOW,
 							copyLabel: "Copy workflow",
 							content: <Yaml />,

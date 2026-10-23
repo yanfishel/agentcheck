@@ -68,6 +68,13 @@ function Code({ file }: { file: FixFilePreview }) {
 	);
 }
 
+/** The code language of a fix file, by its extension (the names match FILE_NAME). */
+function languageOf(name: string): string {
+	if (name.endsWith(".md")) return "markdown";
+	if (name.endsWith(".html")) return "html";
+	return "text";
+}
+
 function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
 	return files.map((file) => {
 		const Icon = kindIcon[file.kind];
@@ -75,6 +82,7 @@ function fileTabs(auditId: string, files: FixFilePreview[]): CodeTab[] {
 		return {
 			label: file.name,
 			icon: <Icon aria-hidden="true" className="size-3.5" />,
+			language: languageOf(file.name),
 			content: <Code file={file} />,
 			copy: file.content,
 			// A cut file is copied whole: fetched on click from its download.

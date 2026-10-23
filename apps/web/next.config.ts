@@ -24,7 +24,16 @@ const nextConfig: NextConfig = {
 		};
 	},
 	async headers() {
-		return [{ source: "/", headers: [{ key: "Vary", value: "Accept" }] }];
+		return [
+			{ source: "/", headers: [{ key: "Vary", value: "Accept" }] },
+			// The markdown version points back to the page, so it is not a duplicate.
+			{
+				source: "/index.md",
+				headers: [
+					{ key: "Link", value: '<https://agentcheck.dev/>; rel="canonical"' },
+				],
+			},
+		];
 	},
 	turbopack: {
 		rules: {

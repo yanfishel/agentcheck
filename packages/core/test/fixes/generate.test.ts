@@ -222,7 +222,7 @@ describe("generateFixFiles", () => {
 		const twin = out.files[2];
 		expect(twin?.kind).toBe("markdown");
 		// The page's only content is an h1 equal to its title: dropped, so a TODO is left.
-		expect(twin?.content).toBe(
+		expect(withoutFrontmatter(twin?.content)).toBe(
 			"# Pricing | CodeFrame\n\n<!-- TODO: add the text of /pricing -->\n",
 		);
 		expect(twin?.target).toContain('href="/pricing.md"');
@@ -280,7 +280,7 @@ describe("generateFixFiles", () => {
 			},
 		);
 		expect(out.files.map((f) => f.name)).toEqual(["index.md"]);
-		expect(out.files[0]?.content).toBe(
+		expect(withoutFrontmatter(out.files[0]?.content)).toBe(
 			"# CodeFrame - code screenshots\n\n## Code screenshots\n",
 		);
 		expect(out.pagesRead).toBe(1);
@@ -652,3 +652,8 @@ describe("generateFixFiles", () => {
 		expect(opts.network).toEqual({ blockPrivate: true });
 	});
 });
+
+/** A twin's text without its YAML frontmatter (twin.test.ts covers that). */
+function withoutFrontmatter(content: string | undefined): string {
+	return (content ?? "").replace(/^---\n[\s\S]*?\n---\n\n/, "");
+}

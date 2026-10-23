@@ -66,11 +66,11 @@ describe("content-signals", () => {
 
 	it("reads a signal in any group, as sites append it at the end", async () => {
 		const out = await run(
-			"User-agent: *\nAllow: /\n\nUser-agent: Cohere-ai\nAllow: /\nContent-Signal: search=yes\n",
+			"User-agent: *\nAllow: /\n\nUser-agent: ExampleBot\nAllow: /\nContent-Signal: search=yes\n",
 		);
 		expect(out.status).toBe("pass");
 		expect(out.details).toEqual([
-			"robots.txt (User-agent: Cohere-ai): search=yes",
+			"robots.txt (User-agent: ExampleBot): search=yes",
 		]);
 	});
 

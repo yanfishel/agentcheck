@@ -118,6 +118,10 @@ describe("agentcheck.dev is AI-ready itself", () => {
 			source: "/",
 			headers: [{ key: "Vary", value: "Accept" }],
 		});
+		expect(await nextConfig.headers?.()).toContainEqual({
+			source: "/index.md",
+			headers: [{ key: "Link", value: `<${SITE.url}/>; rel="canonical"` }],
+		});
 	});
 
 	it("every page links to llms.txt with rel=describedby", () => {

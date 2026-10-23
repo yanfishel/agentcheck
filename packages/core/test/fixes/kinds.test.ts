@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NO_CANONICAL, UNADVERTISED } from "../../src/checks/markdown-twin.ts";
 import { fixKindsFor, fixKindsSettled } from "../../src/fixes/kinds.ts";
 import type { AuditResult, CheckResult, Status } from "../../src/types.ts";
 
@@ -100,9 +101,27 @@ describe("fixKindsFor", () => {
 		expect(fixKindsFor(result([check("markdown-twin", "fail")]))).toEqual([
 			"markdown",
 		]);
-		expect(fixKindsFor(result([check("markdown-twin", "warn")]))).toEqual([
-			"head",
-		]);
+		const warn = (message: string) => ({
+			...check("markdown-twin", "warn"),
+			message,
+		});
+		expect(
+			fixKindsFor(
+				result([
+					warn(`Markdown version at https://x/index.md, ${UNADVERTISED}`),
+				]),
+			),
+		).toEqual(["head"]);
+		// A missing canonical header is a server setting, not a file.
+		expect(
+			fixKindsFor(
+				result([
+					warn(
+						`Markdown version advertised at https://x/a.md, ${NO_CANONICAL}`,
+					),
+				]),
+			),
+		).toEqual([]);
 	});
 
 	it("includes head for a failed llms-txt-link, not for a skipped one", () => {

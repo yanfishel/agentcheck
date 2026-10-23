@@ -8,6 +8,7 @@ const TEXT: Route = {
 	status: 200,
 	contentType: "text/plain; charset=utf-8",
 	body: "# Page\n\nHello.",
+	headers: { link: `<${ORIGIN}/>; rel="canonical"` },
 };
 
 const page = (head = ""): Route => ({
@@ -23,6 +24,31 @@ const run = (routes: Record<string, Route>, target = `${ORIGIN}/`) =>
 	runCheck(markdownTwin, mockRoutes(ORIGIN, routes), target);
 
 describe("markdown-twin", () => {
+	it("warns on an advertised twin without a canonical Link header", async () => {
+		const out = await run({
+			"/": page(alt("/twin.md")),
+			"/twin.md": { ...TEXT, headers: {} },
+		});
+		expect(out.status).toBe("warn");
+		expect(out.message).toBe(
+			'Markdown version advertised at https://example.com/twin.md, but its response has no Link header with rel="canonical"',
+		);
+		expect(out.remediation).toContain(
+			'Send Link: <https://example.com/>; rel="canonical"',
+		);
+	});
+
+	it("does not count a canonical that points at the twin itself", async () => {
+		const out = await run({
+			"/": page(alt("/twin.md")),
+			"/twin.md": {
+				...TEXT,
+				headers: { link: '</twin.md>; rel="canonical"' },
+			},
+		});
+		expect(out.status).toBe("warn");
+	});
+
 	it("has the expected metadata", () => {
 		expect(markdownTwin.id).toBe("markdown-twin");
 		expect(markdownTwin.weight).toBe(20);

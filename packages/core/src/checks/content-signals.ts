@@ -43,8 +43,8 @@ export function parseSignalValue(
 
 /**
  * Every `Content-Signal` line of a robots.txt, whatever group it sits in:
- * sites append it at the end of the file (cloudflare.com puts it under its
- * last bot's group), and readers treat it as site-wide.
+ * sites append it at the end of the file, where it lands under the last bot's
+ * group, and readers treat it as site-wide.
  */
 export function robotsContentSignals(body: string): ContentSignalLine[] {
 	const found: ContentSignalLine[] = [];

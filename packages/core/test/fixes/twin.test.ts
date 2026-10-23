@@ -90,9 +90,7 @@ describe("buildMarkdownTwin", () => {
 		expect(file.name).toBe("pricing.md");
 		expect(file.fixes).toEqual(["markdown-twin"]);
 		expect(file.todos).toEqual([]);
-		expect(file.content).toBe(
-			"# Pricing | CodeFrame\n\n## Plans\n\nPick one.\n",
-		);
+		expect(body(file)).toBe("# Pricing | CodeFrame\n\n## Plans\n\nPick one.\n");
 	});
 
 	it("drops the page's leading heading when it repeats the title", () => {
@@ -100,21 +98,19 @@ describe("buildMarkdownTwin", () => {
 			meta: meta("/pricing", { title: "Pricing | CodeFrame" }),
 			markdown: "# Pricing | CodeFrame\n\nPick one.\n\n# Pricing | CodeFrame",
 		});
-		expect(file.content).toBe(
+		expect(body(file)).toBe(
 			"# Pricing | CodeFrame\n\nPick one.\n\n## Pricing | CodeFrame\n",
 		);
 		const escaped = buildMarkdownTwin({
 			meta: meta("/", { title: "[Home]" }),
 			markdown: "## \\[Home\\]\n\nHi",
 		});
-		expect(escaped.content).toBe("# \\[Home\\]\n\nHi\n");
+		expect(body(escaped)).toBe("# \\[Home\\]\n\nHi\n");
 		const only = buildMarkdownTwin({
 			meta: meta("/docs", { title: "Docs" }),
 			markdown: "# Docs",
 		});
-		expect(only.content).toBe(
-			"# Docs\n\n<!-- TODO: add the text of /docs -->\n",
-		);
+		expect(body(only)).toBe("# Docs\n\n<!-- TODO: add the text of /docs -->\n");
 		expect(only.todos).toEqual([{ text: "docs.md: add the text of /docs" }]);
 	});
 
@@ -124,19 +120,19 @@ describe("buildMarkdownTwin", () => {
 			markdown:
 				"# Pricing\n\nPick one.\n\n## Plans\n\n### Pro\n\n```\n# not a heading\n```",
 		});
-		expect(file.content).toBe(
+		expect(body(file)).toBe(
 			"# Pricing\n\nPick one.\n\n## Plans\n\n### Pro\n\n```\n# not a heading\n```\n",
 		);
 		const second = buildMarkdownTwin({
 			meta: meta("/pricing", { title: "Pricing" }),
 			markdown: "# Pricing\n\n## Plans\n\n# Extras",
 		});
-		expect(second.content).toBe("# Pricing\n\n### Plans\n\n## Extras\n");
+		expect(body(second)).toBe("# Pricing\n\n### Plans\n\n## Extras\n");
 		const kept = buildMarkdownTwin({
 			meta: meta("/pricing", { title: "Plans" }),
 			markdown: "# Pricing\n\n## Plans",
 		});
-		expect(kept.content).toBe("# Plans\n\n## Pricing\n\n### Plans\n");
+		expect(body(kept)).toBe("# Plans\n\n## Pricing\n\n### Plans\n");
 	});
 
 	it("escapes ampersands in the title and keeps entity text literal", () => {
@@ -145,7 +141,7 @@ describe("buildMarkdownTwin", () => {
 			meta: meta("/qa", { title: "Q&A &lt;b&gt;" }),
 			markdown: "Hi",
 		});
-		expect(file.content).toBe(`# Q${bs}&A ${bs}&lt;b${bs}&gt;\n\nHi\n`);
+		expect(body(file)).toBe(`# Q${bs}&A ${bs}&lt;b${bs}&gt;\n\nHi\n`);
 	});
 
 	it("escapes the title", () => {
@@ -153,7 +149,7 @@ describe("buildMarkdownTwin", () => {
 			meta: meta("/", { title: "[Home](x)" }),
 			markdown: "Hi",
 		});
-		expect(file.content.startsWith("# \\[Home\\]\\(x\\)\n\n")).toBe(true);
+		expect(body(file).startsWith("# \\[Home\\]\\(x\\)\n\n")).toBe(true);
 	});
 
 	it("TODO for a page with no content", () => {
@@ -161,7 +157,7 @@ describe("buildMarkdownTwin", () => {
 			meta: meta("/docs/", { title: "Docs" }),
 			markdown: "",
 		});
-		expect(file.content).toBe(
+		expect(body(file)).toBe(
 			"# Docs\n\n<!-- TODO: add the text of /docs/ -->\n",
 		);
 		expect(file.todos).toEqual([{ text: "docs.md: add the text of /docs/" }]);
@@ -173,7 +169,38 @@ describe("buildMarkdownTwin", () => {
 			markdown: "Text",
 		});
 		expect(file.target).toBe(
-			'New file at /pricing.md, served as text/markdown; add <link rel="alternate" type="text/markdown" href="/pricing.md"> inside <head> of https://codeframe.pro/pricing?plan=pro',
+			'New file at /pricing.md, served as text/markdown with Link: <https://codeframe.pro/pricing?plan=pro>; rel="canonical"; add <link rel="alternate" type="text/markdown" href="/pricing.md"> inside <head> of https://codeframe.pro/pricing?plan=pro',
+		);
+	});
+
+	it("starts with YAML frontmatter whose values cannot break out", () => {
+		const file = buildMarkdownTwin({
+			meta: meta("/pricing", {
+				title: 'Plans: "pro"\n---',
+				description: "Pick one.",
+				canonical: "https://codeframe.pro/pricing",
+			}),
+			markdown: "Text",
+		});
+		expect(
+			file.content.startsWith(
+				'---\ntitle: "Plans: \\"pro\\" ---"\nurl: "https://codeframe.pro/pricing"\ndescription: "Pick one."\n---\n\n# ',
+			),
+		).toBe(true);
+	});
+
+	it("leaves description out of the frontmatter when the page has none", () => {
+		const file = buildMarkdownTwin({
+			meta: meta("/", { title: "Home" }),
+			markdown: "Hi",
+		});
+		expect(file.content).toBe(
+			'---\ntitle: "Home"\nurl: "https://codeframe.pro/"\n---\n\n# Home\n\nHi\n',
 		);
 	});
 });
+
+/** The twin without its frontmatter. */
+function body(file: { content: string }): string {
+	return file.content.replace(/^---\n[\s\S]*?\n---\n\n/, "");
+}

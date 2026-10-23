@@ -9,12 +9,14 @@ afterEach(cleanup);
 const tabs: [CodeTab, CodeTab] = [
 	{
 		label: "zsh",
+		language: "shell-session",
 		content: "npx agentcheck-dev",
 		copy: "npx agentcheck-dev",
 		copyLabel: "Copy command",
 	},
 	{
 		label: "ci.yml",
+		language: "yaml",
 		content: "runs-on: ubuntu",
 		copy: "runs-on: ubuntu",
 		copyLabel: "Copy workflow",
@@ -39,6 +41,16 @@ describe("CodeWindow", () => {
 		expect(
 			screen.getByRole("button", { name: "Copy command" }),
 		).toBeInTheDocument();
+	});
+
+	it("names each tab's language on its code element", () => {
+		render(<CodeWindow label="Examples" tabs={tabs} />);
+		expect(
+			screen.getByText("npx agentcheck-dev", { selector: "code" }),
+		).toHaveClass("language-shell-session");
+		expect(
+			screen.getByText("runs-on: ubuntu", { selector: "code" }),
+		).toHaveClass("language-yaml");
 	});
 
 	it("switches tabs and copies the active one", async () => {

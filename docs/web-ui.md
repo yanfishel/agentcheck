@@ -140,7 +140,9 @@ components and the copy.
   landing carries JSON-LD (`landing/structured-data.tsx`) and
   `<link rel="alternate" type="text/markdown" href="/index.md">`, and
   `next.config.ts` answers `/` with `index.md` for `Accept: text/markdown`
-  (`Vary: Accept`); the root layout links every page to `/llms.txt` with
+  (`Vary: Accept`) and serves `/index.md` with `Link: <https://agentcheck.dev/>;
+  rel="canonical"`; every `CodeWindow` tab names its `language` (`language-*`
+  on the `<code>`); the root layout links every page to `/llms.txt` with
   `rel="describedby"`.
 - OG pictures are drawn only in `app/_og/draw.tsx`: `drawSiteOg` (the site
   picture) and `drawReportOg` (a shared report's, served at

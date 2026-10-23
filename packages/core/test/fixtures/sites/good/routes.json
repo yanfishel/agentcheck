@@ -14,7 +14,8 @@
 		"/index.md": {
 			"status": 200,
 			"contentType": "text/plain; charset=utf-8",
-			"file": "index.md"
+			"file": "index.md",
+			"headers": { "link": "<https://good.example/>; rel=\"canonical\"" }
 		},
 		"/llms-full.txt": {
 			"status": 404,
