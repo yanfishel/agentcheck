@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { collectRenderedData } from "../../src/browser/collect.ts";
+import {
+	collectRenderedData,
+	RENDERED_HTML_MAX,
+} from "../../src/browser/collect.ts";
 import type { CdpLike, PageLike } from "../../src/browser/playwright-types.ts";
 import { createBrowserRenderer } from "../../src/browser/render.ts";
 import type { RenderedPage } from "../../src/browser/types.ts";
@@ -208,6 +211,11 @@ describe.skipIf(!available)(
 					),
 				},
 				"/many": { body: page(many) },
+				"/scripted": {
+					body: page(
+						'<main id="m"></main><script>document.getElementById("m").textContent = "Added by a script";</script>',
+					),
+				},
 			});
 		});
 		afterAll(async () => {
@@ -223,6 +231,11 @@ describe.skipIf(!available)(
 				throw new Error(`not rendered: ${result.reason}`);
 			return result;
 		}
+
+		it("keeps the rendered DOM, with text a script added", async () => {
+			const { html } = await collect("/scripted");
+			expect(html).toContain("Added by a script");
+		});
 
 		it("lists interactive nodes with names and descriptions", async () => {
 			const { interactive } = await collect("/names");
@@ -483,5 +496,26 @@ describe("collectRenderedData robustness (fakes)", () => {
 		);
 		expect(calls).toBe(2);
 		expect(result.clickTraps).toHaveLength(1);
+	});
+
+	it("keeps the page's content, cut at RENDERED_HTML_MAX", async () => {
+		const page = {
+			evaluate: async () => measured,
+			content: async () => "x".repeat(RENDERED_HTML_MAX + 10),
+		} as unknown as PageLike;
+		const result = await collectRenderedData(page, axCdp);
+		expect(result.html).toHaveLength(RENDERED_HTML_MAX);
+	});
+
+	it("leaves html out when the content cannot be read", async () => {
+		const page = {
+			evaluate: async () => measured,
+			content: async () => {
+				throw new Error("gone");
+			},
+		} as unknown as PageLike;
+		const result = await collectRenderedData(page, axCdp);
+		expect(result).not.toHaveProperty("html");
+		expect(result.failures).toBeUndefined();
 	});
 });

@@ -4,7 +4,7 @@ import type { AuditContext, Check } from "../types.ts";
 const MARKDOWN_TYPES = new Set(["text/markdown", "text/x-markdown"]);
 
 export type Negotiated =
-	| { ok: true; url: string }
+	| { ok: true; url: string; body: string }
 	| { ok: false; problem: string };
 
 function judge(res: HttpResult): Negotiated {
@@ -22,7 +22,7 @@ function judge(res: HttpResult): Negotiated {
 			problem: "answered text/markdown with HTML or nothing",
 		};
 	}
-	return { ok: true, url: res.url };
+	return { ok: true, url: res.url, body: res.body };
 }
 
 // One request per audit, shared by markdown-twin and markdown-negotiation.

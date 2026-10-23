@@ -50,6 +50,26 @@ function pointsBack(res: HttpResult, twin: URL): boolean {
 	);
 }
 
+/** Rough token count: about four characters per token for English text and markup. */
+function tokens(text: string): number {
+	return Math.round(text.length / 4);
+}
+
+function formatTokens(count: number): string {
+	return count < 1000 ? String(count) : `${(count / 1000).toFixed(1)}k`;
+}
+
+/** "Markdown is 89% smaller than the HTML (about 1.4k vs 12.1k tokens)", when it is smaller. */
+export function tokenSavings(html: string, markdown: string): string[] {
+	const before = tokens(html);
+	const after = tokens(markdown);
+	if (before === 0 || after >= before) return [];
+	const percent = Math.round((1 - after / before) * 100);
+	return [
+		`Markdown is ${percent}% smaller than the HTML (about ${formatTokens(after)} vs ${formatTokens(before)} tokens)`,
+	];
+}
+
 /**
  * Passes for a markdown version an agent can discover: advertised by a link
  * tag or header, or served for `Accept: text/markdown`. One found only at the
@@ -68,7 +88,7 @@ export const markdownTwin: Check = {
 		const links = advertised(ctx);
 		for (const url of links) {
 			const res = await ctx.get(url.href);
-			if (isTextResource(res)) {
+			if (isTextResource(res) && res.kind === "response") {
 				if (!pointsBack(res, url)) {
 					return {
 						status: "warn",
@@ -79,6 +99,7 @@ export const markdownTwin: Check = {
 				return {
 					status: "pass",
 					message: `Markdown version advertised at ${url.href}`,
+					details: tokenSavings(ctx.page.body, res.body),
 				};
 			}
 			details.push(`${url.href}: ${describeProblem(res)}`);
@@ -89,6 +110,7 @@ export const markdownTwin: Check = {
 			return {
 				status: "pass",
 				message: "Markdown version served for Accept: text/markdown",
+				details: tokenSavings(ctx.page.body, negotiated.body),
 			};
 		}
 		details.push(`Accept: text/markdown: ${negotiated.problem}`);

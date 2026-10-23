@@ -21,6 +21,7 @@ import { opengraph } from "./checks/opengraph.ts";
 import { overlayBlocking } from "./checks/overlay-blocking.ts";
 import { sitemap } from "./checks/sitemap.ts";
 import { snippetDirectives } from "./checks/snippet-directives.ts";
+import { staticContent } from "./checks/static-content.ts";
 import { structuredData } from "./checks/structured-data.ts";
 import type { Check } from "./types.ts";
 
@@ -45,6 +46,7 @@ export const CHECKS: Check[] = [
 	metaDescription,
 	htmlLang,
 	codeLanguages,
+	staticContent,
 	accessibleNames,
 	clickTargets,
 	overlayBlocking,
