@@ -50,7 +50,7 @@ export const kindIcon: Record<FixKind, LucideIcon> = {
 /** The category footer's line: what this category gets. */
 export const kindPitch: Record<FixKind, string> = {
 	robots:
-		"Get a ready robots.txt that keeps your rules and lets the AI crawlers in.",
+		"Get a ready robots.txt that keeps your rules, lets the AI crawlers in and declares content signals.",
 	llms: "Get a ready llms.txt built from your site's pages.",
 	"llms-full": "Get a ready llms-full.txt built from your site's pages.",
 	markdown: "Get a ready markdown version of this page.",

@@ -203,6 +203,7 @@ describe("auditStatusBody", () => {
 					"ai-bots-allowed",
 					"noai-directives",
 					"asset-access",
+					"content-signals",
 				]),
 				...inCategory("content-semantics", [
 					"heading-hierarchy",

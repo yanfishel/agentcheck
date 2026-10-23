@@ -139,6 +139,7 @@ describe("fixKindsSettled", () => {
 		"llms-full-txt",
 		"markdown-twin",
 		"ai-bots-allowed",
+		"content-signals",
 		"opengraph",
 		"structured-data",
 	];
@@ -164,7 +165,7 @@ describe("fixKindsSettled", () => {
 		expect(
 			fixKindsSettled([
 				category(["opengraph", "structured-data", "heading-hierarchy"]),
-				category(["ai-bots-allowed", "noai-directives"]),
+				category(["ai-bots-allowed", "noai-directives", "content-signals"]),
 				category([
 					"markdown-twin",
 					"llms-full-txt",

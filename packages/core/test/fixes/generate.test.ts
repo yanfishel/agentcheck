@@ -78,7 +78,7 @@ describe("generateFixFiles", () => {
 
 		const robots = out.files[0];
 		expect(robots?.target).toBe("Replace /robots.txt at the site root");
-		expect(robots?.fixes).toEqual(["ai-bots-allowed"]);
+		expect(robots?.fixes).toEqual(["ai-bots-allowed", "content-signals"]);
 		expect(robots?.content).toContain("User-agent: GPTBot # AgentCheck");
 		expect(robots?.content).toContain("Disallow: /admin");
 
@@ -434,7 +434,9 @@ describe("generateFixFiles", () => {
 		);
 		const robots = out.files[0];
 		expect(robots?.target).toBe("New file at /robots.txt");
-		expect(robots?.content).toContain("User-agent: *\nAllow: /\n");
+		expect(robots?.content).toContain(
+			"User-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=no\nAllow: /\n",
+		);
 		expect(robots?.content).toContain(
 			"Sitemap: https://codeframe.pro/sitemap.xml",
 		);
@@ -507,7 +509,31 @@ describe("generateFixFiles", () => {
 		expect(out.files[0]?.content).not.toContain("Elsewhere");
 	});
 
-	it("skips robots.txt when it already allows the AI crawlers", async () => {
+	it("skips robots.txt when it already allows the AI crawlers and declares signals", async () => {
+		const out = await generateFixFiles(
+			{ url: `${ORIGIN}/`, kinds: ["robots"] },
+			{
+				...BASE,
+				dispatcher: site({
+					"/robots.txt": {
+						status: 200,
+						contentType: "text/plain",
+						body: "User-agent: *\nContent-Signal: search=yes\nDisallow: /admin\n",
+					},
+				}),
+			},
+		);
+		expect(out.files).toEqual([]);
+		expect(out.skipped).toEqual([
+			{
+				kind: "robots",
+				reason:
+					"robots.txt already allows the AI crawlers on / and declares content signals",
+			},
+		]);
+	});
+
+	it("adds only the content signal when the AI crawlers are already allowed", async () => {
 		const out = await generateFixFiles(
 			{ url: `${ORIGIN}/`, kinds: ["robots"] },
 			{
@@ -521,13 +547,10 @@ describe("generateFixFiles", () => {
 				}),
 			},
 		);
-		expect(out.files).toEqual([]);
-		expect(out.skipped).toEqual([
-			{
-				kind: "robots",
-				reason: "robots.txt already allows the AI crawlers on /",
-			},
-		]);
+		expect(out.files[0]?.fixes).toEqual(["content-signals"]);
+		expect(out.files[0]?.content).toContain(
+			"User-agent: *\nDisallow: /admin\nContent-Signal: search=yes, ai-input=yes, ai-train=no # AgentCheck: declare content signals\n",
+		);
 	});
 
 	it("skips head.html when the page has its og tags and usable JSON-LD", async () => {
