@@ -15,6 +15,12 @@ export type CodeTab = {
 	 */
 	icon?: ReactNode;
 	content: ReactNode;
+	/**
+	 * The code's language (`bash`, `yaml`, `markdown`, `html`, `text`), set as
+	 * `language-*` on the `<code>`: agents (and our own code-languages check)
+	 * read it to tell a command from its output.
+	 */
+	language: string;
 	/** What Copy puts on the clipboard for this tab. */
 	copy: string;
 	/** Fetches what Copy puts on the clipboard on click, instead of `copy` (e.g. a file shown cut). */
@@ -151,7 +157,7 @@ export function CodeWindow({
 						<pre
 							className={`h-full overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed text-code-text ${codeClassName ?? ""}`}
 						>
-							<code>{tab.content}</code>
+							<code className={`language-${tab.language}`}>{tab.content}</code>
 						</pre>
 					</Tabs.Panel>
 				))}

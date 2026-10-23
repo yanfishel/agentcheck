@@ -4,6 +4,7 @@ import { assetAccess } from "./checks/asset-access.ts";
 import { canonical } from "./checks/canonical.ts";
 import { captchaBlocking } from "./checks/captcha-blocking.ts";
 import { clickTargets } from "./checks/click-targets.ts";
+import { codeLanguages } from "./checks/code-languages.ts";
 import { contentDensity } from "./checks/content-density.ts";
 import { contentSignals } from "./checks/content-signals.ts";
 import { headingHierarchy } from "./checks/heading-hierarchy.ts";
@@ -43,6 +44,7 @@ export const CHECKS: Check[] = [
 	canonical,
 	metaDescription,
 	htmlLang,
+	codeLanguages,
 	accessibleNames,
 	clickTargets,
 	overlayBlocking,

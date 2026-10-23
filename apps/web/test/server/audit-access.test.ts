@@ -217,6 +217,7 @@ describe("auditStatusBody", () => {
 					"canonical",
 					"meta-description",
 					"html-lang",
+					"code-languages",
 				]),
 			];
 			const all = {

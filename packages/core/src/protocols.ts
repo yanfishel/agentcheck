@@ -73,6 +73,14 @@ export const PROTOCOLS: readonly Protocol[] = [
 		rel: "ai-catalog",
 	},
 	{
+		// agents.md: instructions for coding agents, a repository convention; listed when a site serves it.
+		id: "agents-md",
+		title: "AGENTS.md",
+		group: "agents",
+		paths: ["/AGENTS.md", "/agents.md"],
+		body: "text",
+	},
+	{
 		id: "oauth-discovery",
 		title: "OAuth / OpenID Connect discovery",
 		group: "auth",

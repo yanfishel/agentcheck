@@ -1,3 +1,4 @@
+import { NO_CANONICAL } from "../checks/markdown-twin.ts";
 import type { AuditResult } from "../types.ts";
 import type { FixFile, FixFiles } from "./types.ts";
 
@@ -50,6 +51,12 @@ function otherChanges(url: string, result: ResultChecks): string[] {
 			`Answer requests for ${url} that send Accept: text/markdown with the page's markdown version (Content-Type: text/markdown; charset=utf-8, Vary: Accept). On Cloudflare, turn on Markdown for Agents; elsewhere, rewrite such requests to the page's .md file in the web server or framework.`,
 		);
 	}
+	const twin = find("markdown-twin");
+	if (twin?.status === "warn" && twin.message.endsWith(NO_CANONICAL)) {
+		changes.push(
+			`Send Link: <${url}>; rel="canonical" with the markdown version of ${url}, in the web server or framework that serves the .md file, so it is not taken for a duplicate page.`,
+		);
+	}
 	const lang = find("html-lang");
 	if (lang?.status === "fail" || lang?.status === "warn") {
 		changes.push(
@@ -96,7 +103,7 @@ function fileInstruction(file: FixFile): string | null {
 		return `Create the file ${file.name}.`;
 	}
 	if (file.kind === "markdown") {
-		return `Create the file ${file.name}, then add the <link rel="alternate" type="text/markdown"> tag from the target to the <head> of the page it mirrors.`;
+		return `Create the file ${file.name}, serve it with the Link header from the target, then add the <link rel="alternate" type="text/markdown"> tag from the target to the <head> of the page it mirrors.`;
 	}
 	return null;
 }

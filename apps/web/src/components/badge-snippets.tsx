@@ -21,6 +21,7 @@ export function badgeSnippetTabs({
 		{
 			label: "README.md",
 			icon: <FileText aria-hidden="true" className="size-3.5" />,
+			language: "markdown",
 			copy: `[![${alt}](${badgeUrl})](${reportUrl})`,
 			copyLabel: "Copy Markdown",
 			content: (
@@ -44,6 +45,7 @@ export function badgeSnippetTabs({
 		{
 			label: "index.html",
 			icon: <FileCode aria-hidden="true" className="size-3.5" />,
+			language: "html",
 			copy: `<a href="${reportUrl}"><img src="${badgeUrl}" alt="${alt}"></a>`,
 			copyLabel: "Copy HTML",
 			content: (

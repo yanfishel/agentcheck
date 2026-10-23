@@ -1,3 +1,4 @@
+import { UNADVERTISED } from "../checks/markdown-twin.ts";
 import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 import type { FixKind } from "./types.ts";
 
@@ -21,7 +22,9 @@ const FIXED_BY: Record<FixKind, Record<string, Needs>> = {
 	head: {
 		opengraph: failing,
 		"structured-data": failing,
-		"markdown-twin": (c) => c.status === "warn",
+		// Only a twin nothing points to: a missing canonical header is a server setting.
+		"markdown-twin": (c) =>
+			c.status === "warn" && c.message.endsWith(UNADVERTISED),
 		"llms-txt-link": (c) => c.status === "fail",
 		// A missing tag only; a wrong one is the owner's to correct.
 		canonical: (c) => c.status === "fail",

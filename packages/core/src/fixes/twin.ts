@@ -91,11 +91,11 @@ export function buildMarkdownTwin(page: PageText): FixFile {
 	const url = new URL(page.meta.url);
 	const name = twinName(url);
 	const path = twinPath(url);
-	const title = escapeMarkdown(
+	const plainTitle =
 		cleanText(page.meta.ogTitle || page.meta.title) ||
-			page.meta.h1 ||
-			pathOf(url),
-	);
+		page.meta.h1 ||
+		pathOf(url);
+	const title = escapeMarkdown(plainTitle);
 	const todos: FixTodo[] = [];
 	const { markdown, level } = dropTitleHeading(page.markdown, title);
 	// The title is the h1; when the dropped heading was the page's only h1,
@@ -111,9 +111,29 @@ export function buildMarkdownTwin(page: PageText): FixFile {
 	return {
 		kind: "markdown",
 		name,
-		target: `New file at ${path}, served as text/markdown; add <link rel="alternate" type="text/markdown" href="${path}"> inside <head> of ${url.href}`,
+		target: `New file at ${path}, served as text/markdown with Link: <${url.href}>; rel="canonical"; add <link rel="alternate" type="text/markdown" href="${path}"> inside <head> of ${url.href}`,
 		fixes: ["markdown-twin"],
-		content: `# ${title}\n\n${body}\n`,
+		content: `${frontmatter(page, plainTitle)}# ${title}\n\n${body}\n`,
 		todos,
 	};
+}
+
+/**
+ * YAML frontmatter agents read before the text: title, the page's URL and its
+ * description when it has one. Values are JSON strings, which YAML reads as
+ * double-quoted scalars, so no site text can break out of them.
+ */
+function frontmatter(page: PageText, title: string): string {
+	const description = cleanText(
+		page.meta.description || page.meta.ogDescription,
+	);
+	const lines = [
+		"---",
+		`title: ${JSON.stringify(title)}`,
+		`url: ${JSON.stringify(page.meta.canonical || page.meta.url)}`,
+		...(description ? [`description: ${JSON.stringify(description)}`] : []),
+		"---",
+		"",
+	];
+	return `${lines.join("\n")}\n`;
 }

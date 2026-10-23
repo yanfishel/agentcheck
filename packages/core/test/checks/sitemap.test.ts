@@ -73,13 +73,13 @@ describe("sitemap", () => {
 
 	it("warns and lists the URLs that do not answer 200", async () => {
 		const out = await run({
-			"/sitemap.xml": urlset(["/", "/he/privacy", "/ru/privacy"]),
+			"/sitemap.xml": urlset(["/", "/de/about", "/fr/about"]),
 		});
 		expect(out.status).toBe("warn");
 		expect(out.message).toBe("Sitemap: 2 of 3 checked URLs do not answer 200");
 		expect(out.details).toEqual([
-			`${ORIGIN}/he/privacy: HTTP 404`,
-			`${ORIGIN}/ru/privacy: HTTP 404`,
+			`${ORIGIN}/de/about: HTTP 404`,
+			`${ORIGIN}/fr/about: HTTP 404`,
 		]);
 	});
 

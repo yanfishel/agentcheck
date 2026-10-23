@@ -91,6 +91,7 @@ interface SiteManifest {
 			status: number;
 			contentType?: string;
 			file?: string;
+			headers?: Record<string, string>;
 			/** Served for Accept: text/markdown. */
 			markdown?: { status: number; contentType?: string; file?: string };
 		}
@@ -108,9 +109,11 @@ export function mockSite(name: string): { agent: MockAgent; origin: string } {
 		status: number;
 		contentType?: string;
 		file?: string;
+		headers?: Record<string, string>;
 	}): Route => ({
 		status: entry.status,
 		contentType: entry.contentType,
+		headers: entry.headers,
 		// Routes without a stored file (non-2xx) reply a short not-found body.
 		body: entry.file
 			? new Uint8Array(readFileSync(new URL(entry.file, dir)))
