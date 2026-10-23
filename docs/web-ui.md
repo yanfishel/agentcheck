@@ -161,6 +161,14 @@ components and the copy.
   and land 1.5rem below the top. The URL field gets focus on load where there
   is a mouse (`pointer: fine`, never on touch, where it would open the
   keyboard) and after any click on a link to `#start`.
+- Agent protocols (`report/protocols-section.tsx`) close the category
+  sections of a done report (the shared one too): a card like a category's
+  with a neutral icon (`Waypoints` on `bg-surface-2`, never a category hue,
+  so it does not read as a fifth category), "not scored" as its chip and
+  "Checked N protocols, M published." under the title; only the protocols
+  found are listed (group icon `Plug`/`KeyRound`/`ShoppingCart`, title, the
+  URL as text, never a link). With none it is one row like a closed category.
+  Results stored without `protocols` show no block.
 - In a skipped category the reason is shown once, in its header; each check
   row then shows the check's title instead of repeating it.
 - A category header is icon and title in one flex item of natural width

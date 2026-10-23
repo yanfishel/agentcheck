@@ -14,6 +14,7 @@ import { createAuditContext } from "./context.ts";
 import { type Favicon, fetchFavicon } from "./favicon.ts";
 import { createFetcher, type Fetcher, type NetworkOptions } from "./http.ts";
 import type { FinishedCheck } from "./progress.ts";
+import { findProtocols } from "./protocols.ts";
 import { CHECKS } from "./registry.ts";
 import { buildCategoryResults, gradeFor, overallScore } from "./scoring.ts";
 import type { AuditResult, Check } from "./types.ts";
@@ -126,6 +127,8 @@ async function execute(
 				opts.faviconBudgetMs,
 			)
 		: null;
+	// Alongside the checks; it never throws and stays within its own budget.
+	const protocols = findProtocols(ctx);
 
 	const results = await Promise.all(
 		checks.map(async (check): Promise<FinishedCheck> => {
@@ -188,6 +191,7 @@ async function execute(
 		score,
 		grade: gradeFor(score),
 		browser,
+		protocols: await protocols,
 	};
 }
 

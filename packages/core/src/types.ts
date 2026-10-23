@@ -1,6 +1,7 @@
 import type { CheerioAPI } from "cheerio";
 import type { RenderOutcome } from "./browser/types.ts";
 import type { HttpResult } from "./http.ts";
+import type { ProtocolsResult } from "./protocols.ts";
 
 export type CategoryId =
 	| "ai-manifests"
@@ -95,4 +96,9 @@ export interface AuditResult {
 				version: string;
 				renderMs: number;
 		  };
+	/**
+	 * Agent protocols the site publishes (MCP, A2A, OAuth, ...): informational,
+	 * never scored. Absent in results stored before it existed.
+	 */
+	protocols?: ProtocolsResult;
 }

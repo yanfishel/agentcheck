@@ -12,6 +12,7 @@ import {
 import { CategoryTiles } from "./report/category-tiles";
 import { CheckRow } from "./report/check-row";
 import type { CategoryResult } from "./report/markers";
+import { ProtocolsSection } from "./report/protocols-section";
 import { relativeTime } from "./report/relative-time";
 import { ScoreBand } from "./report/score-band";
 import type { ScreenshotSources } from "./report/screenshot-thumb";
@@ -287,6 +288,16 @@ export function AuditReport({
 								</Arrive>
 							);
 						})}
+						{/* Informational, after the scored categories; results stored
+						    before it existed have no protocols and show nothing. */}
+						{complete?.protocols ? (
+							<Arrive key="protocols" present>
+								<ProtocolsSection
+									protocols={complete.protocols}
+									heading={example ? "h4" : "h2"}
+								/>
+							</Arrive>
+						) : null}
 					</div>
 				</div>
 			</ArrivalProvider>
