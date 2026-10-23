@@ -134,7 +134,11 @@ components and the copy.
   `app/opengraph-image.tsx` (built at build time, `drawSiteOg`; our font from
   `app/_og/`, each font URL a literal or the bundler loads one file for both
   weights); `public/llms.txt`,
-  `public/llms-full.txt` and `public/index.md` are hand-kept, and
+  `public/llms-full.txt` and `public/index.md` are hand-kept;
+  `public/privacy.md` and `public/terms.md` are the legal pages run through
+  the engine's own `twinMarkdown` as a file snapshot in `ai-ready.test.tsx`
+  (CI fails when a page changes without them: run `vitest -u` there), and
+  `LegalPage` carries a schema.org `WebPage`; and
   `test/app/ai-ready.test.tsx` fails when a landing heading is missing from
   `index.md` or `llms-full.txt`, so change them with the landing's copy. The
   landing carries JSON-LD (`landing/structured-data.tsx`) and

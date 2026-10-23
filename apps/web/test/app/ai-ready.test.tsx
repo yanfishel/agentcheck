@@ -1,10 +1,13 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { twinMarkdown } from "@agentcheck/core/fixes";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import Home, { metadata as homeMetadata } from "@/app/page";
+import PrivacyPage, { metadata as privacyMetadata } from "@/app/privacy/page";
 import { GET as robotsRoute } from "@/app/robots.txt/route";
 import sitemap from "@/app/sitemap";
+import TermsPage, { metadata as termsMetadata } from "@/app/terms/page";
 import { ToastProvider } from "@/components/ui";
 import { LEGAL } from "@/content/legal";
 import { robotsTxt } from "@/content/robots";
@@ -121,6 +124,40 @@ describe("agentcheck.dev is AI-ready itself", () => {
 		expect(await nextConfig.headers?.()).toContainEqual({
 			source: "/index.md",
 			headers: [{ key: "Link", value: `<${SITE.url}/>; rel="canonical"` }],
+		});
+	});
+
+	it.each([
+		["privacy", PrivacyPage, privacyMetadata],
+		["terms", TermsPage, termsMetadata],
+	] as const)(
+		"public/%s.md is the page's markdown version, kept in step (vitest -u rewrites it)",
+		async (name, Page, metadata) => {
+			const url = `${SITE.url}/${name}`;
+			const body = renderToStaticMarkup(<Page />);
+			const html = `<html><head><title>${String(metadata.title).split(" — ")[0]}</title><meta name="description" content="${String(metadata.description)}"><link rel="canonical" href="${url}"></head><body>${body}</body></html>`;
+			await expect(twinMarkdown(html, new URL(url))).toMatchFileSnapshot(
+				`../../public/${name}.md`,
+			);
+			expect(metadata.alternates?.types).toEqual({
+				"text/markdown": `/${name}.md`,
+			});
+		},
+	);
+
+	it("the legal pages describe themselves as schema.org WebPages", () => {
+		const html = renderToStaticMarkup(<PrivacyPage />);
+		const match = html.match(
+			/<script type="application\/ld\+json">([\s\S]*?)<\/script>/,
+		);
+		const data = JSON.parse(match?.[1] ?? "{}") as Record<string, unknown>;
+		expect(data).toMatchObject({
+			"@type": "WebPage",
+			name: "Privacy Policy",
+			url: `${SITE.url}/privacy`,
+			dateModified: new Date(`${LEGAL.updated} 00:00 UTC`)
+				.toISOString()
+				.slice(0, 10),
 		});
 	});
 
