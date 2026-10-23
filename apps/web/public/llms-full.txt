@@ -10,7 +10,7 @@ Source: https://agentcheck.dev/
 
 People ask ChatGPT, Claude and Perplexity what they used to google. Check whether those assistants can read your site, quote it and link to it. It takes under a minute.
 
-Check a site at https://agentcheck.dev: paste a URL and choose **Quick** (no browser, no account) or **Full check** (adds browser-based checks; needs a free account).
+Check a site at https://agentcheck.dev: paste a URL and choose **Quick** (no browser, no account) or **Full check** (adds browser-based checks and up to 10 pages of the site; needs a free account).
 
 ### What an AI reads before it reads you
 

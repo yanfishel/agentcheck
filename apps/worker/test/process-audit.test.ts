@@ -7,6 +7,7 @@ import {
 	type GuardedAuditOptionsInput,
 	guardedAuditOptions,
 	type Screenshot,
+	SERVICE_CRAWL,
 	TargetUnreachableError,
 } from "@agentcheck/core";
 import type { Audit, AuditMode, ClaimResult } from "@agentcheck/db";
@@ -187,6 +188,7 @@ describe("processAudit", () => {
 		const opts = audit.mock.calls[0]?.[1];
 		if (!opts) throw new Error("no options");
 		expect(Object.keys(opts).sort()).toEqual([
+			"crawl",
 			"network",
 			"onCheck",
 			"onFavicon",
@@ -194,6 +196,8 @@ describe("processAudit", () => {
 			"toolVersion",
 			"userAgent",
 		]);
+		// Fixed in the engine: nothing from the job reaches the crawl's limits.
+		expect(opts.crawl).toEqual(SERVICE_CRAWL);
 	});
 
 	it("stores the favicon of a quick audit", async () => {
@@ -318,6 +322,24 @@ describe("processAudit", () => {
 		);
 		expect(store.completed).toEqual([]);
 		expect(store.failed).toHaveLength(1);
+	});
+
+	it("stores a crawl's site score as the audit's score", async () => {
+		const store = fakeStore({ kind: "claimed", audit: auditRow("full") });
+		const crawled: AuditResult = {
+			...RESULT,
+			crawl: { score: 61, grade: "D", pages: [], issues: [] },
+		};
+		await processAudit(
+			deps(store, { audit: vi.fn(async () => crawled) }),
+			{ auditId: ID },
+			JOB_ID,
+		);
+		expect(store.completed[0]?.data).toMatchObject({
+			result: crawled,
+			score: 61,
+			grade: "D",
+		});
 	});
 
 	it("stores the result", async () => {

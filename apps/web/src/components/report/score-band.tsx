@@ -4,6 +4,7 @@ import { SiteIcon } from "../site-icon";
 import { BandGradeMark, BandScoreRing } from "./band-arrival";
 import { Gauge } from "./gauge";
 import { gradeStroke } from "./grade-mark";
+import { headline } from "./headline";
 import { ScoreConfetti } from "./score-confetti";
 import { HALO, ScoreRing } from "./score-ring";
 import { type ScreenshotSources, ScreenshotThumb } from "./screenshot-thumb";
@@ -86,8 +87,10 @@ export function ScoreBand({
 	/** Fire confetti from the ring (a full report that scores 100). */
 	celebrate?: boolean;
 }) {
+	// A crawl leads with the site score; the page's own is in the Pages section.
+	const lead = headline(result);
 	const ring = (
-		<BandScoreRing score={result.score} grade={result.grade} large={!surface} />
+		<BandScoreRing score={lead.score} grade={lead.grade} large={!surface} />
 	);
 	const Heading = heading;
 	return (
@@ -136,7 +139,7 @@ export function ScoreBand({
 					    the mark's box, hence the nudge down). */}
 					{screenshot ? null : (
 						<BandGradeMark
-							grade={result.grade}
+							grade={lead.grade}
 							className={`hidden shrink-0 translate-y-[12%] text-accent-fg sm:block ${surface ? "size-14" : "size-20"}`}
 						/>
 					)}
@@ -145,12 +148,12 @@ export function ScoreBand({
 					<ScreenshotThumb
 						sources={screenshot}
 						host={hostOf(result.target)}
-						grade={result.grade}
+						grade={lead.grade}
 					/>
 				) : (
 					// On a phone the grade keeps its place beside the ring.
 					<BandGradeMark
-						grade={result.grade}
+						grade={lead.grade}
 						className={`justify-self-end text-accent-fg sm:hidden ${surface ? "size-14" : "size-16"}`}
 					/>
 				)}

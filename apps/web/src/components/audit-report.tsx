@@ -11,7 +11,9 @@ import {
 } from "./report/category-section";
 import { CategoryTiles } from "./report/category-tiles";
 import { CheckRow } from "./report/check-row";
+import { headline } from "./report/headline";
 import type { CategoryResult } from "./report/markers";
+import { PagesSection, WaitingPages } from "./report/pages-section";
 import { ProtocolsSection } from "./report/protocols-section";
 import { relativeTime } from "./report/relative-time";
 import { ScoreBand } from "./report/score-band";
@@ -81,6 +83,7 @@ function ReportBand({
 	favicon?: string;
 	now: number;
 }) {
+	const lead = headline(result);
 	const chips = (
 		<>
 			{tag ? <Chip tone="band">{tag}</Chip> : null}
@@ -88,6 +91,9 @@ function ReportBand({
 				<Chip tone="band">
 					{mode === "full" ? "Full check" : "Quick check"}
 				</Chip>
+			) : null}
+			{lead.pages !== null ? (
+				<Chip tone="band">{`${lead.pages} page${lead.pages === 1 ? "" : "s"}`}</Chip>
 			) : null}
 			<Chip tone="band">{browserLabel(result.browser)}</Chip>
 			<Tooltip content={absoluteTime(result.timestamp)}>
@@ -125,7 +131,7 @@ function ReportBand({
 				surface={false}
 				screenshot={screenshot}
 				favicon={favicon}
-				celebrate={mode === "full" && result.score === 100}
+				celebrate={mode === "full" && lead.score === 100}
 			/>
 		</PlumBand>
 	);
@@ -288,6 +294,21 @@ export function AuditReport({
 								</Arrive>
 							);
 						})}
+						{/* A full check's crawl: waiting while it runs, after the
+						    categories (the page's own) once the result is in. */}
+						{complete?.crawl ? (
+							<Arrive key="pages" present>
+								<PagesSection
+									crawl={complete.crawl}
+									pageScore={complete.score}
+									heading={example ? "h4" : "h2"}
+								/>
+							</Arrive>
+						) : !complete && mode === "full" ? (
+							<Arrive key="pages" present={false}>
+								<WaitingPages heading={example ? "h4" : "h2"} />
+							</Arrive>
+						) : null}
 						{/* Informational, after the scored categories; results stored
 						    before it existed have no protocols and show nothing. */}
 						{complete?.protocols ? (

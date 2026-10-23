@@ -126,7 +126,9 @@ export type CrawledPage =
 				message: string;
 			}[];
 	  }
-	| { url: string; status: "failed"; error: string };
+	| { url: string; status: "failed"; error: string }
+	/** Not reached within the crawl's time budget (the hosted service's). */
+	| { url: string; status: "skipped"; reason: string };
 
 /** How many audited pages a page check warns or fails on. */
 export interface CrawlIssue {

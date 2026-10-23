@@ -126,5 +126,7 @@ Example terminal output:
 The hosted service at https://agentcheck.dev (web app, worker, PostgreSQL queue)
 runs the same engine with the network guard on, stores audits, history and share
 links, adds a first-screen screenshot and the site's favicon to each report, and
-lets the owner generate fix files (section 4). Rules: `CLAUDE.md`; deploy:
+lets the owner generate fix files (section 4). A full check (signed in) also
+crawls the site, up to 10 pages within 40 s, and leads with the site score; a
+quick check audits the one page. Rules: `CLAUDE.md`; deploy:
 `docs/deploy.md`.

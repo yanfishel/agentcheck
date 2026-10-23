@@ -100,7 +100,7 @@ export function FullCheckDialog({
 			onOpenChange={onOpenChange}
 			onDismiss={onDismiss}
 			title="Full check needs an account"
-			description="A full check also opens the page in a real browser and tests what agents can click and read there. Accounts are free, and the check starts as soon as you are in."
+			description="A full check also opens the page in a real browser, tests what agents can click and read there, and checks up to 10 pages of the site. Accounts are free, and the check starts as soon as you are in."
 		/>
 	);
 }

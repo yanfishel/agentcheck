@@ -7,6 +7,7 @@ import { AuditFailed } from "../../../components/audit-failed";
 import { CheckNow } from "../../../components/landing/check-now";
 import { type FinalReport, LiveReport } from "../../../components/live-report";
 import type { FixFilesRole } from "../../../components/report/fix-files/provider";
+import { headline } from "../../../components/report/headline";
 import { ReportActions } from "../../../components/report-actions";
 import {
 	auditStatusBody,
@@ -114,7 +115,7 @@ export default async function AuditPage({ params }: PageProps<"/audits/[id]">) {
 						auditId={audit.id}
 						mode={audit.mode}
 						url={audit.url}
-						score={result.score}
+						score={headline(result).score}
 						canRerun={canRerun}
 						canShare={canShare}
 						shareToken={token}
