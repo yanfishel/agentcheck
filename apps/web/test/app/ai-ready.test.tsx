@@ -6,6 +6,7 @@ import Home, { metadata as homeMetadata } from "@/app/page";
 import { GET as robotsRoute } from "@/app/robots.txt/route";
 import sitemap from "@/app/sitemap";
 import { ToastProvider } from "@/components/ui";
+import { LEGAL } from "@/content/legal";
 import { robotsTxt } from "@/content/robots";
 import { siteMetadata as rootMetadata, SITE } from "@/content/site";
 import nextConfig from "../../next.config";
@@ -53,13 +54,22 @@ describe("agentcheck.dev is AI-ready itself", () => {
 		expect(await res.text()).toBe(robotsTxt());
 	});
 
-	it("the sitemap lists the public pages by absolute URL", () => {
-		const urls = sitemap().map((entry) => entry.url);
+	it("the sitemap lists the public pages by absolute URL, each with a lastmod", () => {
+		const entries = sitemap();
+		const urls = entries.map((entry) => entry.url);
 		expect(urls).toEqual([
 			`${SITE.url}/`,
 			`${SITE.url}/privacy`,
 			`${SITE.url}/terms`,
 		]);
+		for (const entry of entries) {
+			expect(Number.isNaN(new Date(entry.lastModified ?? "").getTime())).toBe(
+				false,
+			);
+		}
+		expect(new Date(entries[1]?.lastModified ?? "").toISOString()).toBe(
+			new Date(`${LEGAL.updated} 00:00 UTC`).toISOString(),
+		);
 	});
 
 	it("the site's base URL and OpenGraph URL are agentcheck.dev", () => {

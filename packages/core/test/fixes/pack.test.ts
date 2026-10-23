@@ -147,7 +147,7 @@ describe("fix files pack", () => {
 	it("README has no hand-fill section without TODOs", () => {
 		const text = readme({ ...files, files: [robotsFile] }, audit);
 		expect(text).not.toContain("Fill in by hand");
-		expect(text).not.toContain("Change on the server");
+		expect(text).not.toContain("Also change");
 	});
 
 	it("README and prompt ask for content negotiation when markdown-negotiation fails", () => {
@@ -177,13 +177,55 @@ describe("fix files pack", () => {
 			} as unknown as AuditResult,
 		};
 		const text = readme(files, negotiation);
-		expect(text).toContain("## Change on the server");
+		expect(text).toContain("## Also change");
 		expect(text).toContain(
 			"Answer requests for https://codeframe.pro/ that send Accept: text/markdown",
 		);
 		const prompt = agentPrompt(files, negotiation);
-		expect(prompt).toContain("## Server change");
+		expect(prompt).toContain("## Other changes");
 		expect(prompt).toContain("Markdown for Agents");
+	});
+
+	it("the prompt names broken sitemap URLs as code spans, at most ten", () => {
+		const details = Array.from(
+			{ length: 12 },
+			(_, i) => `https://codeframe.pro/p${i}: HTTP 404`,
+		);
+		const withSitemap = {
+			...audit,
+			result: {
+				...result,
+				categories: [
+					{
+						id: "bot-access",
+						title: "Bot Access",
+						weight: 20,
+						status: "scored",
+						score: 50,
+						checks: [
+							{
+								id: "sitemap",
+								title: "Sitemap lists live pages",
+								weight: 15,
+								status: "warn",
+								message: "Sitemap: 12 of 30 checked URLs do not answer 200",
+								details,
+								remediation:
+									"In the sitemap, remove or fix the URLs that do not answer 200.",
+							},
+						],
+					},
+				],
+			} as unknown as AuditResult,
+		};
+		const prompt = agentPrompt(files, withSitemap);
+		expect(prompt).toContain(
+			"- Sitemap: 12 of 30 checked URLs do not answer 200. In the sitemap, remove or fix the URLs that do not answer 200. Change the code or settings that build the sitemap, not a copy of the file. URLs: `https://codeframe.pro/p0: HTTP 404`,",
+		);
+		expect(prompt).toContain(
+			"`https://codeframe.pro/p9: HTTP 404` and 2 more.",
+		);
+		expect(prompt).not.toContain("p10");
 	});
 
 	it("the agent prompt carries full contents, merge advice, questions and the check command", () => {

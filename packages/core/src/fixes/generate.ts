@@ -7,6 +7,7 @@ import {
 	isTextResource,
 	type NetworkOptions,
 } from "../http.ts";
+import { isSitemapXml, sitemapLines } from "../sitemaps.ts";
 import { menuLinks, pageMeta, sitemapUrls } from "./extract.ts";
 import { buildHeadHtml } from "./head.ts";
 import { FIX_KIND_ORDER } from "./kinds.ts";
@@ -94,27 +95,6 @@ type RobotsRead =
 function isHtml(contentType: string | null): boolean {
 	const type = contentType?.split(";")[0]?.trim().toLowerCase();
 	return type === "text/html" || type === "application/xhtml+xml";
-}
-
-function sitemapLines(robots: string, root: URL): URL[] {
-	const out: URL[] = [];
-	for (const line of robots.split(/\r\n|\r|\n/)) {
-		const match = line.match(/^\s*sitemap\s*:\s*(\S+)/i);
-		if (!match?.[1]) continue;
-		try {
-			const url = new URL(match[1], root);
-			// Same host only: a robots.txt must not point the service at other sites.
-			if (
-				(url.protocol === "http:" || url.protocol === "https:") &&
-				url.host === root.host
-			) {
-				out.push(url);
-			}
-		} catch {
-			// not a URL: ignored
-		}
-	}
-	return out;
 }
 
 async function generate(
@@ -409,7 +389,7 @@ async function readSitemaps(
 			maxBytes: SITEMAP_MAX_BYTES,
 		});
 		if (res.kind !== "response" || res.status !== 200) return null;
-		if (!/<(urlset|sitemapindex)[\s>]/i.test(res.body)) return null;
+		if (!isSitemapXml(res.body)) return null;
 		return sitemapUrls(res.body, root);
 	};
 	for (const url of top) {

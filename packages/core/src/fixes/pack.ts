@@ -37,18 +37,36 @@ function todoLines(files: FixFiles): string[] {
 	return files.files.flatMap((file) => file.todos.map((todo) => todo.text));
 }
 
-/** Failed checks that no file fixes: they need a change in the server's configuration. */
-function serverChanges(url: string, result: ResultChecks): string[] {
-	const failed = new Set(
-		result.categories
-			.flatMap((category) => category.checks)
-			.filter((check) => check.status === "fail")
-			.map((check) => check.id),
-	);
+/** Sitemap URLs named in a pack at most; the report has the rest. */
+const SITEMAP_URLS_MAX = 10;
+
+/** Findings no file fixes: a change in the server's configuration or the site's own sitemap. */
+function otherChanges(url: string, result: ResultChecks): string[] {
+	const checks = result.categories.flatMap((category) => category.checks);
+	const find = (id: string) => checks.find((check) => check.id === id);
 	const changes: string[] = [];
-	if (failed.has("markdown-negotiation")) {
+	if (find("markdown-negotiation")?.status === "fail") {
 		changes.push(
 			`Answer requests for ${url} that send Accept: text/markdown with the page's markdown version (Content-Type: text/markdown; charset=utf-8, Vary: Accept). On Cloudflare, turn on Markdown for Agents; elsewhere, rewrite such requests to the page's .md file in the web server or framework.`,
+		);
+	}
+	const sitemap = find("sitemap");
+	if (sitemap && (sitemap.status === "warn" || sitemap.status === "fail")) {
+		const urls = sitemap.details ?? [];
+		// The site's URLs are data: code spans keep them apart from the instructions.
+		const listed = urls
+			.slice(0, SITEMAP_URLS_MAX)
+			.map((detail) => `\`${detail.replace(/`/g, "")}\``)
+			.join(", ");
+		const more =
+			urls.length > SITEMAP_URLS_MAX
+				? ` and ${urls.length - SITEMAP_URLS_MAX} more`
+				: "";
+		changes.push(
+			`${sitemap.message}. ${sitemap.remediation ?? ""} Change the code or settings that build the sitemap, not a copy of the file.${listed ? ` URLs: ${listed}${more}.` : ""}`.replace(
+				/\s+/g,
+				" ",
+			),
 		);
 	}
 	return changes;
@@ -89,14 +107,9 @@ export function readme(files: FixFiles, audit: ReadmeAudit): string {
 	if (todos.length > 0) {
 		lines.push("## Fill in by hand", "", ...todos.map((t) => `- ${t}`), "");
 	}
-	const server = serverChanges(audit.url, audit.result);
-	if (server.length > 0) {
-		lines.push(
-			"## Change on the server",
-			"",
-			...server.map((s) => `- ${s}`),
-			"",
-		);
+	const other = otherChanges(audit.url, audit.result);
+	if (other.length > 0) {
+		lines.push("## Also change", "", ...other.map((s) => `- ${s}`), "");
 	}
 	lines.push(
 		"## Check the result",
@@ -121,14 +134,14 @@ export function agentPrompt(files: FixFiles, audit: PackAudit): string {
 		if (instruction) lines.push(instruction, "");
 		lines.push(fence(file.content), "");
 	}
-	const server = serverChanges(audit.url, audit.result);
-	if (server.length > 0) {
+	const other = otherChanges(audit.url, audit.result);
+	if (other.length > 0) {
 		lines.push(
-			"## Server change",
+			"## Other changes",
 			"",
-			"Make this change in the web server or framework configuration of the repository:",
+			"No file above covers these; make them in the server, framework or sitemap configuration of the repository:",
 			"",
-			...server.map((s) => `- ${s}`),
+			...other.map((s) => `- ${s}`),
 			"",
 		);
 	}

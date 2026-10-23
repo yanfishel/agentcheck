@@ -15,6 +15,7 @@ import { markdownTwin } from "./checks/markdown-twin.ts";
 import { noaiDirectives } from "./checks/noai-directives.ts";
 import { opengraph } from "./checks/opengraph.ts";
 import { overlayBlocking } from "./checks/overlay-blocking.ts";
+import { sitemap } from "./checks/sitemap.ts";
 import { structuredData } from "./checks/structured-data.ts";
 import type { Check } from "./types.ts";
 
@@ -23,6 +24,7 @@ export const CHECKS: Check[] = [
 	noaiDirectives,
 	assetAccess,
 	contentSignals,
+	sitemap,
 	llmsTxt,
 	llmsTxtFormat,
 	llmsFullTxt,

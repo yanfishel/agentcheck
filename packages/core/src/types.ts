@@ -30,8 +30,11 @@ export interface AuditContext {
 	page: { body: string; headers: Headers };
 	/** Parsed target page. */
 	$: CheerioAPI;
-	/** Relative paths resolve against targetUrl.origin; a call with `accept` is not cached. */
-	get(pathOrUrl: string, opts?: { accept?: string }): Promise<HttpResult>;
+	/** Relative paths resolve against targetUrl.origin; a call with `accept` or `signal` is not cached. */
+	get(
+		pathOrUrl: string,
+		opts?: { accept?: string; signal?: AbortSignal },
+	): Promise<HttpResult>;
 	/** Memoized robots.txt lookup. */
 	robots(): Promise<RobotsInfo>;
 	/** Memoized browser render of targetUrl. */
