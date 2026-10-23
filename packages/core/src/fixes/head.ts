@@ -4,12 +4,30 @@ import type { FixFile, FixTodo } from "./types.ts";
 
 export function buildHeadHtml(
 	page: PageMeta,
-	opts: { og: boolean; jsonLd: boolean },
+	opts: {
+		og: boolean;
+		jsonLd: boolean;
+		/** Path of an existing markdown version the page does not link to. */
+		markdownHref?: string;
+		/** Add the `describedby` link to /llms.txt. */
+		llmsLink?: boolean;
+	},
 ): FixFile {
 	const todos: FixTodo[] = [];
 	const fixes: string[] = [];
 	const lines: string[] = [];
 	const none = "none found on the page";
+
+	if (opts.markdownHref) {
+		fixes.push("markdown-twin");
+		lines.push(
+			`<link rel="alternate" type="text/markdown" href="${escapeAttribute(opts.markdownHref)}">`,
+		);
+	}
+	if (opts.llmsLink) {
+		fixes.push("llms-txt-link");
+		lines.push('<link rel="describedby" href="/llms.txt">');
+	}
 
 	const meta = (property: string, value: string) =>
 		`<meta property="${property}" content="${escapeAttribute(value)}">`;

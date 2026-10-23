@@ -96,11 +96,26 @@ describe("fixKindsFor", () => {
 		]);
 	});
 
-	it("includes markdown for a failed markdown-twin only", () => {
+	it("includes markdown for a failed markdown-twin, head for an unadvertised one", () => {
 		expect(fixKindsFor(result([check("markdown-twin", "fail")]))).toEqual([
 			"markdown",
 		]);
-		expect(fixKindsFor(result([check("markdown-twin", "warn")]))).toEqual([]);
+		expect(fixKindsFor(result([check("markdown-twin", "warn")]))).toEqual([
+			"head",
+		]);
+	});
+
+	it("includes head for a failed llms-txt-link, not for a skipped one", () => {
+		expect(fixKindsFor(result([check("llms-txt-link", "fail")]))).toEqual([
+			"head",
+		]);
+		expect(fixKindsFor(result([check("llms-txt-link", "skip")]))).toEqual([]);
+	});
+
+	it("never asks for a file for markdown-negotiation", () => {
+		expect(
+			fixKindsFor(result([check("markdown-negotiation", "fail")])),
+		).toEqual([]);
 	});
 
 	it("orders robots, llms, llms-full, markdown, head", () => {
@@ -138,6 +153,7 @@ describe("fixKindsSettled", () => {
 		"llms-txt-format",
 		"llms-full-txt",
 		"markdown-twin",
+		"llms-txt-link",
 		"ai-bots-allowed",
 		"content-signals",
 		"opengraph",
@@ -168,6 +184,7 @@ describe("fixKindsSettled", () => {
 				category(["ai-bots-allowed", "noai-directives", "content-signals"]),
 				category([
 					"markdown-twin",
+					"llms-txt-link",
 					"llms-full-txt",
 					"llms-txt-format",
 					"llms-txt",

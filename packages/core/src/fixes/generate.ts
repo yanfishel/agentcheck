@@ -1,7 +1,12 @@
 import type { CheerioAPI } from "cheerio";
 import { load } from "cheerio";
 import type { Dispatcher } from "undici";
-import { createFetcher, type Fetcher, type NetworkOptions } from "../http.ts";
+import {
+	createFetcher,
+	type Fetcher,
+	isTextResource,
+	type NetworkOptions,
+} from "../http.ts";
 import { menuLinks, pageMeta, sitemapUrls } from "./extract.ts";
 import { buildHeadHtml } from "./head.ts";
 import { FIX_KIND_ORDER } from "./kinds.ts";
@@ -9,7 +14,7 @@ import { buildLlmsTxt, llmsPages } from "./llms.ts";
 import { buildLlmsFullTxt, type PageText } from "./llms-full.ts";
 import { pageMarkdown } from "./markdown.ts";
 import { rewriteRobots } from "./robots.ts";
-import { buildMarkdownTwin } from "./twin.ts";
+import { buildMarkdownTwin, twinPath } from "./twin.ts";
 import type { FixFile, FixFiles, FixKind } from "./types.ts";
 
 export interface FixOptions {
@@ -146,7 +151,7 @@ async function generate(
 			};
 		}
 		const $ = load(res.body);
-		const meta = pageMeta($, finalUrl);
+		const meta = pageMeta($, finalUrl, res.headers);
 		const markdown = read.text ? pageMarkdown($, finalUrl) : "";
 		return { ok: true, url: finalUrl, $, page: { meta, markdown } };
 	};
@@ -343,11 +348,29 @@ async function generate(
 		const page = audited.page.meta;
 		const og = OG_CORE.some((key) => !(key in page.og));
 		const jsonLd = !page.jsonLd.usable;
-		if (og || jsonLd) built.set("head", buildHeadHtml(page, { og, jsonLd }));
-		else {
+		const pageUrl = new URL(page.url);
+		const exists = async (path: string) =>
+			isTextResource(
+				await fetcher.get(new URL(path, pageUrl.origin), { signal }),
+			);
+		// A twin built in this pack names its own link in its target.
+		let markdownHref: string | undefined;
+		if (!page.links.markdown && !kinds.has("markdown")) {
+			const path = twinPath(pageUrl);
+			if (await exists(path)) markdownHref = path;
+		}
+		const llmsLink =
+			!page.links.llms && (kinds.has("llms") || (await exists("/llms.txt")));
+		if (og || jsonLd || markdownHref || llmsLink) {
+			built.set(
+				"head",
+				buildHeadHtml(page, { og, jsonLd, markdownHref, llmsLink }),
+			);
+		} else {
 			skipped.push({
 				kind: "head",
-				reason: "the page already has its OpenGraph tags and usable JSON-LD",
+				reason:
+					"the page already has its OpenGraph tags, usable JSON-LD and every link head.html would add",
 			});
 		}
 	}

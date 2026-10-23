@@ -129,7 +129,8 @@ components and the copy.
 - The site is AI-ready itself (our own CLI must keep it at A): `content/site.ts`
   holds its URL (`https://agentcheck.dev`, a constant because the landing is
   built before the server's env exists) and the root metadata (metadataBase,
-  OpenGraph, Twitter card); `app/robots.ts`, `app/sitemap.ts`,
+  OpenGraph, Twitter card); robots.txt (`content/robots.ts`, served by
+  `app/robots.txt/route.ts` with its Content-Signal line), `app/sitemap.ts`,
   `app/opengraph-image.tsx` (built at build time, `drawSiteOg`; our font from
   `app/_og/`, each font URL a literal or the bundler loads one file for both
   weights); `public/llms.txt`,
@@ -137,7 +138,10 @@ components and the copy.
   `test/app/ai-ready.test.tsx` fails when a landing heading is missing from
   `index.md` or `llms-full.txt`, so change them with the landing's copy. The
   landing carries JSON-LD (`landing/structured-data.tsx`) and
-  `<link rel="alternate" type="text/markdown" href="/index.md">`.
+  `<link rel="alternate" type="text/markdown" href="/index.md">`, and
+  `next.config.ts` answers `/` with `index.md` for `Accept: text/markdown`
+  (`Vary: Accept`); the root layout links every page to `/llms.txt` with
+  `rel="describedby"`.
 - OG pictures are drawn only in `app/_og/draw.tsx`: `drawSiteOg` (the site
   picture) and `drawReportOg` (a shared report's, served at
   `/api/shared/[token]/og.png`). Report layout: brand row with the score ring

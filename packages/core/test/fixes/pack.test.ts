@@ -147,6 +147,43 @@ describe("fix files pack", () => {
 	it("README has no hand-fill section without TODOs", () => {
 		const text = readme({ ...files, files: [robotsFile] }, audit);
 		expect(text).not.toContain("Fill in by hand");
+		expect(text).not.toContain("Change on the server");
+	});
+
+	it("README and prompt ask for content negotiation when markdown-negotiation fails", () => {
+		const negotiation = {
+			...audit,
+			result: {
+				...result,
+				categories: [
+					...result.categories,
+					{
+						id: "ai-manifests",
+						title: "AI Manifests",
+						weight: 30,
+						status: "scored",
+						score: 0,
+						checks: [
+							{
+								id: "markdown-negotiation",
+								title: "Markdown on Accept: text/markdown",
+								weight: 10,
+								status: "fail",
+								message: "no",
+							},
+						],
+					},
+				],
+			} as unknown as AuditResult,
+		};
+		const text = readme(files, negotiation);
+		expect(text).toContain("## Change on the server");
+		expect(text).toContain(
+			"Answer requests for https://codeframe.pro/ that send Accept: text/markdown",
+		);
+		const prompt = agentPrompt(files, negotiation);
+		expect(prompt).toContain("## Server change");
+		expect(prompt).toContain("Markdown for Agents");
 	});
 
 	it("the agent prompt carries full contents, merge advice, questions and the check command", () => {

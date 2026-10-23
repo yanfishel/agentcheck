@@ -179,6 +179,8 @@ describe("auditStatusBody", () => {
 				finished("llms-txt-format", "llms.txt format", "fail"),
 				finished("llms-full-txt", "llms-full.txt", "fail"),
 				finished("markdown-twin", "Markdown twin", "fail"),
+				finished("llms-txt-link", "Page links to llms.txt", "fail"),
+				finished("markdown-negotiation", "Markdown on Accept", "fail"),
 			].map((c) => [c.id, c]),
 		);
 

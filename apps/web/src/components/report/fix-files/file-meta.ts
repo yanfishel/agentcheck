@@ -54,7 +54,7 @@ export const kindPitch: Record<FixKind, string> = {
 	llms: "Get a ready llms.txt built from your site's pages.",
 	"llms-full": "Get a ready llms-full.txt built from your site's pages.",
 	markdown: "Get a ready markdown version of this page.",
-	head: "Get ready OpenGraph and JSON-LD tags built from your page.",
+	head: "Get ready head tags built from your page: OpenGraph, JSON-LD and the links agents look for.",
 };
 
 const PITCH_PART: Record<FixKind, string> = {
