@@ -206,6 +206,7 @@ describe("auditStatusBody", () => {
 					"noai-directives",
 					"asset-access",
 					"content-signals",
+					"sitemap",
 				]),
 				...inCategory("content-semantics", [
 					"heading-hierarchy",
