@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runAudit } from "../src/audit.ts";
+import { guardedAuditOptions, runAudit } from "../src/audit.ts";
 import { createAuditContext } from "../src/context.ts";
 import { CRAWL_BROWSER_REASON, discoverPages } from "../src/crawl.ts";
 import { createFetcher } from "../src/http.ts";
@@ -170,6 +170,37 @@ describe("crawl in runAudit", () => {
 	it("respects the limit, the page itself included", async () => {
 		const result = await crawl(2);
 		expect(result.crawl?.pages).toHaveLength(2);
+	});
+
+	it("lists pages not done within the budget as skipped, outside the mean", async () => {
+		const result = await runAudit(`${ORIGIN}/`, {
+			userAgent: "test",
+			checks: [siteCheck, pageCheck],
+			dispatcher: mockRoutes(ORIGIN, {
+				"/": html("good"),
+				"/sitemap.xml": sitemap(["/", "/slow"]),
+				"/slow": { ...html("bad"), delayMs: 2000 },
+			}),
+			crawl: { limit: 10, budgetMs: 200 },
+		});
+		expect(result.crawl?.pages[1]).toEqual({
+			url: `${ORIGIN}/slow`,
+			status: "skipped",
+			reason: "Not checked within 0.2 s",
+		});
+		expect(result.crawl?.score).toBe(100);
+	});
+
+	it("guardedAuditOptions crawls with the fixed service limits only", () => {
+		const opts = guardedAuditOptions({
+			userAgent: "test",
+			browser: false,
+			crawl: true,
+		});
+		expect(opts.crawl).toEqual({ limit: 10, budgetMs: 40_000 });
+		expect(
+			guardedAuditOptions({ userAgent: "test", browser: false }),
+		).not.toHaveProperty("crawl");
 	});
 
 	it("leaves crawl out without the option", async () => {

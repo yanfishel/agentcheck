@@ -16,6 +16,8 @@ import type {
 
 export const CRAWL_LIMIT_DEFAULT = 10;
 export const CRAWL_LIMIT_MAX = 50;
+/** The hosted service's crawl: fixed here, so no caller can raise it. */
+export const SERVICE_CRAWL = { limit: 10, budgetMs: 40_000 } as const;
 /** Pages audited at once. */
 const WORKERS = 3;
 /** Time for finding the pages (sitemap reads). */
@@ -85,6 +87,8 @@ export async function crawlSite(
 		/** The audited page: its URL, score and check results. */
 		first: { url: string; score: number; results: FinishedCheck[] };
 		limit: number;
+		/** Time for the other pages; pages not done by then are `skipped`. None: no limit. */
+		budgetMs?: number;
 	},
 ): Promise<CrawlResult> {
 	const siteIds = new Set(
@@ -126,6 +130,25 @@ export async function crawlSite(
 		};
 	};
 
+	const deadline =
+		input.budgetMs === undefined ? undefined : Date.now() + input.budgetMs;
+	const overtime = (url: URL): CrawledPage => ({
+		url: url.href,
+		status: "skipped",
+		reason: `Not checked within ${(input.budgetMs ?? 0) / 1000} s`,
+	});
+	// A page still running at the deadline is skipped; its late result is dropped.
+	const withinBudget = (url: URL): Promise<CrawledPage> => {
+		if (deadline === undefined) return audit(url);
+		const left = deadline - Date.now();
+		if (left <= 0) return Promise.resolve(overtime(url));
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const late = new Promise<CrawledPage>((resolve) => {
+			timer = setTimeout(() => resolve(overtime(url)), left);
+		});
+		return Promise.race([audit(url), late]).finally(() => clearTimeout(timer));
+	};
+
 	const audited: CrawledPage[] = new Array(others.length);
 	let next = 0;
 	const worker = async () => {
@@ -133,7 +156,7 @@ export async function crawlSite(
 			const index = next++;
 			const url = others[index];
 			if (!url) return;
-			audited[index] = await audit(url);
+			audited[index] = await withinBudget(url);
 		}
 	};
 	await Promise.all(Array.from({ length: WORKERS }, worker));

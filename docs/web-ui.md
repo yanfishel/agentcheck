@@ -167,6 +167,17 @@ components and the copy.
   and land 1.5rem below the top. The URL field gets focus on load where there
   is a mouse (`pointer: fine`, never on touch, where it would open the
   keyboard) and after any click on a link to `#start`.
+- A full check crawls the site (up to 10 pages): the band's ring, grade,
+  confetti and the score stored for history, badge and pictures are the site
+  score (`report/headline.ts`: the crawl's, else the page's), with a "N pages"
+  chip; the tiles and category sections stay the audited page's own. Pages
+  (`report/pages-section.tsx`) follow the categories: an accordion like a
+  category, closed, with a neutral `Files` icon, "Site score: the average of
+  N pages; this page M" under the title and the site score as its chip; inside,
+  "Problems across the pages" (fail/warn mark, title, "fail on 7 of 10 pages")
+  and each page by its path (linked) with its score chip and the titles of
+  its problems, a failed or skipped page with its reason. While a full check
+  runs, `WaitingPages` holds the place ("Checking other pages of the site…").
 - Agent protocols (`report/protocols-section.tsx`) close the category
   sections of a done report (the shared one too): a card like a category's
   with a neutral icon (`Waypoints` on `bg-surface-2`, never a category hue,

@@ -11,7 +11,7 @@ import {
 	type Screenshot,
 } from "./browser/types.ts";
 import { createAuditContext } from "./context.ts";
-import { crawlSite } from "./crawl.ts";
+import { crawlSite, SERVICE_CRAWL } from "./crawl.ts";
 import { type Favicon, fetchFavicon } from "./favicon.ts";
 import { createFetcher, type Fetcher, type NetworkOptions } from "./http.ts";
 import type { FinishedCheck } from "./progress.ts";
@@ -41,9 +41,10 @@ export interface AuditOptions {
 	faviconBudgetMs?: number;
 	/**
 	 * Opt-in: audit up to `limit` pages of the site (the target included) and
-	 * add `crawl` to the result. Other pages run without the browser.
+	 * add `crawl` to the result. Other pages run without the browser; with
+	 * `budgetMs`, pages not done in time are listed as skipped.
 	 */
-	crawl?: { limit: number };
+	crawl?: { limit: number; budgetMs?: number };
 }
 
 /** Longest the favicon fetch may run after the checks are done. */
@@ -62,6 +63,8 @@ export interface GuardedAuditOptionsInput {
 	onFavicon?: (icon: Favicon) => void;
 	/** Opt-in: called once per check as it settles. */
 	onCheck?: (check: FinishedCheck) => void;
+	/** Opt-in: also audit other pages of the site (`SERVICE_CRAWL`: 10 pages, 40 s). */
+	crawl?: boolean;
 }
 
 /**
@@ -72,7 +75,13 @@ export function guardedAuditOptions(
 	opts: GuardedAuditOptionsInput,
 ): Pick<
 	AuditOptions,
-	"network" | "renderer" | "userAgent" | "toolVersion" | "onFavicon" | "onCheck"
+	| "network"
+	| "renderer"
+	| "userAgent"
+	| "toolVersion"
+	| "onFavicon"
+	| "onCheck"
+	| "crawl"
 > {
 	return {
 		userAgent: opts.userAgent,
@@ -80,6 +89,7 @@ export function guardedAuditOptions(
 		network: { blockPrivate: true },
 		...(opts.onFavicon && { onFavicon: opts.onFavicon }),
 		...(opts.onCheck && { onCheck: opts.onCheck }),
+		...(opts.crawl && { crawl: { ...SERVICE_CRAWL } }),
 		renderer: opts.browser
 			? createGuardedBrowserRenderer({
 					...opts.rendererOptions,
@@ -168,6 +178,9 @@ async function execute(
 				checks,
 				first: { url: ctx.targetUrl.href, score, results },
 				limit: opts.crawl.limit,
+				...(opts.crawl.budgetMs === undefined
+					? {}
+					: { budgetMs: opts.crawl.budgetMs }),
 			})
 		: undefined;
 	return {

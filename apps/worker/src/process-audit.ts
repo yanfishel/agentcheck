@@ -97,7 +97,8 @@ export async function processAudit(
 	// Only the guard's options: nothing from the job payload or the row
 	// except the target URL and the mode reaches runAudit.
 	// The first-screen shot is kept only for full audits and stored with the
-	// result; a timed-out or failed audit never reads it.
+	// result; a timed-out or failed audit never reads it. A full audit also
+	// crawls the site (SERVICE_CRAWL, fixed in the engine).
 	let screenshot: Screenshot | undefined;
 	let favicon: Favicon | undefined;
 	const full = row.mode === "full";
@@ -105,6 +106,7 @@ export async function processAudit(
 		userAgent: defaultUserAgent(WORKER_VERSION),
 		toolVersion: WORKER_VERSION,
 		browser: full,
+		crawl: full,
 		onCheck: (check: FinishedCheck) => {
 			partial(store.recordCheck(auditId, jobId, check), check.id);
 		},
@@ -149,19 +151,21 @@ export async function processAudit(
 		return "failed";
 	}
 	const { result } = outcome;
+	// The headline: a crawl's site score, else the page's.
+	const headline = result.crawl ?? result;
 	await store.complete(auditId, {
 		result,
 		finalUrl: result.finalUrl,
-		score: result.score,
-		grade: result.grade,
+		score: headline.score,
+		grade: headline.grade,
 		screenshot,
 		favicon,
 	});
 	log("info", "audit.done", {
 		auditId,
 		durationMs: Math.round(performance.now() - started),
-		score: result.score,
-		grade: result.grade,
+		score: headline.score,
+		grade: headline.grade,
 	});
 	return "done";
 }

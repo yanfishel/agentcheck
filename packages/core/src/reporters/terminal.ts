@@ -105,9 +105,13 @@ export function renderTerminal(
 				lines.push(
 					`     ${String(page.score).padStart(3)}  ${page.grade.padEnd(2)}  ${page.url}`,
 				);
-			} else {
+			} else if (page.status === "failed") {
 				lines.push(
 					`     ${paint("red", "  ✗")}      ${page.url} ${paint("dim", `(${page.error})`)}`,
+				);
+			} else {
+				lines.push(
+					`     ${paint("dim", "  –")}      ${page.url} ${paint("dim", `(${page.reason})`)}`,
 				);
 			}
 		}

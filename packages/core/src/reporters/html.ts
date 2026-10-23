@@ -144,7 +144,9 @@ function renderCrawl(crawl: AuditResult["crawl"]): string {
 		.map((page) =>
 			page.status === "audited"
 				? `<tr><td class="num">${page.score}</td><td class="num">${esc(page.grade)}</td><td>${esc(page.url)}</td></tr>`
-				: `<tr><td class="num failed" colspan="2">failed</td><td>${esc(page.url)} (${esc(page.error)})</td></tr>`,
+				: page.status === "failed"
+					? `<tr><td class="num failed" colspan="2">failed</td><td>${esc(page.url)} (${esc(page.error)})</td></tr>`
+					: `<tr><td class="num" colspan="2">skipped</td><td>${esc(page.url)} (${esc(page.reason)})</td></tr>`,
 		)
 		.join("");
 	const issues = crawl.issues
