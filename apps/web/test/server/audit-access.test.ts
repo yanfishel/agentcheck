@@ -207,12 +207,16 @@ describe("auditStatusBody", () => {
 					"asset-access",
 					"content-signals",
 					"sitemap",
+					"snippet-directives",
 				]),
 				...inCategory("content-semantics", [
 					"heading-hierarchy",
 					"structured-data",
 					"opengraph",
 					"content-density",
+					"canonical",
+					"meta-description",
+					"html-lang",
 				]),
 			];
 			const all = {

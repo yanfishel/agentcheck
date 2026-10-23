@@ -9,7 +9,8 @@ import type { Metadata } from "next";
 export const SITE = {
 	url: "https://agentcheck.dev",
 	name: "AgentCheck",
-	description: "Check how ready your website is for AI agents.",
+	description:
+		"Check how ready your website is for AI agents: llms.txt, robots.txt for AI crawlers, structured data and controls an agent can use.",
 } as const;
 
 /** The root layout's metadata; every page inherits it. */

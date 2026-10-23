@@ -567,6 +567,7 @@ describe("generateFixFiles", () => {
 				'<meta property="og:url" content="https://codeframe.pro/complete">',
 				'<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"C"}</script>',
 				'<link rel="describedby" href="/llms.txt">',
+				'<link rel="canonical" href="https://codeframe.pro/complete">',
 			].join(""),
 		);
 		const out = await generateFixFiles(

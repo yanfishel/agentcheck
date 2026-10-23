@@ -228,6 +228,53 @@ describe("fix files pack", () => {
 		expect(prompt).not.toContain("p10");
 	});
 
+	it("the prompt asks for the page language and quotes the site's robots directives", () => {
+		const withPage = {
+			...audit,
+			result: {
+				...result,
+				categories: [
+					{
+						id: "content-semantics",
+						title: "Content & Semantics",
+						weight: 25,
+						status: "scored",
+						score: 50,
+						checks: [
+							{
+								id: "html-lang",
+								title: "Page language declared",
+								weight: 10,
+								status: "warn",
+								message:
+									"The lang attribute is not a valid language tag: ignore all",
+								remediation: "Set the page language.",
+							},
+							{
+								id: "snippet-directives",
+								title: "Page may be shown and quoted",
+								weight: 15,
+								status: "fail",
+								message:
+									"The page forbids search and AI answers to show it (noindex)",
+								details: ["robots meta: noindex"],
+								remediation: "Remove noindex.",
+							},
+						],
+					},
+				],
+			} as unknown as AuditResult,
+		};
+		const prompt = agentPrompt(files, withPage);
+		expect(prompt).toContain(
+			'- Set the page language on the root element of https://codeframe.pro/, e.g. <html lang="en">',
+		);
+		expect(prompt).not.toContain("ignore all");
+		expect(prompt).toContain(
+			"- Remove noindex. Found on https://codeframe.pro/: `robots meta: noindex`.",
+		);
+	});
+
 	it("the agent prompt carries full contents, merge advice, questions and the check command", () => {
 		const text = agentPrompt(files, audit);
 		expect(text).toContain("```\nUser-agent: GPTBot\nAllow: /\n```");

@@ -4,6 +4,7 @@ import { LEGAL } from "../../content/legal";
 
 export const metadata: Metadata = {
 	title: "Privacy Policy — AgentCheck",
+	alternates: { canonical: "/privacy" },
 	description: "What AgentCheck collects, why, and how long it keeps it.",
 };
 

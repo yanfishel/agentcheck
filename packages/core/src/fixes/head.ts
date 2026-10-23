@@ -1,4 +1,4 @@
-import type { PageMeta } from "./extract.ts";
+import { normaliseLink, type PageMeta } from "./extract.ts";
 import { cleanText, escapeAttribute, jsonForScript } from "./text.ts";
 import type { FixFile, FixTodo } from "./types.ts";
 
@@ -11,6 +11,10 @@ export function buildHeadHtml(
 		markdownHref?: string;
 		/** Add the `describedby` link to /llms.txt. */
 		llmsLink?: boolean;
+		/** Add `<link rel="canonical">` (the page has none). */
+		canonical?: boolean;
+		/** Add `<meta name="description">` (the page has none). */
+		description?: boolean;
 	},
 ): FixFile {
 	const todos: FixTodo[] = [];
@@ -18,6 +22,27 @@ export function buildHeadHtml(
 	const lines: string[] = [];
 	const none = "none found on the page";
 
+	if (opts.canonical) {
+		fixes.push("canonical");
+		// Tracking parameters (utm_*, gclid, ...) are no part of the page's URL.
+		const href = normaliseLink(page.url, new URL(page.url))?.href ?? page.url;
+		lines.push(`<link rel="canonical" href="${escapeAttribute(href)}">`);
+	}
+	if (opts.description) {
+		fixes.push("meta-description");
+		if (page.ogDescription) {
+			lines.push(
+				`<meta name="description" content="${escapeAttribute(page.ogDescription)}">`,
+			);
+		} else {
+			todos.push({
+				text: `head.html: meta description, one or two sentences on the page (${none})`,
+			});
+			lines.push(
+				'<meta name="description" content="TODO: one or two sentences on what the page is">',
+			);
+		}
+	}
 	if (opts.markdownHref) {
 		fixes.push("markdown-twin");
 		lines.push(
