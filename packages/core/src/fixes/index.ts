@@ -7,5 +7,5 @@ export {
 export { FIX_KIND_ORDER, fixKindsFor, fixKindsSettled } from "./kinds.ts";
 export { LLMS_FULL_MAX, type PageText } from "./llms-full.ts";
 export { agentPrompt, readme } from "./pack.ts";
-export { twinName, twinPath } from "./twin.ts";
+export { twinMarkdown, twinName, twinPath } from "./twin.ts";
 export type { FixFile, FixFiles, FixKind, FixTodo } from "./types.ts";

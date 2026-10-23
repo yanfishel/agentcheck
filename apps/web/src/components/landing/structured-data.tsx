@@ -37,8 +37,13 @@ export function StructuredData() {
 			type="application/ld+json"
 			// biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD built above, not user text.
 			dangerouslySetInnerHTML={{
-				__html: JSON.stringify(graph).replace(/</g, "\u003c"),
+				__html: jsonLd(graph),
 			}}
 		/>
 	);
+}
+
+/** JSON for a `<script>` block: `<` as `\u003c`, so the text can never close the tag. */
+export function jsonLd(value: unknown): string {
+	return JSON.stringify(value).replace(/</g, "\\u003c");
 }

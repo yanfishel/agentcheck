@@ -1,5 +1,5 @@
 import { styleText } from "node:util";
-import { protocolsLine } from "../protocols-line.ts";
+import { pagesWord, protocolsLine } from "../protocols-line.ts";
 import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 
 export interface TerminalOptions {
@@ -123,7 +123,7 @@ export function renderTerminal(
 					.filter(Boolean)
 					.join(", ");
 				lines.push(
-					`     ${marker} ${issue.title}: ${counts} of ${audited} pages`,
+					`     ${marker} ${issue.title}: ${counts} of ${pagesWord(audited)}`,
 				);
 			}
 		}
@@ -136,7 +136,7 @@ export function renderTerminal(
 			(p) => p.status === "audited",
 		).length;
 		lines.push(
-			` ${paint("bold", `SITE AI SCORE: ${result.crawl.score} / 100 [${result.crawl.grade}]`)} ${paint("dim", `(average of ${audited} pages; this page ${result.score} [${result.grade}])`)}`,
+			` ${paint("bold", `SITE AI SCORE: ${result.crawl.score} / 100 [${result.crawl.grade}]`)} ${paint("dim", `(average of ${pagesWord(audited)}; this page ${result.score} [${result.grade}])`)}`,
 		);
 	} else {
 		lines.push(

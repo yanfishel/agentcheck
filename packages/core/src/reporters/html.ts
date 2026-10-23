@@ -1,4 +1,4 @@
-import { protocolsLine } from "../protocols-line.ts";
+import { pagesWord, protocolsLine } from "../protocols-line.ts";
 import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 import { HOMEPAGE } from "../version.ts";
 
@@ -155,7 +155,7 @@ function renderCrawl(crawl: AuditResult["crawl"]): string {
 			]
 				.filter(Boolean)
 				.join(", ");
-			return `<li>${esc(issue.title)}: ${counts} of ${audited} pages</li>`;
+			return `<li>${esc(issue.title)}: ${counts} of ${pagesWord(audited)}</li>`;
 		})
 		.join("");
 	const problems = issues
@@ -203,7 +203,7 @@ ${STYLE}
 <h1>${result.crawl ? "Site AI-readiness report" : "AI-readiness report"}</h1>
 <p>Target: <a href="${target}">${target}</a></p>
 ${final}
-${result.crawl ? `<p>${esc(`Average of ${result.crawl.pages.filter((p) => p.status === "audited").length} pages; this page ${result.score} (${result.grade}). Details below are for this page.`)}</p>` : ""}
+${result.crawl ? `<p>${esc(`Average of ${pagesWord(result.crawl.pages.filter((p) => p.status === "audited").length)}; this page ${result.score} (${result.grade}). Details below are for this page.`)}</p>` : ""}
 <p>${esc(result.timestamp)}</p>
 <p>${esc(browserLine(result.browser))}</p>
 </div>

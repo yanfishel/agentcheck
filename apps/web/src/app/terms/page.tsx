@@ -3,10 +3,15 @@ import Link from "next/link";
 import { LegalPage } from "../../components/legal-page";
 import { LEGAL } from "../../content/legal";
 
+const DESCRIPTION = "The terms for using the hosted AgentCheck service.";
+
 export const metadata: Metadata = {
 	title: "Terms of Use — AgentCheck",
-	alternates: { canonical: "/terms" },
-	description: "The terms for using the hosted AgentCheck service.",
+	alternates: {
+		canonical: "/terms",
+		types: { "text/markdown": "/terms.md" },
+	},
+	description: DESCRIPTION,
 };
 
 const mail = `mailto:${LEGAL.email}?subject=AgentCheck%20terms`;
@@ -15,6 +20,8 @@ export default function TermsPage() {
 	return (
 		<LegalPage
 			title="Terms of Use"
+			path="/terms"
+			description={DESCRIPTION}
 			intro={
 				<>
 					These terms apply to the AgentCheck service on this website, operated

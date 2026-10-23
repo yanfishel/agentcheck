@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import { LegalPage } from "../../components/legal-page";
 import { LEGAL } from "../../content/legal";
 
+const DESCRIPTION = "What AgentCheck collects, why, and how long it keeps it.";
+
 export const metadata: Metadata = {
 	title: "Privacy Policy — AgentCheck",
-	alternates: { canonical: "/privacy" },
-	description: "What AgentCheck collects, why, and how long it keeps it.",
+	alternates: {
+		canonical: "/privacy",
+		types: { "text/markdown": "/privacy.md" },
+	},
+	description: DESCRIPTION,
 };
 
 const mail = `mailto:${LEGAL.email}?subject=AgentCheck%20privacy`;
@@ -14,6 +19,8 @@ export default function PrivacyPage() {
 	return (
 		<LegalPage
 			title="Privacy Policy"
+			path="/privacy"
+			description={DESCRIPTION}
 			intro={
 				<>
 					AgentCheck is operated by {LEGAL.operator}. This policy explains what

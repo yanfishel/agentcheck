@@ -1,6 +1,8 @@
+import { load } from "cheerio";
+import { pageMeta } from "./extract.ts";
 import { pathOf } from "./llms.ts";
 import type { PageText } from "./llms-full.ts";
-import { hasHeading, shiftHeadings } from "./markdown.ts";
+import { hasHeading, pageMarkdown, shiftHeadings } from "./markdown.ts";
 import { cleanText, escapeMarkdown } from "./text.ts";
 import type { FixFile, FixTodo } from "./types.ts";
 
@@ -136,4 +138,17 @@ function frontmatter(page: PageText, title: string): string {
 		"",
 	];
 	return `${lines.join("\n")}\n`;
+}
+
+/**
+ * The markdown version of an HTML page, exactly as the fix files build it
+ * (frontmatter, title, main content). For a site that keeps its own twins in
+ * step with its pages, e.g. agentcheck.dev's legal pages.
+ */
+export function twinMarkdown(html: string, url: URL): string {
+	const $ = load(html);
+	return buildMarkdownTwin({
+		meta: pageMeta($, url),
+		markdown: pageMarkdown($, url),
+	}).content;
 }
