@@ -4,6 +4,7 @@ import { checkTextManifest } from "./text-manifest.ts";
 export const llmsTxt: Check = {
 	id: "llms-txt",
 	category: "ai-manifests",
+	scope: "site",
 	title: "llms.txt present",
 	weight: 40,
 	run: (ctx) =>

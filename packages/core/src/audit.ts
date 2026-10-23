@@ -11,11 +11,13 @@ import {
 	type Screenshot,
 } from "./browser/types.ts";
 import { createAuditContext } from "./context.ts";
+import { crawlSite } from "./crawl.ts";
 import { type Favicon, fetchFavicon } from "./favicon.ts";
 import { createFetcher, type Fetcher, type NetworkOptions } from "./http.ts";
 import type { FinishedCheck } from "./progress.ts";
 import { findProtocols } from "./protocols.ts";
 import { CHECKS } from "./registry.ts";
+import { runChecks } from "./run-checks.ts";
 import { buildCategoryResults, gradeFor, overallScore } from "./scoring.ts";
 import type { AuditResult, Check } from "./types.ts";
 import { VERSION } from "./version.ts";
@@ -37,6 +39,11 @@ export interface AuditOptions {
 	onCheck?: (check: FinishedCheck) => void;
 	/** @internal tests only: time cap for the favicon fetch (default FAVICON_BUDGET_MS). */
 	faviconBudgetMs?: number;
+	/**
+	 * Opt-in: audit up to `limit` pages of the site (the target included) and
+	 * add `crawl` to the result. Other pages run without the browser.
+	 */
+	crawl?: { limit: number };
 }
 
 /** Longest the favicon fetch may run after the checks are done. */
@@ -130,34 +137,7 @@ async function execute(
 	// Alongside the checks; it never throws and stays within its own budget.
 	const protocols = findProtocols(ctx);
 
-	const results = await Promise.all(
-		checks.map(async (check): Promise<FinishedCheck> => {
-			const base = {
-				id: check.id,
-				title: check.title,
-				weight: check.weight,
-				category: check.category,
-			};
-			let result: FinishedCheck;
-			try {
-				result = { ...base, ...(await check.run(ctx)) };
-			} catch (err) {
-				const message = err instanceof Error ? err.message : String(err);
-				result = {
-					...base,
-					status: "fail",
-					message: `Check crashed: ${message}`,
-					remediation: "This is a bug in AgentCheck; please report it.",
-				};
-			}
-			try {
-				opts.onCheck?.(result);
-			} catch {
-				// A failing consumer never affects the audit.
-			}
-			return result;
-		}),
-	);
+	const results = await runChecks(ctx, checks, opts.onCheck);
 
 	let browser: AuditResult["browser"] = {
 		used: false,
@@ -182,6 +162,14 @@ async function execute(
 
 	const categories = buildCategoryResults(results);
 	const score = overallScore(categories);
+	const crawl = opts.crawl
+		? await crawlSite(ctx, {
+				fetcher,
+				checks,
+				first: { url: ctx.targetUrl.href, score, results },
+				limit: opts.crawl.limit,
+			})
+		: undefined;
 	return {
 		tool: { name: "agentcheck", version: opts.toolVersion ?? VERSION },
 		target,
@@ -192,6 +180,7 @@ async function execute(
 		grade: gradeFor(score),
 		browser,
 		protocols: await protocols,
+		...(crawl ? { crawl } : {}),
 	};
 }
 

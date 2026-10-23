@@ -21,6 +21,7 @@ export {
 	UNAVAILABLE_REASON,
 } from "./browser/types.ts";
 export { TargetUnreachableError } from "./context.ts";
+export { CRAWL_LIMIT_DEFAULT, CRAWL_LIMIT_MAX } from "./crawl.ts";
 export type { Favicon, FaviconContentType } from "./favicon.ts";
 export type {
 	BytesResult,

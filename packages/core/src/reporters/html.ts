@@ -77,6 +77,16 @@ section.protocols ul{padding:0;margin:8px 0 0}
 section.protocols li{padding:8px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
 section.protocols li span{display:block;color:var(--muted);font-size:14px}
 section.protocols p{margin:8px 0 0;color:var(--muted);font-size:14px}
+section.pages{padding:16px 20px}
+section.pages h2{margin:0;font-size:16px;display:flex;justify-content:space-between;gap:16px}
+section.pages h2 span{color:var(--muted);font-weight:400}
+section.pages table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+section.pages td{padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+section.pages td.num{width:48px;font-weight:600;color:var(--accent)}
+section.pages td.failed{color:var(--fail)}
+section.pages h3{margin:16px 0 4px;font-size:14px}
+section.pages ul{padding:0;margin:0}
+section.pages li{padding:4px 0;font-size:14px}
 footer{text-align:center;color:var(--muted);font-size:14px}
 `.trim();
 
@@ -126,6 +136,34 @@ function browserLine(browser: AuditResult["browser"]): string {
 	return `Browser: ${browser.engine} ${browser.version} (rendered in ${seconds} s)`;
 }
 
+/** The crawl's pages (URLs as text: no links besides target and homepage) and the problems across them. */
+function renderCrawl(crawl: AuditResult["crawl"]): string {
+	if (!crawl) return "";
+	const audited = crawl.pages.filter((p) => p.status === "audited").length;
+	const rows = crawl.pages
+		.map((page) =>
+			page.status === "audited"
+				? `<tr><td class="num">${page.score}</td><td class="num">${esc(page.grade)}</td><td>${esc(page.url)}</td></tr>`
+				: `<tr><td class="num failed" colspan="2">failed</td><td>${esc(page.url)} (${esc(page.error)})</td></tr>`,
+		)
+		.join("");
+	const issues = crawl.issues
+		.map((issue) => {
+			const counts = [
+				issue.fail > 0 ? `fail on ${issue.fail}` : "",
+				issue.warn > 0 ? `warn on ${issue.warn}` : "",
+			]
+				.filter(Boolean)
+				.join(", ");
+			return `<li>${esc(issue.title)}: ${counts} of ${audited} pages</li>`;
+		})
+		.join("");
+	const problems = issues
+		? `<h3>Problems across the pages</h3><ul>${issues}</ul>`
+		: "";
+	return `<section class="card pages"><h2>Pages<span>${audited} audited</span></h2><table>${rows}</table>${problems}</section>`;
+}
+
 /** Found protocols only, then one line for the rest; URLs stay text (no links besides target and homepage). */
 function renderProtocols(protocols: AuditResult["protocols"]): string {
 	if (!protocols) return "";
@@ -160,17 +198,19 @@ ${STYLE}
 <body>
 <main>
 <header class="card">
-<div class="score"><strong>${result.score}</strong><span>/ 100</span><span class="grade">${esc(result.grade)}</span></div>
+<div class="score"><strong>${result.crawl ? result.crawl.score : result.score}</strong><span>/ 100</span><span class="grade">${esc(result.crawl ? result.crawl.grade : result.grade)}</span></div>
 <div class="meta">
-<h1>AI-readiness report</h1>
+<h1>${result.crawl ? "Site AI-readiness report" : "AI-readiness report"}</h1>
 <p>Target: <a href="${target}">${target}</a></p>
 ${final}
+${result.crawl ? `<p>${esc(`Average of ${result.crawl.pages.filter((p) => p.status === "audited").length} pages; this page ${result.score} (${result.grade}). Details below are for this page.`)}</p>` : ""}
 <p>${esc(result.timestamp)}</p>
 <p>${esc(browserLine(result.browser))}</p>
 </div>
 </header>
 ${result.categories.map(renderCategory).join("\n")}
 ${renderProtocols(result.protocols)}
+${renderCrawl(result.crawl)}
 <footer>${product} v${version}</footer>
 </main>
 </body>

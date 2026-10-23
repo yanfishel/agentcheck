@@ -130,6 +130,8 @@ describe("spread", () => {
 	it("keeps short lists and picks evenly from long ones", () => {
 		expect(spread([1, 2, 3], 5)).toEqual([1, 2, 3]);
 		expect(spread([0, 1, 2, 3, 4, 5, 6, 7, 8], 3)).toEqual([0, 4, 8]);
+		expect(spread([0, 1, 2], 1)).toEqual([0]);
+		expect(spread([0, 1, 2], 0)).toEqual([]);
 	});
 });
 

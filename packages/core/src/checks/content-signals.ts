@@ -83,6 +83,7 @@ function describeLine(line: ContentSignalLine): string {
 export const contentSignals: Check = {
 	id: "content-signals",
 	category: "bot-access",
+	scope: "site",
 	title: "Content signals declared",
 	weight: 20,
 	async run(ctx) {
