@@ -93,7 +93,10 @@ describe("generateFixFiles", () => {
 		const head = out.files[2];
 		expect(head?.target).toBe("Add inside <head> of https://codeframe.pro/");
 		// The fixture page has og:title but no og:image, and a usable JSON-LD block.
-		expect(head?.fixes).toEqual(["opengraph"]);
+		expect(head?.fixes).toEqual(["llms-txt-link", "opengraph"]);
+		expect(head?.content).toContain(
+			'<link rel="describedby" href="/llms.txt">',
+		);
 		expect(head?.content).toContain('property="og:description"');
 		expect(head?.content).not.toContain("ld+json");
 	});
@@ -563,6 +566,7 @@ describe("generateFixFiles", () => {
 				'<meta property="og:image" content="https://codeframe.pro/i.png">',
 				'<meta property="og:url" content="https://codeframe.pro/complete">',
 				'<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"C"}</script>',
+				'<link rel="describedby" href="/llms.txt">',
 			].join(""),
 		);
 		const out = await generateFixFiles(
@@ -573,9 +577,31 @@ describe("generateFixFiles", () => {
 		expect(out.skipped).toEqual([
 			{
 				kind: "head",
-				reason: "the page already has its OpenGraph tags and usable JSON-LD",
+				reason:
+					"the page already has its OpenGraph tags, usable JSON-LD and every link head.html would add",
 			},
 		]);
+	});
+
+	it("links an existing but unadvertised markdown version in head.html", async () => {
+		const out = await generateFixFiles(
+			{ url: `${ORIGIN}/pricing`, kinds: ["head"] },
+			{
+				...BASE,
+				dispatcher: site({
+					"/pricing.md": {
+						status: 200,
+						contentType: "text/markdown",
+						body: "# Pricing\n",
+					},
+				}),
+			},
+		);
+		const head = out.files[0];
+		expect(head?.fixes).toContain("markdown-twin");
+		expect(head?.content).toContain(
+			'<link rel="alternate" type="text/markdown" href="/pricing.md">',
+		);
 	});
 
 	it("counts non-HTML pages as failed", async () => {

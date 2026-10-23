@@ -1,6 +1,7 @@
 import type { CheerioAPI } from "cheerio";
 import { load } from "cheerio";
 import { hasSchemaOrgContext } from "../checks/structured-data.ts";
+import { isLlmsTxtLink, isMarkdownAlternate, pageLinks } from "../links.ts";
 import { cleanText } from "./text.ts";
 
 export interface PageMeta {
@@ -19,6 +20,8 @@ export interface PageMeta {
 	jsonLd: { present: boolean; usable: boolean; names: string[] };
 	logo: string;
 	h1: string;
+	/** The page already links to its markdown version / to /llms.txt (tag or Link header). */
+	links: { markdown: boolean; llms: boolean };
 }
 
 const TRACKING = /^(utm_|gclid$|fbclid$|ref$)/i;
@@ -103,7 +106,7 @@ function findLogo($: CheerioAPI, base: URL): string {
 	return absolute(img.attr("src"), base);
 }
 
-export function pageMeta($: CheerioAPI, url: URL): PageMeta {
+export function pageMeta($: CheerioAPI, url: URL, headers?: Headers): PageMeta {
 	const og: Record<string, string> = {};
 	$("meta[property^='og:']").each((_, el) => {
 		const key = $(el).attr("property")?.trim().toLowerCase();
@@ -112,6 +115,7 @@ export function pageMeta($: CheerioAPI, url: URL): PageMeta {
 	});
 	const title = cleanText($("title").first().text());
 	const jsonLd = jsonLdInfo($);
+	const links = pageLinks($, headers, url);
 	const pageName =
 		og["og:site_name"] || jsonLd.names[0] || nameFromTitle(title);
 	return {
@@ -128,6 +132,10 @@ export function pageMeta($: CheerioAPI, url: URL): PageMeta {
 		jsonLd,
 		logo: findLogo($, url),
 		h1: cleanText($("h1").first().text()),
+		links: {
+			markdown: links.some(isMarkdownAlternate),
+			llms: links.some((link) => isLlmsTxtLink(link, url.origin)),
+		},
 	};
 }
 

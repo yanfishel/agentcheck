@@ -113,8 +113,11 @@ export async function createAuditContext(
 	let robotsPromise: Promise<RobotsInfo> | undefined;
 	let renderPromise: Promise<RenderOutcome> | undefined;
 
-	const get = (pathOrUrl: string) =>
-		fetcher.get(new URL(pathOrUrl, finalUrl.origin));
+	const get = (pathOrUrl: string, opts?: { accept?: string }) =>
+		fetcher.get(
+			new URL(pathOrUrl, finalUrl.origin),
+			opts?.accept ? { accept: opts.accept } : undefined,
+		);
 
 	return {
 		targetUrl: finalUrl,

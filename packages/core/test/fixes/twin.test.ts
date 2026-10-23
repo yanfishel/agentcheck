@@ -22,6 +22,7 @@ function meta(path: string, extra: Partial<PageMeta> = {}): PageMeta {
 		jsonLd: { present: false, usable: false, names: [] },
 		logo: "",
 		h1: "",
+		links: { markdown: false, llms: false },
 		...extra,
 	};
 }
@@ -72,7 +73,7 @@ describe("twinName / twinPath", () => {
 			});
 			const result = await runCheck(markdownTwin, agent, target.href);
 			expect(result.status).toBe("fail");
-			expect(result.details?.[0]).toBe(
+			expect(result.details?.at(-1)).toBe(
 				`${ORIGIN}${twinPath(target)}: HTTP 404`,
 			);
 		}

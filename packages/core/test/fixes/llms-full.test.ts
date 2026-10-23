@@ -24,6 +24,7 @@ function meta(path: string, extra: Partial<PageMeta> = {}): PageMeta {
 		jsonLd: { present: false, usable: false, names: [] },
 		logo: "",
 		h1: "",
+		links: { markdown: false, llms: false },
 		...extra,
 	};
 }

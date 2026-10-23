@@ -37,6 +37,23 @@ function todoLines(files: FixFiles): string[] {
 	return files.files.flatMap((file) => file.todos.map((todo) => todo.text));
 }
 
+/** Failed checks that no file fixes: they need a change in the server's configuration. */
+function serverChanges(url: string, result: ResultChecks): string[] {
+	const failed = new Set(
+		result.categories
+			.flatMap((category) => category.checks)
+			.filter((check) => check.status === "fail")
+			.map((check) => check.id),
+	);
+	const changes: string[] = [];
+	if (failed.has("markdown-negotiation")) {
+		changes.push(
+			`Answer requests for ${url} that send Accept: text/markdown with the page's markdown version (Content-Type: text/markdown; charset=utf-8, Vary: Accept). On Cloudflare, turn on Markdown for Agents; elsewhere, rewrite such requests to the page's .md file in the web server or framework.`,
+		);
+	}
+	return changes;
+}
+
 /** What the coding agent does with one file, outside the fenced content. */
 function fileInstruction(file: FixFile): string | null {
 	if (file.kind === "robots") {
@@ -72,6 +89,15 @@ export function readme(files: FixFiles, audit: ReadmeAudit): string {
 	if (todos.length > 0) {
 		lines.push("## Fill in by hand", "", ...todos.map((t) => `- ${t}`), "");
 	}
+	const server = serverChanges(audit.url, audit.result);
+	if (server.length > 0) {
+		lines.push(
+			"## Change on the server",
+			"",
+			...server.map((s) => `- ${s}`),
+			"",
+		);
+	}
 	lines.push(
 		"## Check the result",
 		"",
@@ -94,6 +120,17 @@ export function agentPrompt(files: FixFiles, audit: PackAudit): string {
 		const instruction = fileInstruction(file);
 		if (instruction) lines.push(instruction, "");
 		lines.push(fence(file.content), "");
+	}
+	const server = serverChanges(audit.url, audit.result);
+	if (server.length > 0) {
+		lines.push(
+			"## Server change",
+			"",
+			"Make this change in the web server or framework configuration of the repository:",
+			"",
+			...server.map((s) => `- ${s}`),
+			"",
+		);
 	}
 	const todos = todoLines(files);
 	if (todos.length > 0) {

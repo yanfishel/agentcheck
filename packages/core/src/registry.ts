@@ -9,6 +9,8 @@ import { headingHierarchy } from "./checks/heading-hierarchy.ts";
 import { llmsFullTxt } from "./checks/llms-full-txt.ts";
 import { llmsTxt } from "./checks/llms-txt.ts";
 import { llmsTxtFormat } from "./checks/llms-txt-format.ts";
+import { llmsTxtLink } from "./checks/llms-txt-link.ts";
+import { markdownNegotiation } from "./checks/markdown-negotiation.ts";
 import { markdownTwin } from "./checks/markdown-twin.ts";
 import { noaiDirectives } from "./checks/noai-directives.ts";
 import { opengraph } from "./checks/opengraph.ts";
@@ -25,6 +27,8 @@ export const CHECKS: Check[] = [
 	llmsTxtFormat,
 	llmsFullTxt,
 	markdownTwin,
+	llmsTxtLink,
+	markdownNegotiation,
 	headingHierarchy,
 	structuredData,
 	opengraph,

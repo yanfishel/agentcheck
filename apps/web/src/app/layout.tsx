@@ -30,6 +30,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 			suppressHydrationWarning
 		>
 			<head>
+				{/* Agents that land on any page find the site's llms.txt. */}
+				<link rel="describedby" href="/llms.txt" />
 				<script
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: a constant script with no user input.
 					dangerouslySetInnerHTML={{ __html: themeScript }}

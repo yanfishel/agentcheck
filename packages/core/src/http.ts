@@ -42,6 +42,8 @@ export interface GetOptions {
 	signal?: AbortSignal;
 	/** Byte cap for this request instead of the fetcher's `maxBytes`. */
 	maxBytes?: number;
+	/** Accept header for this request (content negotiation); none by default. */
+	accept?: string;
 }
 
 export interface Fetcher {
@@ -175,6 +177,7 @@ export function createFetcher(opts: FetcherOptions): Fetcher {
 		startUrl: string,
 		cap: number,
 		external?: AbortSignal,
+		accept?: string,
 	): Promise<RawResult> {
 		const timeout = AbortSignal.timeout(timeoutMs);
 		const signal = external ? AbortSignal.any([timeout, external]) : timeout;
@@ -196,7 +199,10 @@ export function createFetcher(opts: FetcherOptions): Fetcher {
 					redirect: "manual",
 					signal,
 					dispatcher,
-					headers: { "user-agent": opts.userAgent },
+					headers: {
+						"user-agent": opts.userAgent,
+						...(accept ? { accept } : {}),
+					},
 				});
 				const location = res.headers.get("location");
 				if (REDIRECT_STATUSES.has(res.status) && location) {
@@ -257,9 +263,12 @@ export function createFetcher(opts: FetcherOptions): Fetcher {
 		get(url, getOpts) {
 			const key = new URL(url).href;
 			if (getOpts) {
-				return load(key, getOpts.maxBytes ?? maxBytes, getOpts.signal).then(
-					toHttpResult,
-				);
+				return load(
+					key,
+					getOpts.maxBytes ?? maxBytes,
+					getOpts.signal,
+					getOpts.accept,
+				).then(toHttpResult);
 			}
 			let pending = cache.get(key);
 			if (!pending) {

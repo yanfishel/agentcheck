@@ -38,10 +38,11 @@ describe("markdown-twin", () => {
 		expect(out.message).toContain("https://example.com/llms.txt");
 	});
 
-	it("passes via /index.md when there is no link", async () => {
+	it("warns for /index.md that the page does not advertise", async () => {
 		const out = await run({ "/": page(), "/index.md": TEXT });
-		expect(out.status).toBe("pass");
+		expect(out.status).toBe("warn");
 		expect(out.message).toContain("https://example.com/index.md");
+		expect(out.remediation).toContain('href="/index.md"');
 	});
 
 	it("requests <pathname>.md and drops the query", async () => {
@@ -53,7 +54,7 @@ describe("markdown-twin", () => {
 			},
 			`${ORIGIN}/docs/page?x=1`,
 		);
-		expect(out.status).toBe("pass");
+		expect(out.status).toBe("warn");
 		expect(hits).toEqual(["md"]);
 	});
 
@@ -62,7 +63,7 @@ describe("markdown-twin", () => {
 			{ "/docs/": page(), "/docs.md": TEXT },
 			`${ORIGIN}/docs/`,
 		);
-		expect(out.status).toBe("pass");
+		expect(out.status).toBe("warn");
 		expect(out.message).toContain("https://example.com/docs.md");
 	});
 
@@ -85,13 +86,41 @@ describe("markdown-twin", () => {
 		expect(out.details?.join("\n")).not.toContain("other.example");
 	});
 
-	it("falls back to .md when the linked file is missing", async () => {
+	it("falls back to .md with a warn when the linked file is missing", async () => {
 		const out = await run({
 			"/": page(alt("/missing.md")),
 			"/index.md": TEXT,
 		});
-		expect(out.status).toBe("pass");
+		expect(out.status).toBe("warn");
 		expect(out.message).toContain("/index.md");
+		expect(out.details?.join("\n")).toContain("/missing.md: HTTP 404");
+	});
+
+	it("passes via a Link header", async () => {
+		const out = await run({
+			"/": {
+				...page(),
+				headers: { link: '</twin.md>; rel="alternate"; type="text/markdown"' },
+			},
+			"/twin.md": TEXT,
+		});
+		expect(out.status).toBe("pass");
+		expect(out.message).toBe(
+			"Markdown version advertised at https://example.com/twin.md",
+		);
+	});
+
+	it("passes when the page answers Accept: text/markdown", async () => {
+		const out = await run({
+			"/": {
+				...page(),
+				markdown: { ...TEXT, contentType: "text/markdown; charset=utf-8" },
+			},
+		});
+		expect(out.status).toBe("pass");
+		expect(out.message).toBe(
+			"Markdown version served for Accept: text/markdown",
+		);
 	});
 
 	it("fails when the link is 404 and there is no .md", async () => {

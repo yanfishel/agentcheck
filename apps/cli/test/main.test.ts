@@ -16,11 +16,16 @@ import cliPkg from "../package.json" with { type: "json" };
 import { run } from "../src/main.js";
 
 const ORIGIN = "https://example.com";
-const PAGE = { status: 200, contentType: "text/html", body: "<html></html>" };
+const PAGE = {
+	status: 200,
+	contentType: "text/html",
+	body: '<html><head><link rel="describedby" href="/llms.txt"></head></html>',
+	markdown: { status: 200, contentType: "text/markdown", body: "# Example\n" },
+};
 const ROBOTS_OPEN = {
 	status: 200,
 	contentType: "text/plain",
-	body: "User-agent: *\nAllow: /",
+	body: "User-agent: *\nContent-Signal: search=yes, ai-input=yes\nAllow: /",
 };
 const ROBOTS_BLOCKING = {
 	status: 200,

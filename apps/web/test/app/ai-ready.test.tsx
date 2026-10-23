@@ -8,6 +8,7 @@ import sitemap from "@/app/sitemap";
 import { ToastProvider } from "@/components/ui";
 import { robotsTxt } from "@/content/robots";
 import { siteMetadata as rootMetadata, SITE } from "@/content/site";
+import nextConfig from "../../next.config";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@clerk/nextjs", () => ({
@@ -82,6 +83,28 @@ describe("agentcheck.dev is AI-ready itself", () => {
 		expect(homeMetadata.alternates?.types).toEqual({
 			"text/markdown": "/index.md",
 		});
+	});
+
+	it("the landing answers Accept: text/markdown with its twin, varying on Accept", async () => {
+		const rewrites = await nextConfig.rewrites?.();
+		const before = Array.isArray(rewrites) ? rewrites : rewrites?.beforeFiles;
+		expect(before).toContainEqual({
+			source: "/",
+			has: [{ type: "header", key: "accept", value: ".*text/markdown.*" }],
+			destination: "/index.md",
+		});
+		expect(await nextConfig.headers?.()).toContainEqual({
+			source: "/",
+			headers: [{ key: "Vary", value: "Accept" }],
+		});
+	});
+
+	it("every page links to llms.txt with rel=describedby", () => {
+		const layout = readFileSync(
+			fileURLToPath(new URL("../../src/app/layout.tsx", import.meta.url)),
+			"utf8",
+		);
+		expect(layout).toContain('<link rel="describedby" href="/llms.txt" />');
 	});
 
 	it("the landing describes itself in JSON-LD", () => {

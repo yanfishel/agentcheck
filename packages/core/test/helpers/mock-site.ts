@@ -9,6 +9,8 @@ export type Route = {
 	delayMs?: number;
 	/** Called with the request headers each time the route is hit. */
 	onRequest?: (headers: Record<string, string>) => void;
+	/** Served instead when the request's Accept names text/markdown. */
+	markdown?: Route;
 };
 
 const NOT_FOUND_BODY = "<!DOCTYPE html><html><body>Not found</body></html>";
@@ -36,20 +38,32 @@ export function mockRoutes(
 	agent.disableNetConnect();
 	const pool = agent.get(origin);
 
-	for (const [path, route] of Object.entries(routes)) {
-		const scope = pool.intercept({ path, method: "GET" }).reply((opts) => {
-			route.onRequest?.(normalizeHeaders(opts.headers));
-			return {
-				statusCode: route.status,
-				data: route.body ?? "",
-				responseOptions: {
-					headers: {
-						...(route.contentType ? { "content-type": route.contentType } : {}),
-						...route.headers,
-					},
+	const reply = (route: Route) => (opts: { headers?: unknown }) => {
+		route.onRequest?.(normalizeHeaders(opts.headers));
+		return {
+			statusCode: route.status,
+			data: route.body ?? "",
+			responseOptions: {
+				headers: {
+					...(route.contentType ? { "content-type": route.contentType } : {}),
+					...route.headers,
 				},
-			};
-		});
+			},
+		};
+	};
+	for (const [path, route] of Object.entries(routes)) {
+		// Registered first, so it wins over the plain route for Accept: text/markdown.
+		if (route.markdown) {
+			pool
+				.intercept({
+					path,
+					method: "GET",
+					headers: { accept: (v: string) => /text\/markdown/i.test(v ?? "") },
+				})
+				.reply(reply(route.markdown))
+				.persist();
+		}
+		const scope = pool.intercept({ path, method: "GET" }).reply(reply(route));
 		if (route.delayMs) scope.delay(route.delayMs);
 		scope.persist();
 	}
@@ -73,7 +87,13 @@ interface SiteManifest {
 	origin: string;
 	routes: Record<
 		string,
-		{ status: number; contentType?: string; file?: string }
+		{
+			status: number;
+			contentType?: string;
+			file?: string;
+			/** Served for Accept: text/markdown. */
+			markdown?: { status: number; contentType?: string; file?: string };
+		}
 	>;
 }
 
@@ -84,14 +104,22 @@ export function mockSite(name: string): { agent: MockAgent; origin: string } {
 		readFileSync(new URL("routes.json", dir), "utf8"),
 	) as SiteManifest;
 	const routes: Record<string, Route> = {};
+	const toRoute = (entry: {
+		status: number;
+		contentType?: string;
+		file?: string;
+	}): Route => ({
+		status: entry.status,
+		contentType: entry.contentType,
+		// Routes without a stored file (non-2xx) reply a short not-found body.
+		body: entry.file
+			? new Uint8Array(readFileSync(new URL(entry.file, dir)))
+			: NOT_FOUND_BODY,
+	});
 	for (const [path, entry] of Object.entries(manifest.routes)) {
 		routes[path] = {
-			status: entry.status,
-			contentType: entry.contentType,
-			// Routes without a stored file (non-2xx) reply a short not-found body.
-			body: entry.file
-				? new Uint8Array(readFileSync(new URL(entry.file, dir)))
-				: NOT_FOUND_BODY,
+			...toRoute(entry),
+			...(entry.markdown ? { markdown: toRoute(entry.markdown) } : {}),
 		};
 	}
 	return {
