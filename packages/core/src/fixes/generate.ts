@@ -210,10 +210,10 @@ async function generate(
 				toolVersion: opts.toolVersion,
 				...(found ? { sitemap: found } : {}),
 			});
-			if (original !== null && rewrite.blockedBots.length === 0) {
+			if (original !== null && rewrite.changed.length === 0) {
 				skipped.push({
 					kind: "robots",
-					reason: `robots.txt already allows the AI crawlers on ${audited.url.pathname}`,
+					reason: `robots.txt already allows the AI crawlers on ${audited.url.pathname} and declares content signals`,
 				});
 			} else {
 				built.set("robots", {
@@ -223,7 +223,12 @@ async function generate(
 						original === null
 							? "New file at /robots.txt"
 							: "Replace /robots.txt at the site root",
-					fixes: ["ai-bots-allowed"],
+					fixes: [
+						...(original === null || rewrite.blockedBots.length > 0
+							? ["ai-bots-allowed"]
+							: []),
+						...(rewrite.addedSignal ? ["content-signals"] : []),
+					],
 					content: rewrite.content,
 					todos: [],
 				});

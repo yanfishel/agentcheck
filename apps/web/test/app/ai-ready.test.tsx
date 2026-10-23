@@ -3,9 +3,10 @@ import { fileURLToPath } from "node:url";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import Home, { metadata as homeMetadata } from "@/app/page";
-import robots from "@/app/robots";
+import { GET as robotsRoute } from "@/app/robots.txt/route";
 import sitemap from "@/app/sitemap";
 import { ToastProvider } from "@/components/ui";
+import { robotsTxt } from "@/content/robots";
 import { siteMetadata as rootMetadata, SITE } from "@/content/site";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -29,17 +30,26 @@ const landing = () =>
 
 describe("agentcheck.dev is AI-ready itself", () => {
 	it("robots.txt lets every crawler in, keeps out the private areas and names the sitemap", () => {
-		const r = robots();
-		const rules = Array.isArray(r.rules) ? r.rules : [r.rules];
-		expect(rules).toContainEqual(
-			expect.objectContaining({ userAgent: "*", allow: "/" }),
-		);
-		const disallow = rules.flatMap((rule) => rule.disallow ?? []);
+		const lines = robotsTxt().split("\n");
+		expect(lines[0]).toBe("User-agent: *");
+		expect(lines).toContain("Allow: /");
+		const disallow = lines
+			.filter((l) => l.startsWith("Disallow: "))
+			.map((l) => l.slice("Disallow: ".length));
 		for (const path of ["/api/", "/admin", "/audits/", "/history"]) {
 			expect(disallow).toContain(path);
 		}
 		expect(disallow).not.toContain("/");
-		expect(r.sitemap).toBe(`${SITE.url}/sitemap.xml`);
+		expect(lines).toContain(`Sitemap: ${SITE.url}/sitemap.xml`);
+	});
+
+	it("robots.txt declares content signals that let agents use the pages", async () => {
+		expect(robotsTxt()).toMatch(
+			/^User-agent: \*\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\n/,
+		);
+		const res = robotsRoute();
+		expect(res.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+		expect(await res.text()).toBe(robotsTxt());
 	});
 
 	it("the sitemap lists the public pages by absolute URL", () => {

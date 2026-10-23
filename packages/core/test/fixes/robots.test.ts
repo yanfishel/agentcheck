@@ -236,11 +236,64 @@ describe("rewriteRobots", () => {
 	});
 
 	it("keeps the file as it is when no AI crawler is blocked", () => {
-		const original = "User-agent: *\nDisallow: /admin\n";
+		const original =
+			"User-agent: *\nContent-Signal: search=yes, ai-input=yes\nDisallow: /admin\n";
 		const out = rewriteRobots(original, ROOT, OPTS);
 		expect(out.changed).toEqual([]);
 		expect(out.blockedBots).toEqual([]);
+		expect(out.addedSignal).toBe(false);
 		expect(out.content.endsWith(original)).toBe(true);
+	});
+
+	it("adds the default content signal at the end of the * group", () => {
+		const out = rewriteRobots(
+			"User-agent: *\nUser-agent: Twitterbot\nDisallow: /admin\n\nUser-agent: Bingbot\nDisallow: /x\n",
+			ROOT,
+			OPTS,
+		);
+		expect(out.addedSignal).toBe(true);
+		expect(out.changed).toEqual([
+			"declare Content-Signal: search=yes, ai-input=yes, ai-train=no",
+		]);
+		expect(out.content).toContain(
+			"User-agent: *\nUser-agent: Twitterbot\nDisallow: /admin\nContent-Signal: search=yes, ai-input=yes, ai-train=no # AgentCheck: declare content signals\n\nUser-agent: Bingbot\nDisallow: /x\n",
+		);
+	});
+
+	it("adds a * group for the signal when the file has none", () => {
+		const out = rewriteRobots(
+			"User-agent: Bingbot\nDisallow: /x\n",
+			ROOT,
+			OPTS,
+		);
+		expect(
+			out.content.endsWith(
+				"Disallow: /x\n\nUser-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=no # AgentCheck: declare content signals\n",
+			),
+		).toBe(true);
+	});
+
+	it("puts the signal before a Sitemap line that follows the * group", () => {
+		const out = rewriteRobots(
+			"User-agent: *\nDisallow: /admin\n\nSitemap: https://site.test/sitemap.xml\n",
+			ROOT,
+			OPTS,
+		);
+		expect(out.content).toContain(
+			"Disallow: /admin\nContent-Signal: search=yes, ai-input=yes, ai-train=no # AgentCheck: declare content signals\n\nSitemap: https://site.test/sitemap.xml\n",
+		);
+	});
+
+	it("repeats the * group's signal in a new group for an unblocked crawler", () => {
+		const out = rewriteRobots(
+			"User-agent: *\nContent-Signal: search=yes, ai-input=yes\nDisallow: /\n",
+			ROOT,
+			OPTS,
+		);
+		expect(out.addedSignal).toBe(false);
+		expect(out.content).toContain(
+			"User-agent: GPTBot # AgentCheck: allow GPTBot\nAllow: / # AgentCheck: allow GPTBot\nContent-Signal: search=yes, ai-input=yes # AgentCheck: allow GPTBot\n",
+		);
 	});
 
 	it("strips a byte order mark and normalises line endings", () => {

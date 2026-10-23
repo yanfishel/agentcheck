@@ -168,7 +168,7 @@ describe("agentcheck fix", () => {
 			"/robots.txt": {
 				status: 200,
 				contentType: "text/plain",
-				body: "User-agent: *\nAllow: /",
+				body: "User-agent: *\nContent-Signal: search=yes\nAllow: /",
 			},
 		});
 		const r = await exec(

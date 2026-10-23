@@ -4,6 +4,7 @@ import { assetAccess } from "./checks/asset-access.ts";
 import { captchaBlocking } from "./checks/captcha-blocking.ts";
 import { clickTargets } from "./checks/click-targets.ts";
 import { contentDensity } from "./checks/content-density.ts";
+import { contentSignals } from "./checks/content-signals.ts";
 import { headingHierarchy } from "./checks/heading-hierarchy.ts";
 import { llmsFullTxt } from "./checks/llms-full-txt.ts";
 import { llmsTxt } from "./checks/llms-txt.ts";
@@ -19,6 +20,7 @@ export const CHECKS: Check[] = [
 	aiBotsAllowed,
 	noaiDirectives,
 	assetAccess,
+	contentSignals,
 	llmsTxt,
 	llmsTxtFormat,
 	llmsFullTxt,

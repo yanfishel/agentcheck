@@ -2,7 +2,7 @@ import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 import type { FixKind } from "./types.ts";
 
 const FIXED_BY: Record<FixKind, string[]> = {
-	robots: ["ai-bots-allowed"],
+	robots: ["ai-bots-allowed", "content-signals"],
 	llms: ["llms-txt", "llms-txt-format"],
 	"llms-full": ["llms-full-txt"],
 	markdown: ["markdown-twin"],
@@ -21,6 +21,8 @@ function needsFix(check: CheckResult): boolean {
 	if (check.status !== "warn" && check.status !== "fail") return false;
 	// ai-bots-allowed without details: robots.txt could not be read, nothing to rewrite.
 	if (check.id === "ai-bots-allowed") return (check.details?.length ?? 0) > 0;
+	// Only a missing signal: a warn is an unreadable robots.txt or the owner's own "no".
+	if (check.id === "content-signals") return check.status === "fail";
 	// Only a missing twin calls for one (the check has no warn today; a future one would not mean "missing").
 	if (check.id === "markdown-twin") return check.status === "fail";
 	return true;

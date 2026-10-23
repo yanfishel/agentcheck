@@ -20,7 +20,7 @@ Four categories; the total score is 0–100 with a grade from A+ to F.
 | Category | Weight | Checks |
 |---|---|---|
 | AI Manifests | 30% | `/llms.txt` present (`llms-txt`) and in the llmstxt.org format (`llms-txt-format`); `/llms-full.txt` present (`llms-full-txt`); a markdown twin of the page, advertised with `<link rel="alternate" type="text/markdown">` or at `<page>.md` (`markdown-twin`). |
-| Bot Access | 20% | robots.txt does not block the key AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Applebot-Extended, Google-Extended) from the page (`ai-bots-allowed`); no `noai`/`noimageai` directives (`noai-directives`); robots.txt does not block the page's images, scripts and stylesheets (`asset-access`). |
+| Bot Access | 20% | robots.txt does not block the key AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Applebot-Extended, Google-Extended) from the page (`ai-bots-allowed`); no `noai`/`noimageai` directives (`noai-directives`); robots.txt does not block the page's images, scripts and stylesheets (`asset-access`); a `Content-Signal` (contentsignals.org) in robots.txt or the page's headers that does not opt out of `search` or `ai-input` (`content-signals`). |
 | Content & Semantics | 25% | heading hierarchy (`heading-hierarchy`), JSON-LD / schema.org (`structured-data`), OpenGraph (`opengraph`), main content versus boilerplate (`content-density`). |
 | Agentic Actionability | 25% | accessible names on interactive elements (`accessible-names`), click targets that are real buttons or links (`click-targets`), nothing covering the page on load (`overlay-blocking`), no captcha on a plain page (`captcha-blocking`). Needs a browser; without one the category is skipped. |
 
