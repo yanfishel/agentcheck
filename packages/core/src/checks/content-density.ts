@@ -26,23 +26,32 @@ function textWords($: CheerioAPI, root: ReturnType<CheerioAPI>): number {
 	return countWords(texts.join(" "));
 }
 
+/**
+ * Words of the whole body and of the main content (`<main>`, else
+ * `<article>`, else the body without nav, header, footer and aside) of an
+ * HTML document; scripts and styles do not count. Shared with static-content,
+ * which compares the static HTML with the rendered DOM by the same rule.
+ */
+export function wordCounts(html: string): { body: number; main: number } {
+	const $ = load(html);
+	$("script, style, noscript, template").remove();
+	const body = textWords($, $("body"));
+	const mainRoot = ["main", "article"]
+		.map((sel) => $(sel))
+		.find((els) => els.length > 0);
+	const root = mainRoot ?? $("body");
+	root.find("nav, header, footer, aside").remove();
+	return { body, main: textWords($, root) };
+}
+
 export const contentDensity: Check = {
 	id: "content-density",
 	category: "content-semantics",
 	title: "Content density",
 	weight: 30,
 	async run(ctx) {
-		// Parse a private copy: ctx.$ is shared with checks running in parallel.
-		const $ = load(ctx.page.body);
-		$("script, style, noscript, template").remove();
-		const bodyWords = textWords($, $("body"));
-
-		const mainRoot = ["main", "article"]
-			.map((sel) => $(sel))
-			.find((els) => els.length > 0);
-		const root = mainRoot ?? $("body");
-		root.find("nav, header, footer, aside").remove();
-		const mainWords = textWords($, root);
+		// Parses a private copy: ctx.$ is shared with checks running in parallel.
+		const { body: bodyWords, main: mainWords } = wordCounts(ctx.page.body);
 
 		const ratio = bodyWords === 0 ? 0 : mainWords / bodyWords;
 		const percent = Math.round(ratio * 100);

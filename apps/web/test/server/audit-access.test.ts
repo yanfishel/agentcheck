@@ -218,6 +218,7 @@ describe("auditStatusBody", () => {
 					"meta-description",
 					"html-lang",
 					"code-languages",
+					"static-content",
 				]),
 			];
 			const all = {

@@ -43,6 +43,11 @@ export interface RenderedPage {
 	clickTraps: ElementInfo[];
 	overlays: OverlayInfo[];
 	captcha: CaptchaInfo;
+	/**
+	 * The rendered DOM serialised (`page.content()`), cut at `RENDERED_HTML_MAX`;
+	 * absent when it could not be read (a challenge page, a failed read).
+	 */
+	html?: string;
 	/** Reason text of a collection half that failed; its data is then empty, not trustworthy. */
 	failures?: { accessibility?: string; dom?: string };
 }

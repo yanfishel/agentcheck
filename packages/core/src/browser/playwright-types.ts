@@ -50,7 +50,7 @@ export interface BrowserLike {
 
 export type CollectedData = Pick<
 	RenderedPage,
-	"interactive" | "clickTraps" | "overlays" | "captcha" | "failures"
+	"interactive" | "clickTraps" | "overlays" | "captcha" | "failures" | "html"
 >;
 
 export type Collect = (page: PageLike, cdp: CdpLike) => Promise<CollectedData>;

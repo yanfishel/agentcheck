@@ -31,6 +31,9 @@ const INTERACTIVE_ROLES = new Set([
 /** Upper bound on CDP round trips spent describing unnamed nodes. */
 const MAX_DESCRIBED = 200;
 
+/** The rendered DOM kept for static-content at most (characters). */
+export const RENDERED_HTML_MAX = 5_000_000;
+
 interface AxNode {
 	ignored?: boolean;
 	role?: { value?: unknown };
@@ -319,9 +322,11 @@ export const collectRenderedData: Collect = async (
 	page: PageLike,
 	cdp: CdpLike,
 ): Promise<CollectedData> => {
-	const [tree, measured] = await Promise.allSettled([
+	const [tree, measured, content] = await Promise.allSettled([
 		collectInteractive(cdp),
 		evaluateWithRetry(page),
+		// Inside the chain, so a throw (not only a rejection) is settled too.
+		Promise.resolve().then(() => page.content()),
 	]);
 	if (tree.status === "rejected" && measured.status === "rejected") {
 		throw tree.reason;
@@ -333,6 +338,10 @@ export const collectRenderedData: Collect = async (
 	if (measured.status === "rejected") failures.dom = firstLine(measured.reason);
 	return {
 		...(Object.keys(failures).length > 0 ? { failures } : {}),
+		// A failed read leaves html out: static-content then skips.
+		...(content.status === "fulfilled"
+			? { html: content.value.slice(0, RENDERED_HTML_MAX) }
+			: {}),
 		interactive: tree.status === "fulfilled" ? tree.value : [],
 		clickTraps: dom?.clickTraps ?? [],
 		overlays: dom?.overlays ?? [],
