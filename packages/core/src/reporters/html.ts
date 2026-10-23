@@ -1,3 +1,4 @@
+import { protocolsLine } from "../protocols-line.ts";
 import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 import { HOMEPAGE } from "../version.ts";
 
@@ -69,6 +70,13 @@ li.check{display:grid;grid-template-columns:20px 1fr;gap:4px 8px;padding:10px 0;
 .body ul{padding:0;margin:4px 0 0}
 .body li{padding:0}
 .body p{margin:4px 0 0;color:var(--text)}
+section.protocols{padding:16px 20px}
+section.protocols h2{margin:0;font-size:16px;display:flex;justify-content:space-between;gap:16px}
+section.protocols h2 span{color:var(--muted);font-weight:400}
+section.protocols ul{padding:0;margin:8px 0 0}
+section.protocols li{padding:8px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+section.protocols li span{display:block;color:var(--muted);font-size:14px}
+section.protocols p{margin:8px 0 0;color:var(--muted);font-size:14px}
 footer{text-align:center;color:var(--muted);font-size:14px}
 `.trim();
 
@@ -118,6 +126,17 @@ function browserLine(browser: AuditResult["browser"]): string {
 	return `Browser: ${browser.engine} ${browser.version} (rendered in ${seconds} s)`;
 }
 
+/** Found protocols only, then one line for the rest; URLs stay text (no links besides target and homepage). */
+function renderProtocols(protocols: AuditResult["protocols"]): string {
+	if (!protocols) return "";
+	const { checked, found } = protocols;
+	const items = found
+		.map((p) => `<li>${esc(p.title)}<span>${esc(p.url)}</span></li>`)
+		.join("");
+	const list = items ? `<ul>${items}</ul>` : "";
+	return `<section class="card protocols"><h2>Agent protocols<span>not scored</span></h2>${list}<p>${esc(protocolsLine(checked.length, found.length))}</p></section>`;
+}
+
 export function renderHtml(result: AuditResult): string {
 	const target = esc(result.target);
 	const final =
@@ -151,6 +170,7 @@ ${final}
 </div>
 </header>
 ${result.categories.map(renderCategory).join("\n")}
+${renderProtocols(result.protocols)}
 <footer>${product} v${version}</footer>
 </main>
 </body>

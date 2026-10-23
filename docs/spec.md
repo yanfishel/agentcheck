@@ -24,6 +24,17 @@ Four categories; the total score is 0–100 with a grade from A+ to F.
 | Content & Semantics | 25% | heading hierarchy (`heading-hierarchy`), JSON-LD / schema.org (`structured-data`), OpenGraph (`opengraph`), main content versus boilerplate (`content-density`), a canonical URL that answers 200 on the site (`canonical`), a meta description of 50–300 characters (`meta-description`), a valid `lang` on `<html>` (`html-lang`). |
 | Agentic Actionability | 25% | accessible names on interactive elements (`accessible-names`), click targets that are real buttons or links (`click-targets`), nothing covering the page on load (`overlay-blocking`), no captcha on a plain page (`captcha-blocking`). Needs a browser; without one the category is skipped. |
 
+Agent protocols (not scored): `AuditResult.protocols` lists the ids looked for
+(`checked`) and the ones the site publishes (`found`: id, title, group, URL),
+looked up on the page's origin within 10 s: MCP Server Card, A2A Agent Card,
+Agent Skills index, API Catalog (RFC 9727), OpenAPI (`/openapi.json`), AI
+Catalog (also `rel="ai-catalog"`), OAuth / OpenID Connect discovery, OAuth
+Protected Resource (RFC 9728), `auth.md`, Web Bot Auth key directory, UCP and
+ACP. A document counts with status 200, not HTML, and (for JSON ones) a JSON
+object or array. The reporters list only what was found, then
+"Checked N protocols, M published."; DNS-based discovery (DNS-AID), x402/MPP
+and WebMCP are not looked for.
+
 ## 3. Command-line interface
 
 ```bash

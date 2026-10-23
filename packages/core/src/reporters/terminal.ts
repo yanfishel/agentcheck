@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+import { protocolsLine } from "../protocols-line.ts";
 import type { AuditResult, CategoryResult, CheckResult } from "../types.ts";
 
 export interface TerminalOptions {
@@ -75,6 +76,21 @@ export function renderTerminal(
 				lines.push(`       → ${check.remediation}`);
 			}
 		}
+		lines.push("");
+	}
+
+	if (result.protocols) {
+		const { checked, found } = result.protocols;
+		lines.push(
+			` ${paint("dim", "[·]")} ${"Agent protocols".padEnd(NAME_WIDTH)}${paint("dim", "not scored")}`,
+		);
+		for (const protocol of found) {
+			lines.push(`     ${paint("green", "✓")} ${protocol.title}`);
+			lines.push(paint("dim", `       ${protocol.url}`));
+		}
+		lines.push(
+			paint("dim", `     ${protocolsLine(checked.length, found.length)}`),
+		);
 		lines.push("");
 	}
 
