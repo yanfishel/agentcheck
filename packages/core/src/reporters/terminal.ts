@@ -94,10 +94,55 @@ export function renderTerminal(
 		lines.push("");
 	}
 
+	if (result.crawl) {
+		const { pages, issues } = result.crawl;
+		const audited = pages.filter((p) => p.status === "audited").length;
+		lines.push(
+			` ${paint("dim", "[·]")} ${`Pages (${pages.length})`.padEnd(NAME_WIDTH)}${paint("dim", `${audited} audited`)}`,
+		);
+		for (const page of pages) {
+			if (page.status === "audited") {
+				lines.push(
+					`     ${String(page.score).padStart(3)}  ${page.grade.padEnd(2)}  ${page.url}`,
+				);
+			} else {
+				lines.push(
+					`     ${paint("red", "  ✗")}      ${page.url} ${paint("dim", `(${page.error})`)}`,
+				);
+			}
+		}
+		if (issues.length > 0) {
+			lines.push("", "     Problems across the pages:");
+			for (const issue of issues) {
+				const marker =
+					issue.fail > 0 ? paint("red", "✗") : paint("yellow", "⚠");
+				const counts = [
+					issue.fail > 0 ? `fail on ${issue.fail}` : "",
+					issue.warn > 0 ? `warn on ${issue.warn}` : "",
+				]
+					.filter(Boolean)
+					.join(", ");
+				lines.push(
+					`     ${marker} ${issue.title}: ${counts} of ${audited} pages`,
+				);
+			}
+		}
+		lines.push("");
+	}
+
 	lines.push(` ${RULE}`);
-	lines.push(
-		` ${paint("bold", `OVERALL AI SCORE: ${result.score} / 100 [${result.grade}]`)}`,
-	);
+	if (result.crawl) {
+		const audited = result.crawl.pages.filter(
+			(p) => p.status === "audited",
+		).length;
+		lines.push(
+			` ${paint("bold", `SITE AI SCORE: ${result.crawl.score} / 100 [${result.crawl.grade}]`)} ${paint("dim", `(average of ${audited} pages; this page ${result.score} [${result.grade}])`)}`,
+		);
+	} else {
+		lines.push(
+			` ${paint("bold", `OVERALL AI SCORE: ${result.score} / 100 [${result.grade}]`)}`,
+		);
+	}
 
 	const skipped = result.categories.flatMap((category) =>
 		category.status === "skipped"

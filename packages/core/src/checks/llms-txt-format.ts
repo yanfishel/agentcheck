@@ -7,6 +7,7 @@ const LINK_ITEM = /^\s*[-*]\s+\[[^\]]+\]\([^)]+\)/;
 export const llmsTxtFormat: Check = {
 	id: "llms-txt-format",
 	category: "ai-manifests",
+	scope: "site",
 	title: "llms.txt follows the llmstxt.org format",
 	weight: 20,
 	async run(ctx) {

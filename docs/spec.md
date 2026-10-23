@@ -46,11 +46,25 @@ npx agentcheck-dev https://example.com --format=html > agentcheck-report.html
 
 # CI: fail the build below the threshold; stdout is the JSON only
 npx agentcheck-dev https://example.com --threshold=85 --format=json
+
+# Site audit: up to 20 pages from the sitemap (else the menu links)
+npx agentcheck-dev https://example.com --crawl --limit=20
 ```
 
 Options: `--threshold=N`, `--format=terminal|json|html`, `--user-agent=STRING`
-(env `AGENTCHECK_USER_AGENT`), `--no-browser`, `-h`, `-v`. `--crawl`, `--limit`,
-`--output` and `--report-dir` are refused with a "not implemented" message.
+(env `AGENTCHECK_USER_AGENT`), `--no-browser`, `--crawl`, `--limit=N` (with
+`--crawl` only, 1–50, default 10, the URL included), `-h`, `-v`. `--output` and
+`--report-dir` are refused with a "not implemented" message.
+
+A crawl audits the URL as usual, then up to `--limit` − 1 other pages of the
+same host: the sitemap's, spread evenly over it, else the page's menu links.
+Other pages run the page checks without a browser; the site checks (`scope:
+"site"`: llms.txt, its format, llms-full.txt, content signals, sitemap) run
+once and their results count for every page. `AuditResult.crawl` holds each
+page (URL, score, grade, the page checks that warn or fail) or why it could
+not be read, the problems counted across the pages, and the site score: the
+mean of the audited pages. With `--crawl` the reports lead with the site
+score and `--threshold` compares it; `score` stays the URL's own.
 
 Exit codes are a CI contract: 0 done, 1 score below `--threshold`, 2 usage or
 fatal error (including an unreachable target).

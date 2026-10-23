@@ -54,6 +54,12 @@ export interface CheckOutcome {
 export interface Check {
 	id: string;
 	category: CategoryId;
+	/**
+	 * "site": the answer is the same for every page of the site (llms.txt,
+	 * sitemap, ...). A crawl runs it once, on the first page, and reuses the
+	 * result for the other pages. Page checks leave it out.
+	 */
+	scope?: "site";
 	title: string;
 	weight: number;
 	run(ctx: AuditContext): Promise<CheckOutcome>;
@@ -101,4 +107,41 @@ export interface AuditResult {
 	 * never scored. Absent in results stored before it existed.
 	 */
 	protocols?: ProtocolsResult;
+	/** Present only for a crawl (`--crawl`): every page audited and the site's score. */
+	crawl?: CrawlResult;
+}
+
+/** A page of a crawl: its score (site checks included) and its own problems. */
+export type CrawledPage =
+	| {
+			url: string;
+			status: "audited";
+			score: number;
+			grade: Grade;
+			/** Page checks that warn or fail on this page (site checks are in the main report). */
+			problems: {
+				id: string;
+				title: string;
+				status: "warn" | "fail";
+				message: string;
+			}[];
+	  }
+	| { url: string; status: "failed"; error: string };
+
+/** How many audited pages a page check warns or fails on. */
+export interface CrawlIssue {
+	id: string;
+	title: string;
+	fail: number;
+	warn: number;
+}
+
+export interface CrawlResult {
+	/** The mean score of the audited pages: the site's headline score. */
+	score: number;
+	grade: Grade;
+	/** The audited page first, then the others in the order they were picked. */
+	pages: CrawledPage[];
+	/** Page checks with problems, most pages first. */
+	issues: CrawlIssue[];
 }

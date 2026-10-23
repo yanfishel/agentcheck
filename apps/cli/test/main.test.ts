@@ -184,7 +184,7 @@ describe("run", () => {
 		expect(unknown.stderr).toContain("--bogus");
 	});
 
-	it.each([["--crawl"], ["--limit=5"], ["--output=html"], ["--report-dir=x"]])(
+	it.each([["--output=html"], ["--report-dir=x"]])(
 		"reports %s as not implemented",
 		async (flag) => {
 			const { code, stderr } = await exec(["example.com", flag]);
@@ -192,6 +192,54 @@ describe("run", () => {
 			expect(stderr).toContain("not implemented yet");
 		},
 	);
+
+	it("refuses --limit without --crawl and a limit out of range", async () => {
+		const alone = await exec(["example.com", "--limit=5"]);
+		expect(alone.code).toBe(2);
+		expect(alone.stderr).toBe("--limit needs --crawl\n");
+		for (const bad of ["0", "51", "x"]) {
+			const out = await exec(["example.com", "--crawl", `--limit=${bad}`]);
+			expect(out.code).toBe(2);
+			expect(out.stderr).toContain(
+				"--limit must be an integer between 1 and 50",
+			);
+		}
+	});
+
+	it("--crawl audits the sitemap's pages and thresholds on the site score", async () => {
+		const pageWith = (title: string) => ({
+			...PAGE,
+			markdown: undefined,
+			body: `<html lang="en"><head><title>${title}</title></head><body><main><p>${title}</p></main></body></html>`,
+		});
+		const site = mockRoutes(ORIGIN, {
+			"/": { ...PAGE },
+			"/robots.txt": ROBOTS_OPEN,
+			"/llms.txt": LLMS_TXT,
+			"/llms-full.txt": { ...LLMS_TXT, body: "# Example\n\nFull text." },
+			"/sitemap.xml": {
+				status: 200,
+				contentType: "application/xml",
+				body: `<urlset><url><loc>${ORIGIN}/</loc></url><url><loc>${ORIGIN}/a</loc></url><url><loc>${ORIGIN}/gone</loc></url></urlset>`,
+			},
+			"/a": pageWith("A"),
+		});
+		const { code, stdout, stderr } = await exec(
+			[ORIGIN, "--crawl", "--format=json", "--no-browser", "--threshold=99"],
+			{ dispatcher: site },
+		);
+		const result = JSON.parse(stdout);
+		expect(result.crawl.pages.map((p: { url: string }) => p.url)).toEqual([
+			`${ORIGIN}/`,
+			`${ORIGIN}/a`,
+			`${ORIGIN}/gone`,
+		]);
+		expect(result.crawl.pages[2]).toMatchObject({ status: "failed" });
+		expect(code).toBe(1);
+		expect(stderr).toBe(
+			`Site score ${result.crawl.score} is below threshold 99\n`,
+		);
+	});
 
 	it("--format=json prints only the result JSON", async () => {
 		const { code, stdout, stderr } = await exec(

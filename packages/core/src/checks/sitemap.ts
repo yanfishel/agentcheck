@@ -51,6 +51,8 @@ function parseSitemap(
 /** Up to `max` items picked evenly from the list, first and last included. */
 export function spread<T>(items: T[], max: number): T[] {
 	if (items.length <= max) return items;
+	// One pick has no spacing to divide: take the first.
+	if (max <= 1) return items.slice(0, Math.max(0, max));
 	const step = (items.length - 1) / (max - 1);
 	return Array.from(
 		{ length: max },
@@ -63,7 +65,7 @@ function problem(res: HttpResult): string | null {
 	return res.status === 200 ? null : `HTTP ${res.status}`;
 }
 
-async function readSitemaps(
+export async function readSitemaps(
 	ctx: AuditContext,
 	signal: AbortSignal,
 ): Promise<{ found: URL[]; entries: Entry[] }> {
@@ -100,6 +102,7 @@ export function sitemapCheck(budgetMs: number): Check {
 	return {
 		id: "sitemap",
 		category: "bot-access",
+		scope: "site",
 		title: "Sitemap lists live pages",
 		weight: 15,
 		async run(ctx) {

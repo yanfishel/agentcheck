@@ -1,6 +1,8 @@
 import { parseArgs } from "node:util";
 import {
 	type BrowserRenderer,
+	CRAWL_LIMIT_DEFAULT,
+	CRAWL_LIMIT_MAX,
 	createBrowserRenderer,
 	defaultUserAgent,
 	disabledRenderer,
@@ -29,7 +31,7 @@ export interface CliDeps {
 }
 
 const USAGE =
-	"Usage: agentcheck <url> [--threshold=N] [--format=FORMAT] [--user-agent=STRING] [--no-browser]";
+	"Usage: agentcheck <url> [--threshold=N] [--format=FORMAT] [--user-agent=STRING] [--no-browser] [--crawl [--limit=N]]";
 
 const FIX_LINE =
 	"       agentcheck fix <url> [--out=DIR] [--only=KINDS] [--force]  (write fix files; see: agentcheck fix --help)";
@@ -41,9 +43,14 @@ Audit how ready a website is for AI agents, search LLMs and autonomous browsers.
 
 Options:
   --threshold=N         Exit with code 1 when the overall score is below N (0-100)
+                        (with --crawl: the site score, the average of the pages)
   --format=FORMAT       Output format: terminal (default), json or html
   --user-agent=STRING   User-Agent header to send (env: AGENTCHECK_USER_AGENT)
   --no-browser          Skip browser checks (Agentic Actionability)
+  --crawl               Also audit other pages of the site (from its sitemap,
+                        else its menu links); the browser runs on the first only
+  --limit=N             Pages to audit with --crawl, the URL included
+                        (1-${CRAWL_LIMIT_MAX}, default ${CRAWL_LIMIT_DEFAULT})
   -h, --help            Show this help and exit
   -v, --version         Show the version and exit
 `;
@@ -54,15 +61,15 @@ const OPTIONS = {
 	threshold: { type: "string" },
 	"user-agent": { type: "string" },
 	"no-browser": { type: "boolean" },
-	// Declared so they produce a specific message instead of "unknown option".
 	crawl: { type: "boolean" },
 	limit: { type: "string" },
 	format: { type: "string" },
+	// Declared so they produce a specific message instead of "unknown option".
 	output: { type: "string" },
 	"report-dir": { type: "string" },
 } as const;
 
-const NOT_IMPLEMENTED = ["crawl", "limit", "output", "report-dir"] as const;
+const NOT_IMPLEMENTED = ["output", "report-dir"] as const;
 
 type ParsedValues = ReturnType<
 	typeof parseArgs<{ options: typeof OPTIONS }>
@@ -72,6 +79,12 @@ function parseThreshold(raw: string): number | null {
 	if (!/^\d+$/.test(raw)) return null;
 	const n = Number(raw);
 	return n <= 100 ? n : null;
+}
+
+function parseLimit(raw: string): number | null {
+	if (!/^\d+$/.test(raw)) return null;
+	const n = Number(raw);
+	return n >= 1 && n <= CRAWL_LIMIT_MAX ? n : null;
 }
 
 export async function run(argv: string[], deps: CliDeps): Promise<number> {
@@ -132,6 +145,25 @@ export async function run(argv: string[], deps: CliDeps): Promise<number> {
 		threshold = parsedThreshold;
 	}
 
+	let crawl: { limit: number } | undefined;
+	if (values.limit !== undefined && !values.crawl) {
+		deps.stderr("--limit needs --crawl\n");
+		return 2;
+	}
+	if (values.crawl) {
+		const limit =
+			values.limit === undefined
+				? CRAWL_LIMIT_DEFAULT
+				: parseLimit(values.limit);
+		if (limit === null) {
+			deps.stderr(
+				`--limit must be an integer between 1 and ${CRAWL_LIMIT_MAX}, got "${values.limit}"\n`,
+			);
+			return 2;
+		}
+		crawl = { limit };
+	}
+
 	const customUserAgent =
 		values["user-agent"] || deps.env.AGENTCHECK_USER_AGENT || undefined;
 	const userAgent = customUserAgent ?? defaultUserAgent(CLI_VERSION);
@@ -147,6 +179,7 @@ export async function run(argv: string[], deps: CliDeps): Promise<number> {
 			dispatcher: deps.dispatcher,
 			renderer,
 			browserUserAgent: customUserAgent,
+			...(crawl ? { crawl } : {}),
 		});
 	} catch (err) {
 		deps.stderr(failureMessage(err));
@@ -164,8 +197,11 @@ export async function run(argv: string[], deps: CliDeps): Promise<number> {
 		);
 	}
 
-	if (threshold !== undefined && result.score < threshold) {
-		deps.stderr(`Score ${result.score} is below threshold ${threshold}\n`);
+	const score = result.crawl?.score ?? result.score;
+	if (threshold !== undefined && score < threshold) {
+		deps.stderr(
+			`${result.crawl ? "Site score" : "Score"} ${score} is below threshold ${threshold}\n`,
+		);
 		return 1;
 	}
 	return 0;
