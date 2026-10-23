@@ -1,18 +1,18 @@
 {
 	"tool": {
 		"name": "agentcheck",
-		"version": "0.1.2"
+		"version": "0.2.0"
 	},
 	"target": "https://vite.dev",
 	"finalUrl": "https://vite.dev/",
-	"timestamp": "2026-10-20T20:47:01.938Z",
+	"timestamp": "2026-10-23T03:59:57.127Z",
 	"categories": [
 		{
 			"id": "ai-manifests",
 			"title": "AI Manifests",
 			"weight": 30,
 			"status": "scored",
-			"score": 80,
+			"score": 75,
 			"checks": [
 				{
 					"id": "llms-txt",
@@ -41,8 +41,26 @@
 					"weight": 20,
 					"status": "fail",
 					"message": "No markdown version of this page found",
-					"details": ["https://vite.dev/index.md: HTTP 404"],
-					"remediation": "Serve a markdown version of the page (e.g. <page>.md) and advertise it with <link rel=\"alternate\" type=\"text/markdown\">."
+					"details": [
+						"Accept: text/markdown: answered with text/html",
+						"https://vite.dev/index.md: HTTP 404"
+					],
+					"remediation": "Serve a markdown version of the page (e.g. <page>.md) and advertise it with <link rel=\"alternate\" type=\"text/markdown\" href=\"…\"> inside <head> (or the same rel and type in a Link header)."
+				},
+				{
+					"id": "llms-txt-link",
+					"title": "Page links to llms.txt",
+					"weight": 10,
+					"status": "pass",
+					"message": "The page links to /llms.txt (rel=\"describedby\" link tag)"
+				},
+				{
+					"id": "markdown-negotiation",
+					"title": "Markdown on Accept: text/markdown",
+					"weight": 10,
+					"status": "fail",
+					"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)",
+					"remediation": "Answer requests with Accept: text/markdown with the page's markdown (Content-Type: text/markdown, Vary: Accept): Cloudflare's Markdown for Agents, or a server rewrite to the .md version."
 				}
 			]
 		},
@@ -51,7 +69,7 @@
 			"title": "Bot Access",
 			"weight": 20,
 			"status": "scored",
-			"score": 100,
+			"score": 77,
 			"checks": [
 				{
 					"id": "ai-bots-allowed",
@@ -73,6 +91,32 @@
 					"weight": 10,
 					"status": "pass",
 					"message": "No robots.txt found; page assets are crawlable"
+				},
+				{
+					"id": "content-signals",
+					"title": "Content signals declared",
+					"weight": 20,
+					"status": "fail",
+					"message": "No Content-Signal found in robots.txt or the page's headers",
+					"remediation": "Add \"Content-Signal: search=yes, ai-input=yes, ai-train=no\" to the User-agent: * group of robots.txt (see contentsignals.org)."
+				},
+				{
+					"id": "sitemap",
+					"title": "Sitemap lists live pages",
+					"weight": 15,
+					"status": "warn",
+					"message": "Sitemap: 57 of 57 entries have no <lastmod>",
+					"details": [],
+					"remediation": "In the sitemap, give every entry a <lastmod>."
+				},
+				{
+					"id": "snippet-directives",
+					"title": "Page may be shown and quoted",
+					"weight": 15,
+					"status": "warn",
+					"message": "The page limits what search and AI answers may quote",
+					"details": ["1 element with data-nosnippet"],
+					"remediation": "Drop max-snippet limits, max-image-preview:none and data-nosnippet unless that text must stay out of answers."
 				}
 			]
 		},
@@ -81,7 +125,7 @@
 			"title": "Content & Semantics",
 			"weight": 25,
 			"status": "scored",
-			"score": 63,
+			"score": 73,
 			"checks": [
 				{
 					"id": "heading-hierarchy",
@@ -117,6 +161,42 @@
 					"weight": 30,
 					"status": "pass",
 					"message": "480 words of main content (79% of page text)"
+				},
+				{
+					"id": "canonical",
+					"title": "Canonical URL",
+					"weight": 10,
+					"status": "pass",
+					"message": "Canonical URL: https://vite.dev/"
+				},
+				{
+					"id": "meta-description",
+					"title": "Meta description",
+					"weight": 10,
+					"status": "warn",
+					"message": "The meta description is 32 characters long (50–300 reads well as a link caption)",
+					"remediation": "Write a meta description of 50–300 characters that says what the page is."
+				},
+				{
+					"id": "html-lang",
+					"title": "Page language declared",
+					"weight": 10,
+					"status": "pass",
+					"message": "Page language: en-US"
+				},
+				{
+					"id": "code-languages",
+					"title": "Code blocks name their language",
+					"weight": 10,
+					"status": "pass",
+					"message": "5 of 5 code blocks name their language"
+				},
+				{
+					"id": "static-content",
+					"title": "Content without JavaScript",
+					"weight": 15,
+					"status": "pass",
+					"message": "The static HTML carries 94% of the rendered text (480 of 511 words)"
 				}
 			]
 		},
@@ -162,12 +242,424 @@
 			]
 		}
 	],
-	"score": 80,
-	"grade": "B",
+	"score": 76,
+	"grade": "C",
 	"browser": {
 		"used": true,
 		"engine": "chrome",
-		"version": "155.0.8059.80",
-		"renderMs": 3770
+		"version": "155.0.8059.85",
+		"renderMs": 3958
+	},
+	"protocols": {
+		"checked": [
+			"mcp-server-card",
+			"a2a-agent-card",
+			"agent-skills",
+			"api-catalog",
+			"openapi",
+			"ai-catalog",
+			"agents-md",
+			"oauth-discovery",
+			"oauth-protected-resource",
+			"auth-md",
+			"web-bot-auth",
+			"ucp",
+			"acp"
+		],
+		"found": []
+	},
+	"crawl": {
+		"score": 80,
+		"grade": "B",
+		"pages": [
+			{
+				"url": "https://vite.dev/",
+				"status": "audited",
+				"score": 76,
+				"grade": "C",
+				"problems": [
+					{
+						"id": "snippet-directives",
+						"title": "Page may be shown and quoted",
+						"status": "warn",
+						"message": "The page limits what search and AI answers may quote"
+					},
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "fail",
+						"message": "No markdown version of this page found"
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "heading-hierarchy",
+						"title": "Heading hierarchy",
+						"status": "warn",
+						"message": "Heading hierarchy has problems"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					},
+					{
+						"id": "accessible-names",
+						"title": "Accessible names",
+						"status": "warn",
+						"message": "1 of 65 interactive elements have no accessible name (2%)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/acknowledgements",
+				"status": "audited",
+				"score": 82,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/acknowledgements.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/blog/announcing-vite5",
+				"status": "audited",
+				"score": 78,
+				"grade": "C",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "fail",
+						"message": "No markdown version of this page found"
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/changes/hotupdate-hook",
+				"status": "audited",
+				"score": 81,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/changes/hotupdate-hook.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/config/dep-optimization-options",
+				"status": "audited",
+				"score": 81,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/config/dep-optimization-options.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/guide/api-environment-frameworks",
+				"status": "audited",
+				"score": 81,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/guide/api-environment-frameworks.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/guide/api-javascript",
+				"status": "audited",
+				"score": 81,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/guide/api-javascript.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/guide/env-and-mode",
+				"status": "audited",
+				"score": 80,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/guide/env-and-mode.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					},
+					{
+						"id": "code-languages",
+						"title": "Code blocks name their language",
+						"status": "warn",
+						"message": "6 of 13 code blocks name their language"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/guide/static-deploy",
+				"status": "audited",
+				"score": 81,
+				"grade": "B",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "warn",
+						"message": "Markdown version advertised at https://vite.dev/guide/static-deploy.md, but its response has no Link header with rel=\"canonical\""
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					},
+					{
+						"id": "meta-description",
+						"title": "Meta description",
+						"status": "warn",
+						"message": "The meta description is 32 characters long (50–300 reads well as a link caption)"
+					}
+				]
+			},
+			{
+				"url": "https://vite.dev/team",
+				"status": "audited",
+				"score": 76,
+				"grade": "C",
+				"problems": [
+					{
+						"id": "markdown-twin",
+						"title": "Markdown version of the page",
+						"status": "fail",
+						"message": "No markdown version of this page found"
+					},
+					{
+						"id": "markdown-negotiation",
+						"title": "Markdown on Accept: text/markdown",
+						"status": "fail",
+						"message": "The page does not answer Accept: text/markdown with markdown (answered with text/html)"
+					},
+					{
+						"id": "heading-hierarchy",
+						"title": "Heading hierarchy",
+						"status": "warn",
+						"message": "Heading hierarchy has problems"
+					},
+					{
+						"id": "structured-data",
+						"title": "Structured data",
+						"status": "fail",
+						"message": "No structured data found"
+					}
+				]
+			}
+		],
+		"issues": [
+			{
+				"id": "markdown-negotiation",
+				"title": "Markdown on Accept: text/markdown",
+				"fail": 10,
+				"warn": 0
+			},
+			{
+				"id": "structured-data",
+				"title": "Structured data",
+				"fail": 10,
+				"warn": 0
+			},
+			{
+				"id": "markdown-twin",
+				"title": "Markdown version of the page",
+				"fail": 3,
+				"warn": 7
+			},
+			{
+				"id": "meta-description",
+				"title": "Meta description",
+				"fail": 0,
+				"warn": 8
+			},
+			{
+				"id": "heading-hierarchy",
+				"title": "Heading hierarchy",
+				"fail": 0,
+				"warn": 2
+			},
+			{
+				"id": "snippet-directives",
+				"title": "Page may be shown and quoted",
+				"fail": 0,
+				"warn": 1
+			},
+			{
+				"id": "accessible-names",
+				"title": "Accessible names",
+				"fail": 0,
+				"warn": 1
+			},
+			{
+				"id": "code-languages",
+				"title": "Code blocks name their language",
+				"fail": 0,
+				"warn": 1
+			}
+		]
 	}
 }

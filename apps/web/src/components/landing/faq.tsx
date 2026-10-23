@@ -13,6 +13,11 @@ const questions = [
 			"That is your call. Some sites block training crawlers and allow search ones. The report shows what is open and what is closed, so it is a decision rather than an accident.",
 	},
 	{
+		question: "How do you decide what to check?",
+		answer:
+			"Every check rests on a published standard or documented practice: RFCs, llmstxt.org, schema.org, WCAG, the search engines' own guides. Where no standard exists we leave the thing out rather than invent a rule. The full list, with each rule and its source, is on the checks page.",
+	},
+	{
 		question: "Does llms.txt really work?",
 		answer:
 			"Not every assistant reads it yet. It is a small markdown file that takes minutes to write, so we count it and show you what to put in it.",

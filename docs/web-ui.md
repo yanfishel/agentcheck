@@ -108,7 +108,7 @@ components and the copy.
   icons (labels stay for screen readers).
 - The landing's example (`landing/example-report.tsx`) is a saved real audit
   of vite.dev (`content/example-audit.json`, screenshot and site icon in
-  `public/example/`, all from `apps/web/scripts/capture-example.ts`), rendered
+  `public/example/`, all from `apps/web/scripts/capture-example.ts`, run like a full check: browser and crawl, `EXAMPLE_VERSION` set to the release it belongs to; re-capture when the checks change), rendered
   like a live report: the full band on a rounded plum card with the backdrop,
   ring, thumbnail and icon, no actions. Its heading, line and the primary
   "Check your site" button (to `#start`) sit above the card, like every other
@@ -135,7 +135,7 @@ components and the copy.
   `app/_og/`, each font URL a literal or the bundler loads one file for both
   weights); `public/llms.txt`,
   `public/llms-full.txt` and `public/index.md` are hand-kept;
-  `public/privacy.md` and `public/terms.md` are the legal pages run through
+  `public/checks.md`, `public/privacy.md` and `public/terms.md` are those pages run through
   the engine's own `twinMarkdown` as a file snapshot in `ai-ready.test.tsx`
   (CI fails when a page changes without them: run `vitest -u` there), and
   `LegalPage` carries a schema.org `WebPage`; and
@@ -167,6 +167,15 @@ components and the copy.
   and land 1.5rem below the top. The URL field gets focus on load where there
   is a mouse (`pointer: fine`, never on touch, where it would open the
   keyboard) and after any click on a link to `#start`.
+- `/checks` ("What AgentCheck checks") is built from the engine: `CHECKS`,
+  `CHECK_DOCS` (rules and sources), `PROTOCOLS`, `SERVICE_CRAWL`; each check
+  as a card (title, id, share of the score, "once per site", summary,
+  pass/warn/fail/skip rows with the report's marks, source links), then the
+  crawl, the protocols, what we do not check and why, and fix files.
+  `content/facts.ts` holds `FACTS_LINE` (numbers from the engine), shown on
+  the landing under the four guide blocks with "See every check" and in
+  `index.md`/`llms-full.txt` (a test keeps them equal). Facts about ourselves
+  only: no comparisons with other tools, no superlatives.
 - A full check crawls the site (up to 10 pages): the band's ring, grade,
   confetti and the score stored for history, badge and pictures are the site
   score (`report/headline.ts`: the crawl's, else the page's), with a "N pages"

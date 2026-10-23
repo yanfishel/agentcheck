@@ -7,6 +7,7 @@ Paste a URL at https://agentcheck.dev for a score from 0 to 100 in four weighted
 ## Docs
 
 - [The home page in markdown](https://agentcheck.dev/index.md): what is checked and why, how it works, an example report, the CLI and the badge, questions and answers
+- [Every check](https://agentcheck.dev/checks.md): what each check looks at, when it passes, warns or fails, and the standard it rests on
 - [Full text](https://agentcheck.dev/llms-full.txt): the home page and the CLI reference in one file
 - [Source code](https://github.com/yanfishel/agentcheck): the engine, the CLI and the web service (MIT)
 - [CLI on npm](https://www.npmjs.com/package/agentcheck-dev): `npx agentcheck-dev <url>` and `npx agentcheck-dev fix <url>`

@@ -31,7 +31,7 @@ describe("Home", () => {
 			"Example report",
 			"AI Ready",
 			// The terminal tab is the real reporter run on the example audit.
-			"OVERALL AI SCORE: 80 / 100 [B]",
+			"OVERALL AI SCORE: 76 / 100 [C]",
 			// The closing band repeats the form; the example's button leads to it.
 			"Check your site now",
 			'id="check-now"',

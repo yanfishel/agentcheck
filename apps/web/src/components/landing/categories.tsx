@@ -1,5 +1,7 @@
 import { CATEGORIES } from "@agentcheck/core/scoring";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ListChecks } from "lucide-react";
+import Link from "next/link";
+import { FACTS_LINE } from "../../content/facts";
 import { CATEGORY_META, CategoryIcon, type CategoryId } from "../category-meta";
 import { Card, chipClass, Tooltip } from "../ui";
 import { WeightRing } from "./weight-ring";
@@ -23,7 +25,7 @@ const copy: Record<
 > = {
 	"bot-access": {
 		title: "robots.txt says who may come in",
-		text: "AI crawlers have their own names and obey robots.txt. Plenty of sites block them by accident with a rule copied years ago.",
+		text: "AI crawlers have their own names and obey robots.txt, which can now also say what they may do with your pages. Plenty of sites block them by accident with a rule copied years ago, or hide pages with a stray noindex, and a sitemap with dead links sends them nowhere.",
 		aside: "Your old robots.txt may not be a fan of ChatGPT.",
 		docs: [
 			{
@@ -43,17 +45,25 @@ const copy: Record<
 				href: "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
 			},
 			{ label: "RFC 9309", href: "https://www.rfc-editor.org/rfc/rfc9309" },
+			{ label: "contentsignals.org", href: "https://contentsignals.org/" },
+			{ label: "sitemaps.org", href: "https://www.sitemaps.org/protocol.html" },
 		],
 	},
 	"ai-manifests": {
 		title: "llms.txt is a table of contents for models",
-		text: "A plain markdown file at the root that points to your important pages, plus markdown versions of those pages.",
+		text: "A plain markdown file at the root that points to your important pages, plus markdown versions of those pages that a page links to and serves to agents that ask for markdown.",
 		aside: "A young standard, and ten minutes of work.",
-		docs: [{ label: "llmstxt.org", href: "https://llmstxt.org/" }],
+		docs: [
+			{ label: "llmstxt.org", href: "https://llmstxt.org/" },
+			{
+				label: "RFC 8288 (Link)",
+				href: "https://www.rfc-editor.org/rfc/rfc8288",
+			},
+		],
 	},
 	"content-semantics": {
 		title: "Structure tells it what the page is",
-		text: "One h1, headings in order, JSON-LD and OpenGraph, and more real content than menus and footers.",
+		text: "One h1, headings in order, a canonical URL, a description and a language, JSON-LD and OpenGraph, and real content in the HTML itself, not only after JavaScript runs.",
 		docs: [
 			{ label: "schema.org", href: "https://schema.org/docs/gs.html" },
 			{
@@ -61,6 +71,10 @@ const copy: Record<
 				href: "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
 			},
 			{ label: "Open Graph", href: "https://ogp.me/" },
+			{
+				label: "Google canonical URLs",
+				href: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+			},
 		],
 	},
 	"agentic-actionability": {
@@ -157,6 +171,16 @@ export function Categories() {
 						</li>
 					))}
 				</ul>
+				<p className="mt-6 max-w-3xl text-muted">
+					{FACTS_LINE}{" "}
+					<Link
+						href="/checks"
+						className="inline-flex items-center gap-1.5 font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 outline-accent outline-offset-2"
+					>
+						<ListChecks aria-hidden="true" className="size-4" />
+						See every check
+					</Link>
+				</p>
 			</section>
 		</>
 	);

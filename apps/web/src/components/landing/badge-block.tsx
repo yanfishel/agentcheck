@@ -2,14 +2,17 @@ import { Award } from "lucide-react";
 import { exampleAudit } from "../../content/example-audit";
 import { renderBadge } from "../../server/render-badge";
 import { badgeSnippetTabs } from "../badge-snippets";
+import { headline } from "../report/headline";
 import { CodeWindow } from "../ui";
 
-const ALT = `AI Ready: ${exampleAudit.score}/100`;
+// The badge shows what the service stores: the site score of a crawled check.
+const lead = headline(exampleAudit);
+const ALT = `AI Ready: ${lead.score}/100`;
 
 export function BadgeBlock() {
 	const svg = renderBadge({
-		score: exampleAudit.score,
-		grade: exampleAudit.grade,
+		score: lead.score,
+		grade: lead.grade,
 	});
 	return (
 		<section aria-labelledby="badge" className="flex min-w-0 flex-col">

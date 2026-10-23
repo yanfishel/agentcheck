@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 	const legal = new Date(`${LEGAL.updated} 00:00 UTC`);
 	return [
 		{ url: `${SITE.url}/`, lastModified: new Date() },
+		// Built from the engine's checks: it changes with each release.
+		{ url: `${SITE.url}/checks`, lastModified: new Date() },
 		{ url: `${SITE.url}/privacy`, lastModified: legal },
 		{ url: `${SITE.url}/terms`, lastModified: legal },
 	];

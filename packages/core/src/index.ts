@@ -20,6 +20,7 @@ export {
 	type Screenshot,
 	UNAVAILABLE_REASON,
 } from "./browser/types.ts";
+export { CHECK_DOCS, type CheckDoc } from "./check-docs.ts";
 export { TargetUnreachableError } from "./context.ts";
 export {
 	CRAWL_LIMIT_DEFAULT,
@@ -51,6 +52,8 @@ export {
 	type UrlCheck,
 } from "./net/policy.ts";
 export { completeCategories, type FinishedCheck } from "./progress.ts";
+export { PROTOCOLS } from "./protocols.ts";
+export { CHECKS } from "./registry.ts";
 export { renderHtml } from "./reporters/html.ts";
 export { renderTerminal } from "./reporters/terminal.ts";
 export type { AuditResult } from "./types.ts";
