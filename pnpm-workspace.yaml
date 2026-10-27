@@ -9,4 +9,4 @@ catalog:
   cheerio: ^1.2.0
   playwright-core: ^1.64.1
   robots-parser: ^3.0.1
-  undici: ^8.12.2
+  undici: ^8.12.3

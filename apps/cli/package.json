@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@agentcheck/core": "workspace:*",
-		"tsdown": "^0.23.1"
+		"tsdown": "^0.23.2"
 	},
 	"dependencies": {
 		"cheerio": "catalog:",
