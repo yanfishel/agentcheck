@@ -14,7 +14,10 @@
 			"!skills-lock.json",
 			"!packages/db/drizzle",
 			"!apps/web/public/example",
-			"!docs/superpowers"
+			"!docs/superpowers",
+			"!**/*.md",
+			"!**/*.yaml",
+			"!**/*.yml"
 		]
 	},
 	"formatter": {
