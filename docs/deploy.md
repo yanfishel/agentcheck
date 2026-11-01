@@ -90,10 +90,20 @@ outside the list before it touches anything. The images carry no tests
 [trusted publishing](https://docs.npmjs.com/trusted-publishers/): no npm token
 in the repository, npm accepts the job's OIDC identity (repository
 `yanfishel/agentcheck`, workflow `release.yml`) and attaches a provenance
-attestation. The trusted publisher is configured on npmjs.com in the package's
-settings, which exist only once the package does: the first version is
+attestation. It is on: the repository variable `NPM_PUBLISH` is `true`, so
+every tag publishes itself and there is nothing to do by hand. The job packs
+with pnpm and publishes the tarball with the npm CLI, skips a version that is
+already on npm (a re-run) instead of failing the release, and runs
+`npm install -g npm@latest` because trusted publishing needs npm 11.5.1 or newer.
+A new version can answer `ETARGET` to `npx` for a short while after the publish,
+until the registry's install metadata catches up.
+
+**Setting it up again** (only for a new package name or a lost publisher). The
+publisher can be added only once the package exists, so the first version is
 published by the maintainer from a clean checkout of the tag, in a real
-terminal (npm's 2FA opens the browser; pnpm's publish cannot):
+terminal (npm's 2FA opens the browser; pnpm's publish cannot). A 404 on the
+`PUT` here means an expired npm login, not a missing package: check
+`npm whoami`, then `npm login`.
 
 ```sh
 node scripts/set-version.mjs X.Y.Z        # the checkout holds 0.0.0-dev
@@ -110,14 +120,10 @@ since the job has none):
 npm trust github agentcheck-dev --file release.yml --repo yanfishel/agentcheck --allow-publish
 ```
 
-The repository variable `NPM_PUBLISH` is set to `true` (until then the job is
-skipped and a release is images and a deploy), and every later tag publishes
-itself. npm does not validate the publisher when it is saved, and a new one
-expires unless a publish succeeds within 2 days, so add it right before a
-release of a new version. The job packs with pnpm and publishes the tarball
-with the npm CLI, skips a version that is already on npm (the hand-published
-first one, or a re-run) instead of failing the release, and runs
-`npm install -g npm@latest` because trusted publishing needs npm 11.5.1 or newer.
+npm does not validate the publisher when it is saved, and a new one expires
+unless a publish succeeds within 2 days, so add it right before a release of a
+new version. Without `NPM_PUBLISH=true` the job is skipped and a release is
+images and a deploy.
 
 ## Secrets and configuration
 

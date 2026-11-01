@@ -14,7 +14,7 @@ AgentCheck audits a website's readiness for AI agents: a CLI (`npx agentcheck-de
 - Layout: pnpm workspace — `packages/core` (`@agentcheck/core`, the audit engine), `packages/db` (`@agentcheck/db`, Drizzle schema, migrations, pg-boss queue), `apps/cli` (the CLI, `agentcheck-dev` on npm, command `agentcheck`), `apps/web` (Next.js app, Clerk), `apps/worker` (`@agentcheck/worker`, pg-boss consumer that runs audits).
 - Package manager: **pnpm** — never use npm/yarn to install, and don't commit other lockfiles.
 - Tests: Vitest. Lint + format: Biome (`pnpm check`, tabs + double quotes). No ESLint/Prettier.
-- Run from the repo root: `pnpm check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm capture`. Before reporting work done: `pnpm check && pnpm typecheck && pnpm test && pnpm build`.
+- Run from the repo root: `pnpm check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm capture`. Before reporting work done: `pnpm check && pnpm typecheck && pnpm test && pnpm build`. On Windows run it from Git Bash: `deploy/test` spawns `sh`, so from PowerShell those tests fail with `status: null`.
 - Run a single test file: `pnpm --filter @agentcheck/core exec vitest run test/x.test.ts` (or `pnpm --filter agentcheck-dev exec vitest run …` for the CLI); by name: add `-t "name"`.
 - A PostToolUse hook (`.claude/hooks/biome-format.mjs`) auto-formats every edited file with Biome — expect files to change after Write/Edit (it also turns a never-reassigned `let` into `const`).
 - Line endings are LF (enforced by `.gitattributes`).
