@@ -173,7 +173,8 @@ components and the copy.
   pass/warn/fail/skip rows with the report's marks, source links), then the
   crawl, the protocols, what we do not check and why, and fix files.
   `content/facts.ts` holds `FACTS_LINE` (numbers from the engine), shown on
-  the landing under the four guide blocks with "See every check" and in
+  the landing under the four guide blocks with a secondary "See every check"
+  button to its right (under it below `sm`) and in
   `index.md`/`llms-full.txt` (a test keeps them equal). Facts about ourselves
   only: no comparisons with other tools, no superlatives.
 - A full check crawls the site (up to 10 pages): the band's ring, grade,
