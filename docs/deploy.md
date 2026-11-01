@@ -102,12 +102,22 @@ cd apps/cli && pnpm pack                  # resolves the catalog: versions
 npm publish agentcheck-dev-X.Y.Z.tgz --access public --provenance=false
 ```
 
-Then the publisher is added, the repository variable `NPM_PUBLISH` is set to
-`true` (until then the job is skipped and a release is images and a deploy),
-and every later tag publishes itself. The job
-skips a version that is already on npm (the hand-published first one, or a
-re-run) instead of failing the release, and runs `npm install -g npm@latest`
-because trusted publishing needs npm 11.5.1 or newer.
+Then the publisher is added, from a real terminal (or in the package's settings
+on npmjs.com, with `npm publish` among the allowed actions and no environment,
+since the job has none):
+
+```sh
+npm trust github agentcheck-dev --file release.yml --repo yanfishel/agentcheck --allow-publish
+```
+
+The repository variable `NPM_PUBLISH` is set to `true` (until then the job is
+skipped and a release is images and a deploy), and every later tag publishes
+itself. npm does not validate the publisher when it is saved, and a new one
+expires unless a publish succeeds within 2 days, so add it right before a
+release of a new version. The job packs with pnpm and publishes the tarball
+with the npm CLI, skips a version that is already on npm (the hand-published
+first one, or a re-run) instead of failing the release, and runs
+`npm install -g npm@latest` because trusted publishing needs npm 11.5.1 or newer.
 
 ## Secrets and configuration
 

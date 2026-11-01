@@ -111,8 +111,13 @@ jobs:
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
+      # pnpm packs (it resolves the catalog: versions), npm publishes: the
+      # registry's OIDC exchange is documented for the npm CLI.
       - if: steps.published.outputs.skip != 'true'
-        run: pnpm --filter agentcheck-dev publish --access public --no-git-checks
+        working-directory: apps/cli
+        run: |
+          pnpm pack --out agentcheck-dev.tgz
+          npm publish agentcheck-dev.tgz --access public
         env:
           NPM_CONFIG_PROVENANCE: "true"
 
