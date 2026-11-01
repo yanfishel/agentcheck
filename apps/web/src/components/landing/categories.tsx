@@ -1,9 +1,8 @@
 import { CATEGORIES } from "@agentcheck/core/scoring";
 import { BookOpen, ListChecks } from "lucide-react";
-import Link from "next/link";
 import { FACTS_LINE } from "../../content/facts";
 import { CATEGORY_META, CategoryIcon, type CategoryId } from "../category-meta";
-import { Card, chipClass, Tooltip } from "../ui";
+import { ButtonLink, Card, chipClass, Tooltip } from "../ui";
 import { WeightRing } from "./weight-ring";
 
 type Doc = { label: string; href: string };
@@ -171,16 +170,17 @@ export function Categories() {
 						</li>
 					))}
 				</ul>
-				<p className="mt-6 max-w-3xl text-muted">
-					{FACTS_LINE}{" "}
-					<Link
+				<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<p className="max-w-3xl text-muted">{FACTS_LINE}</p>
+					<ButtonLink
 						href="/checks"
-						className="inline-flex items-center gap-1.5 font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 outline-accent outline-offset-2"
+						variant="secondary"
+						className="shrink-0 self-start sm:self-auto"
+						icon={<ListChecks aria-hidden="true" className="size-4" />}
 					>
-						<ListChecks aria-hidden="true" className="size-4" />
 						See every check
-					</Link>
-				</p>
+					</ButtonLink>
+				</div>
 			</section>
 		</>
 	);
