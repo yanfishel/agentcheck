@@ -22,6 +22,6 @@
 	"dependencies": {
 		"@agentcheck/core": "workspace:*",
 		"@agentcheck/db": "workspace:*",
-		"pg-boss": "^12.38.0"
+		"pg-boss": "^12.38.1"
 	}
 }

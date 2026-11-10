@@ -26,11 +26,11 @@
 	"dependencies": {
 		"drizzle-orm": "^0.45.4",
 		"pg": "^8.23.1",
-		"pg-boss": "^12.38.0"
+		"pg-boss": "^12.38.1"
 	},
 	"devDependencies": {
 		"@agentcheck/core": "workspace:*",
-		"@electric-sql/pglite": "^0.5.13",
+		"@electric-sql/pglite": "^0.5.15",
 		"@types/pg": "^8.23.1",
 		"drizzle-kit": "^0.31.11"
 	}
