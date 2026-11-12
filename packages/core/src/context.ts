@@ -16,6 +16,26 @@ export class TargetUnreachableError extends Error {
 	}
 }
 
+/**
+ * Explains a refusal by Cloudflare in front of the site: its firewall (a 403,
+ * or any status with `cf-mitigated`, e.g. a challenge page) or its rate limit
+ * (a 429). Empty for anything else.
+ */
+function cloudflareNote(status: number, headers: Headers): string {
+	const cloudflare =
+		headers.get("server")?.toLowerCase() === "cloudflare" ||
+		headers.has("cf-ray") ||
+		headers.has("cf-mitigated");
+	if (!cloudflare) return "";
+	if (status === 403 || headers.has("cf-mitigated")) {
+		return ", blocked by the site's Cloudflare firewall (its owner can allow AgentCheck's user agent)";
+	}
+	if (status === 429) {
+		return ", rate-limited by the site's Cloudflare (try again in a few minutes)";
+	}
+	return "";
+}
+
 // robots-parser ships CJS typings that TypeScript resolves as the module namespace under NodeNext.
 type RobotsParser = typeof import("robots-parser").default;
 const robotsParser = robotsParserModule as unknown as RobotsParser;
@@ -106,7 +126,7 @@ export async function createAuditContext(
 	}
 	if (res.status < 200 || res.status >= 300) {
 		throw new TargetUnreachableError(
-			`Could not reach ${target}: HTTP ${res.status}`,
+			`Could not reach ${target}: HTTP ${res.status}${cloudflareNote(res.status, res.headers)}`,
 		);
 	}
 	const finalUrl = new URL(res.url);
