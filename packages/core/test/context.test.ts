@@ -48,6 +48,43 @@ describe("createAuditContext", () => {
 		).rejects.toBeInstanceOf(TargetUnreachableError);
 	});
 
+	it.each([
+		[
+			403,
+			{ server: "cloudflare", "cf-ray": "1-LHR" },
+			"Could not reach https://example.com/: HTTP 403, blocked by the site's Cloudflare firewall (its owner can allow AgentCheck's user agent)",
+		],
+		[
+			503,
+			{ server: "cloudflare", "cf-mitigated": "challenge" },
+			"Could not reach https://example.com/: HTTP 503, blocked by the site's Cloudflare firewall (its owner can allow AgentCheck's user agent)",
+		],
+		[
+			429,
+			{ server: "cloudflare" },
+			"Could not reach https://example.com/: HTTP 429, rate-limited by the site's Cloudflare (try again in a few minutes)",
+		],
+		[
+			503,
+			{ server: "cloudflare" },
+			"Could not reach https://example.com/: HTTP 503",
+		],
+		[
+			403,
+			{ server: "nginx" },
+			"Could not reach https://example.com/: HTTP 403",
+		],
+	])("explains HTTP %i from Cloudflare", async (status, headers, message) => {
+		const agent = mockRoutes("https://example.com", {
+			"/": { status, headers },
+		});
+		await expect(
+			createAuditContext("https://example.com/", fetcherFor(agent)),
+		).rejects.toThrow(
+			expect.objectContaining({ name: "TargetUnreachableError", message }),
+		);
+	});
+
 	it("throws TargetUnreachableError on an invalid target", async () => {
 		const agent = mockRoutes("https://example.com", { "/": HTML });
 		await expect(
